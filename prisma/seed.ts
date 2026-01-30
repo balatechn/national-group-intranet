@@ -6,231 +6,637 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting database seed...');
 
-  // Create Companies
+  // ==========================================
+  // CREATE COMPANIES - National Group India
+  // ==========================================
   console.log('Creating companies...');
-  const nationalPlastics = await prisma.company.upsert({
-    where: { code: 'NPL' },
+  
+  // Parent Company - National Group India
+  const nationalGroupIndia = await prisma.company.upsert({
+    where: { code: 'NGI' },
     update: {},
     create: {
-      name: 'National Plastics Limited',
-      shortName: 'National Plastics',
-      code: 'NPL',
-      address: '123 Industrial Area, Phase 1',
-      city: 'Mumbai',
-      state: 'Maharashtra',
+      name: 'National Group India',
+      shortName: 'National Group',
+      code: 'NGI',
+      description: 'A 76-year-old diversified conglomerate since 1949, operating across infrastructure, automotive, retail, jewelry, and transportation sectors in Karnataka and India.',
+      address: '7th Floor, 909 Lavelle, Sampangi Rama Nagar',
+      city: 'Bengaluru',
+      state: 'Karnataka',
       country: 'India',
-      postalCode: '400001',
-      phone: '+91 22 1234 5678',
-      email: 'info@nationalplastics.in',
-      website: 'https://nationalplastics.in',
-      taxId: '27AABCN1234A1Z5',
+      postalCode: '560001',
+      phone: '+91 80 4567 8900',
+      email: 'connect@nationalgroupindia.com',
+      website: 'https://nationalgroupindia.com',
+      taxId: '29AABCN1001A1Z5',
       isActive: true,
     },
   });
 
-  const nationalIndustries = await prisma.company.upsert({
-    where: { code: 'NI' },
+  // National Infra Build - Infrastructure EPC
+  const nationalInfraBuild = await prisma.company.upsert({
+    where: { code: 'NIB' },
     update: {},
     create: {
-      name: 'National Industries',
-      shortName: 'National Industries',
-      code: 'NI',
-      address: '456 Industrial Estate',
-      city: 'Pune',
-      state: 'Maharashtra',
+      name: 'National Infrabuild Private Limited',
+      shortName: 'National Infra Build',
+      code: 'NIB',
+      description: 'Infrastructure development company specializing in EPC projects including highways, airports, smart cities, and water supply schemes. ₹1200+ Cr total project value with 13+ major projects.',
+      address: 'National Arcade, Junior College Road',
+      city: 'Tirthahalli',
+      state: 'Karnataka',
       country: 'India',
-      postalCode: '411001',
-      phone: '+91 20 1234 5678',
-      email: 'info@nationalindustries.in',
-      website: 'https://nationalindustries.in',
-      taxId: '27AABCN5678B1Z5',
+      postalCode: '577432',
+      phone: '+91 81 8288 2345',
+      email: 'connect@nationalgroupindia.com',
+      website: 'https://nationalinfrabuild.com',
+      taxId: '29AABCN1002B1Z5',
       isActive: true,
     },
   });
 
-  const nationalTrading = await prisma.company.upsert({
-    where: { code: 'NT' },
+  // National Consulting India
+  const nationalConsulting = await prisma.company.upsert({
+    where: { code: 'NCI' },
     update: {},
     create: {
-      name: 'National Trading Company',
-      shortName: 'National Trading',
-      code: 'NT',
-      address: '789 Trade Center',
-      city: 'Delhi',
-      state: 'Delhi',
+      name: 'National Consulting India Private Limited',
+      shortName: 'National Consulting',
+      code: 'NCI',
+      description: 'Strategic consulting services providing business advisory, project management, and corporate solutions for enterprises.',
+      address: '7th Floor, 909 Lavelle, Sampangi Rama Nagar',
+      city: 'Bengaluru',
+      state: 'Karnataka',
       country: 'India',
-      postalCode: '110001',
-      phone: '+91 11 1234 5678',
-      email: 'info@nationaltrading.in',
-      website: 'https://nationaltrading.in',
-      taxId: '07AABCN9012C1Z5',
+      postalCode: '560001',
+      phone: '+91 80 4567 8901',
+      email: 'info@nationalconsultingindia.com',
+      website: 'https://nationalconsultingindia.com',
+      taxId: '29AABCN1003C1Z5',
       isActive: true,
     },
   });
 
-  // Create Departments
+  // Rainland Auto Corp - Automotive
+  const rainlandAutoCorp = await prisma.company.upsert({
+    where: { code: 'RAC' },
+    update: {},
+    create: {
+      name: 'Rainland Autocorp Private Limited',
+      shortName: 'Rainland Auto Corp',
+      code: 'RAC',
+      description: 'Automotive dealership and services company offering premium vehicle sales, after-sales service, and fleet management solutions.',
+      address: 'Automotive Hub, BH Road',
+      city: 'Shivamogga',
+      state: 'Karnataka',
+      country: 'India',
+      postalCode: '577201',
+      phone: '+91 81 8267 8901',
+      email: 'sales@rainlandautocorp.com',
+      website: 'https://rainlandautocorp.com',
+      taxId: '29AABCN1004D1Z5',
+      isActive: true,
+    },
+  });
+
+  // iSky Transport Systems - Elevated Transport
+  const iSkyTransport = await prisma.company.upsert({
+    where: { code: 'IST' },
+    update: {},
+    create: {
+      name: 'iSky Transport Systems Private Limited',
+      shortName: 'iSky Transport',
+      code: 'IST',
+      description: 'Revolutionary urban mobility company providing elevated, efficient, and sustainable transport solutions. Next-gen public transportation with string rail technology in association with USky Transport FZE.',
+      address: '4th Floor, 909 Lavelle, Lavelle Road, Shanthala Nagar, Sampangi Rama Nagar',
+      city: 'Bengaluru',
+      state: 'Karnataka',
+      country: 'India',
+      postalCode: '560001',
+      phone: '+91 80 4567 8902',
+      email: 'connect@iskytransport.com',
+      website: 'https://iskytransport.com',
+      taxId: '29AABCN1005E1Z5',
+      isActive: true,
+    },
+  });
+
+  // National Resource - Real Estate
+  const nationalResource = await prisma.company.upsert({
+    where: { code: 'NRE' },
+    update: {},
+    create: {
+      name: 'National Resource Private Limited',
+      shortName: 'National Resource',
+      code: 'NRE',
+      description: 'Real estate development company focused on premium residential, commercial, and mixed-use property development across Karnataka.',
+      address: 'National Arcade, Junior College Road',
+      city: 'Tirthahalli',
+      state: 'Karnataka',
+      country: 'India',
+      postalCode: '577432',
+      phone: '+91 81 8288 3456',
+      email: 'realestate@nationalgroupindia.com',
+      website: 'https://nationalgroupindia.com/realestate',
+      taxId: '29AABCN1006F1Z5',
+      isActive: true,
+    },
+  });
+
+  // Reference for backwards compatibility
+  const nationalPlastics = nationalGroupIndia;
+
+  // ==========================================
+  // CREATE DEPARTMENTS - For All Companies
+  // ==========================================
   console.log('Creating departments...');
-  const itDept = await prisma.department.upsert({
-    where: { companyId_code: { companyId: nationalPlastics.id, code: 'NPL-IT' } },
+  
+  // National Group India (Corporate) Departments
+  const corpItDept = await prisma.department.upsert({
+    where: { companyId_code: { companyId: nationalGroupIndia.id, code: 'NGI-IT' } },
     update: {},
     create: {
       name: 'Information Technology',
-      code: 'NPL-IT',
-      companyId: nationalPlastics.id,
+      code: 'NGI-IT',
+      description: 'Corporate IT & Digital Transformation',
+      companyId: nationalGroupIndia.id,
     },
   });
 
-  const hrDept = await prisma.department.upsert({
-    where: { companyId_code: { companyId: nationalPlastics.id, code: 'NPL-HR' } },
+  const corpHrDept = await prisma.department.upsert({
+    where: { companyId_code: { companyId: nationalGroupIndia.id, code: 'NGI-HR' } },
     update: {},
     create: {
       name: 'Human Resources',
-      code: 'NPL-HR',
-      companyId: nationalPlastics.id,
+      code: 'NGI-HR',
+      description: 'Corporate HR & Talent Management',
+      companyId: nationalGroupIndia.id,
     },
   });
 
-  const financeDept = await prisma.department.upsert({
-    where: { companyId_code: { companyId: nationalPlastics.id, code: 'NPL-FIN' } },
+  const corpFinanceDept = await prisma.department.upsert({
+    where: { companyId_code: { companyId: nationalGroupIndia.id, code: 'NGI-FIN' } },
     update: {},
     create: {
       name: 'Finance & Accounts',
-      code: 'NPL-FIN',
-      companyId: nationalPlastics.id,
+      code: 'NGI-FIN',
+      description: 'Corporate Finance, Treasury & Accounts',
+      companyId: nationalGroupIndia.id,
     },
   });
 
-  const opsDept = await prisma.department.upsert({
-    where: { companyId_code: { companyId: nationalPlastics.id, code: 'NPL-OPS' } },
+  const corpAdminDept = await prisma.department.upsert({
+    where: { companyId_code: { companyId: nationalGroupIndia.id, code: 'NGI-ADMIN' } },
+    update: {},
+    create: {
+      name: 'Administration',
+      code: 'NGI-ADMIN',
+      description: 'Corporate Administration & Facilities',
+      companyId: nationalGroupIndia.id,
+    },
+  });
+
+  const corpLegalDept = await prisma.department.upsert({
+    where: { companyId_code: { companyId: nationalGroupIndia.id, code: 'NGI-LEGAL' } },
+    update: {},
+    create: {
+      name: 'Legal & Compliance',
+      code: 'NGI-LEGAL',
+      description: 'Legal Affairs, Contracts & Regulatory Compliance',
+      companyId: nationalGroupIndia.id,
+    },
+  });
+
+  // National Infra Build Departments
+  const nibProjectsDept = await prisma.department.upsert({
+    where: { companyId_code: { companyId: nationalInfraBuild.id, code: 'NIB-PROJ' } },
+    update: {},
+    create: {
+      name: 'Projects & Execution',
+      code: 'NIB-PROJ',
+      description: 'Infrastructure Project Management & Execution',
+      companyId: nationalInfraBuild.id,
+    },
+  });
+
+  const nibEnggDept = await prisma.department.upsert({
+    where: { companyId_code: { companyId: nationalInfraBuild.id, code: 'NIB-ENGG' } },
+    update: {},
+    create: {
+      name: 'Engineering & Design',
+      code: 'NIB-ENGG',
+      description: 'Civil Engineering, Design & Technical Services',
+      companyId: nationalInfraBuild.id,
+    },
+  });
+
+  const nibProcDept = await prisma.department.upsert({
+    where: { companyId_code: { companyId: nationalInfraBuild.id, code: 'NIB-PROC' } },
+    update: {},
+    create: {
+      name: 'Procurement & Supply Chain',
+      code: 'NIB-PROC',
+      description: 'Materials, Equipment & Vendor Management',
+      companyId: nationalInfraBuild.id,
+    },
+  });
+
+  // iSky Transport Departments
+  const istRndDept = await prisma.department.upsert({
+    where: { companyId_code: { companyId: iSkyTransport.id, code: 'IST-RND' } },
+    update: {},
+    create: {
+      name: 'Research & Development',
+      code: 'IST-RND',
+      description: 'Transport Technology R&D & Innovation',
+      companyId: iSkyTransport.id,
+    },
+  });
+
+  const istOpsDept = await prisma.department.upsert({
+    where: { companyId_code: { companyId: iSkyTransport.id, code: 'IST-OPS' } },
     update: {},
     create: {
       name: 'Operations',
-      code: 'NPL-OPS',
-      companyId: nationalPlastics.id,
+      code: 'IST-OPS',
+      description: 'Transport Operations & Fleet Management',
+      companyId: iSkyTransport.id,
     },
   });
 
-  const salesDept = await prisma.department.upsert({
-    where: { companyId_code: { companyId: nationalPlastics.id, code: 'NPL-SALES' } },
+  // Rainland Auto Corp Departments
+  const racSalesDept = await prisma.department.upsert({
+    where: { companyId_code: { companyId: rainlandAutoCorp.id, code: 'RAC-SALES' } },
     update: {},
     create: {
       name: 'Sales & Marketing',
-      code: 'NPL-SALES',
-      companyId: nationalPlastics.id,
+      code: 'RAC-SALES',
+      description: 'Vehicle Sales, Showroom & Marketing',
+      companyId: rainlandAutoCorp.id,
     },
   });
 
-  // Create Users
+  const racServiceDept = await prisma.department.upsert({
+    where: { companyId_code: { companyId: rainlandAutoCorp.id, code: 'RAC-SVC' } },
+    update: {},
+    create: {
+      name: 'Service & Workshop',
+      code: 'RAC-SVC',
+      description: 'Vehicle Service, Repairs & Maintenance',
+      companyId: rainlandAutoCorp.id,
+    },
+  });
+
+  // National Resource Departments
+  const nreDevDept = await prisma.department.upsert({
+    where: { companyId_code: { companyId: nationalResource.id, code: 'NRE-DEV' } },
+    update: {},
+    create: {
+      name: 'Project Development',
+      code: 'NRE-DEV',
+      description: 'Real Estate Project Planning & Development',
+      companyId: nationalResource.id,
+    },
+  });
+
+  const nreSalesDept = await prisma.department.upsert({
+    where: { companyId_code: { companyId: nationalResource.id, code: 'NRE-SALES' } },
+    update: {},
+    create: {
+      name: 'Sales & Leasing',
+      code: 'NRE-SALES',
+      description: 'Property Sales, Leasing & Client Relations',
+      companyId: nationalResource.id,
+    },
+  });
+
+  // Reference for backwards compatibility
+  const itDept = corpItDept;
+  const hrDept = corpHrDept;
+  const financeDept = corpFinanceDept;
+  const opsDept = corpAdminDept;
+  const salesDept = racSalesDept;
+
+  // ==========================================
+  // CREATE USERS - Employees with Hierarchy
+  // ==========================================
   console.log('Creating users...');
   const passwordHash = await hash('Password@123', 12);
 
-  const superAdmin = await prisma.user.upsert({
-    where: { email: 'admin@nationalgroup.in' },
+  // CEO - Top of hierarchy
+  const ceo = await prisma.user.upsert({
+    where: { email: 'ceo@nationalgroupindia.com' },
     update: {},
     create: {
-      employeeId: 'NG-ADMIN-001',
-      email: 'admin@nationalgroup.in',
+      employeeId: 'NGI-CEO-001',
+      email: 'ceo@nationalgroupindia.com',
       password: passwordHash,
-      firstName: 'Super',
-      lastName: 'Admin',
+      firstName: 'Raghavendra',
+      lastName: 'Nagaraj',
+      displayName: 'Raghavendra Nagaraj',
       role: 'SUPER_ADMIN',
-      phone: '+91 9876543210',
-      companyId: nationalPlastics.id,
-      departmentId: itDept.id,
-      jobTitle: 'System Administrator',
+      phone: '+91 98450 00001',
+      companyId: nationalGroupIndia.id,
+      departmentId: corpAdminDept.id,
+      jobTitle: 'Chairman & Managing Director',
       status: 'ACTIVE',
     },
   });
 
-  const itManager = await prisma.user.upsert({
-    where: { email: 'itmanager@nationalgroup.in' },
+  // Super Admin - System Admin
+  const superAdmin = await prisma.user.upsert({
+    where: { email: 'admin@nationalgroupindia.com' },
     update: {},
     create: {
-      employeeId: 'NPL-IT-001',
-      email: 'itmanager@nationalgroup.in',
+      employeeId: 'NGI-ADM-001',
+      email: 'admin@nationalgroupindia.com',
+      password: passwordHash,
+      firstName: 'System',
+      lastName: 'Administrator',
+      displayName: 'System Admin',
+      role: 'SUPER_ADMIN',
+      phone: '+91 98450 00002',
+      companyId: nationalGroupIndia.id,
+      departmentId: corpItDept.id,
+      jobTitle: 'System Administrator',
+      managerId: ceo.id,
+      status: 'ACTIVE',
+    },
+  });
+
+  // Corporate IT Manager - Reports to CEO
+  const itManager = await prisma.user.upsert({
+    where: { email: 'it.head@nationalgroupindia.com' },
+    update: {},
+    create: {
+      employeeId: 'NGI-IT-001',
+      email: 'it.head@nationalgroupindia.com',
       password: passwordHash,
       firstName: 'Rajesh',
       lastName: 'Kumar',
+      displayName: 'Rajesh Kumar',
       role: 'IT_ADMIN',
-      phone: '+91 9876543211',
-      companyId: nationalPlastics.id,
-      departmentId: itDept.id,
-      jobTitle: 'IT Manager',
+      phone: '+91 98450 10001',
+      companyId: nationalGroupIndia.id,
+      departmentId: corpItDept.id,
+      jobTitle: 'Chief Information Officer',
+      managerId: ceo.id,
       status: 'ACTIVE',
     },
   });
 
+  // Corporate HR Manager - Reports to CEO
   const hrManager = await prisma.user.upsert({
-    where: { email: 'hrmanager@nationalgroup.in' },
+    where: { email: 'hr.head@nationalgroupindia.com' },
     update: {},
     create: {
-      employeeId: 'NPL-HR-001',
-      email: 'hrmanager@nationalgroup.in',
+      employeeId: 'NGI-HR-001',
+      email: 'hr.head@nationalgroupindia.com',
       password: passwordHash,
       firstName: 'Priya',
       lastName: 'Sharma',
+      displayName: 'Priya Sharma',
       role: 'HR_ADMIN',
-      phone: '+91 9876543212',
-      companyId: nationalPlastics.id,
-      departmentId: hrDept.id,
-      jobTitle: 'HR Manager',
+      phone: '+91 98450 20001',
+      companyId: nationalGroupIndia.id,
+      departmentId: corpHrDept.id,
+      jobTitle: 'Chief Human Resources Officer',
+      managerId: ceo.id,
       status: 'ACTIVE',
     },
   });
 
-  const employee1 = await prisma.user.upsert({
-    where: { email: 'john.doe@nationalgroup.in' },
+  // Finance Head - Reports to CEO
+  const financeHead = await prisma.user.upsert({
+    where: { email: 'finance.head@nationalgroupindia.com' },
     update: {},
     create: {
-      employeeId: 'NPL-IT-002',
-      email: 'john.doe@nationalgroup.in',
+      employeeId: 'NGI-FIN-001',
+      email: 'finance.head@nationalgroupindia.com',
       password: passwordHash,
-      firstName: 'John',
-      lastName: 'Doe',
+      firstName: 'Suresh',
+      lastName: 'Menon',
+      displayName: 'Suresh Menon',
+      role: 'ADMIN',
+      phone: '+91 98450 30001',
+      companyId: nationalGroupIndia.id,
+      departmentId: corpFinanceDept.id,
+      jobTitle: 'Chief Financial Officer',
+      managerId: ceo.id,
+      status: 'ACTIVE',
+    },
+  });
+
+  // IT Team Members - Report to IT Manager
+  const employee1 = await prisma.user.upsert({
+    where: { email: 'arun.kumar@nationalgroupindia.com' },
+    update: {},
+    create: {
+      employeeId: 'NGI-IT-002',
+      email: 'arun.kumar@nationalgroupindia.com',
+      password: passwordHash,
+      firstName: 'Arun',
+      lastName: 'Kumar',
+      displayName: 'Arun Kumar',
       role: 'EMPLOYEE',
-      phone: '+91 9876543213',
-      companyId: nationalPlastics.id,
-      departmentId: itDept.id,
-      jobTitle: 'Software Developer',
+      phone: '+91 98450 10002',
+      companyId: nationalGroupIndia.id,
+      departmentId: corpItDept.id,
+      jobTitle: 'Senior Software Developer',
       managerId: itManager.id,
       status: 'ACTIVE',
     },
   });
 
-  const employee2 = await prisma.user.upsert({
-    where: { email: 'jane.smith@nationalgroup.in' },
+  const itEmployee2 = await prisma.user.upsert({
+    where: { email: 'meera.nair@nationalgroupindia.com' },
     update: {},
     create: {
-      employeeId: 'NPL-HR-002',
-      email: 'jane.smith@nationalgroup.in',
+      employeeId: 'NGI-IT-003',
+      email: 'meera.nair@nationalgroupindia.com',
       password: passwordHash,
-      firstName: 'Jane',
-      lastName: 'Smith',
+      firstName: 'Meera',
+      lastName: 'Nair',
+      displayName: 'Meera Nair',
       role: 'EMPLOYEE',
-      phone: '+91 9876543214',
-      companyId: nationalPlastics.id,
-      departmentId: hrDept.id,
+      phone: '+91 98450 10003',
+      companyId: nationalGroupIndia.id,
+      departmentId: corpItDept.id,
+      jobTitle: 'Network Administrator',
+      managerId: itManager.id,
+      status: 'ACTIVE',
+    },
+  });
+
+  // HR Team Members - Report to HR Manager
+  const employee2 = await prisma.user.upsert({
+    where: { email: 'divya.raj@nationalgroupindia.com' },
+    update: {},
+    create: {
+      employeeId: 'NGI-HR-002',
+      email: 'divya.raj@nationalgroupindia.com',
+      password: passwordHash,
+      firstName: 'Divya',
+      lastName: 'Raj',
+      displayName: 'Divya Raj',
+      role: 'EMPLOYEE',
+      phone: '+91 98450 20002',
+      companyId: nationalGroupIndia.id,
+      departmentId: corpHrDept.id,
       jobTitle: 'HR Executive',
       managerId: hrManager.id,
       status: 'ACTIVE',
     },
   });
 
-  // Update department heads
+  // National Infra Build Team
+  const nibProjectManager = await prisma.user.upsert({
+    where: { email: 'karthik.gowda@nationalinfrabuild.com' },
+    update: {},
+    create: {
+      employeeId: 'NIB-PROJ-001',
+      email: 'karthik.gowda@nationalinfrabuild.com',
+      password: passwordHash,
+      firstName: 'Karthik',
+      lastName: 'Gowda',
+      displayName: 'Karthik Gowda',
+      role: 'MANAGER',
+      phone: '+91 98451 00001',
+      companyId: nationalInfraBuild.id,
+      departmentId: nibProjectsDept.id,
+      jobTitle: 'Vice President - Projects',
+      managerId: ceo.id,
+      status: 'ACTIVE',
+    },
+  });
+
+  const nibEngineer = await prisma.user.upsert({
+    where: { email: 'vinay.hegde@nationalinfrabuild.com' },
+    update: {},
+    create: {
+      employeeId: 'NIB-ENGG-001',
+      email: 'vinay.hegde@nationalinfrabuild.com',
+      password: passwordHash,
+      firstName: 'Vinay',
+      lastName: 'Hegde',
+      displayName: 'Vinay Hegde',
+      role: 'EMPLOYEE',
+      phone: '+91 98451 00002',
+      companyId: nationalInfraBuild.id,
+      departmentId: nibEnggDept.id,
+      jobTitle: 'Senior Civil Engineer',
+      managerId: nibProjectManager.id,
+      status: 'ACTIVE',
+    },
+  });
+
+  // iSky Transport Team
+  const istHead = await prisma.user.upsert({
+    where: { email: 'narayan.murthy@iskytransport.com' },
+    update: {},
+    create: {
+      employeeId: 'IST-MGT-001',
+      email: 'narayan.murthy@iskytransport.com',
+      password: passwordHash,
+      firstName: 'Narayan',
+      lastName: 'Murthy',
+      displayName: 'Narayan Murthy',
+      role: 'MANAGER',
+      phone: '+91 98452 00001',
+      companyId: iSkyTransport.id,
+      departmentId: istRndDept.id,
+      jobTitle: 'Director - Technology',
+      managerId: ceo.id,
+      status: 'ACTIVE',
+    },
+  });
+
+  // Rainland Auto Corp Team
+  const racHead = await prisma.user.upsert({
+    where: { email: 'manjunath.shetty@rainlandautocorp.com' },
+    update: {},
+    create: {
+      employeeId: 'RAC-MGT-001',
+      email: 'manjunath.shetty@rainlandautocorp.com',
+      password: passwordHash,
+      firstName: 'Manjunath',
+      lastName: 'Shetty',
+      displayName: 'Manjunath Shetty',
+      role: 'MANAGER',
+      phone: '+91 98453 00001',
+      companyId: rainlandAutoCorp.id,
+      departmentId: racSalesDept.id,
+      jobTitle: 'General Manager - Sales',
+      managerId: ceo.id,
+      status: 'ACTIVE',
+    },
+  });
+
+  // National Resource Team
+  const nreHead = await prisma.user.upsert({
+    where: { email: 'ashok.ravi@nationalgroupindia.com' },
+    update: {},
+    create: {
+      employeeId: 'NRE-MGT-001',
+      email: 'ashok.ravi@nationalgroupindia.com',
+      password: passwordHash,
+      firstName: 'Ashok',
+      lastName: 'Ravi',
+      displayName: 'Ashok Ravi',
+      role: 'MANAGER',
+      phone: '+91 98454 00001',
+      companyId: nationalResource.id,
+      departmentId: nreDevDept.id,
+      jobTitle: 'Director - Real Estate',
+      managerId: ceo.id,
+      status: 'ACTIVE',
+    },
+  });
+
+  // ==========================================
+  // UPDATE DEPARTMENT HEADS
+  // ==========================================
   await prisma.department.update({
-    where: { id: itDept.id },
+    where: { id: corpItDept.id },
     data: { headId: itManager.id },
   });
 
   await prisma.department.update({
-    where: { id: hrDept.id },
+    where: { id: corpHrDept.id },
     data: { headId: hrManager.id },
   });
 
-  // Create Vendors
+  await prisma.department.update({
+    where: { id: corpFinanceDept.id },
+    data: { headId: financeHead.id },
+  });
+
+  await prisma.department.update({
+    where: { id: nibProjectsDept.id },
+    data: { headId: nibProjectManager.id },
+  });
+
+  await prisma.department.update({
+    where: { id: istRndDept.id },
+    data: { headId: istHead.id },
+  });
+
+  await prisma.department.update({
+    where: { id: racSalesDept.id },
+    data: { headId: racHead.id },
+  });
+
+  await prisma.department.update({
+    where: { id: nreDevDept.id },
+    data: { headId: nreHead.id },
+  });
+
+  // ==========================================
+  // CREATE VENDORS
+  // ==========================================
   console.log('Creating vendors...');
   const vendor1 = await prisma.vendor.upsert({
-    where: { companyId_code: { companyId: nationalPlastics.id, code: 'DELL-001' } },
+    where: { companyId_code: { companyId: nationalGroupIndia.id, code: 'DELL-001' } },
     update: {},
     create: {
       code: 'DELL-001',
@@ -238,17 +644,17 @@ async function main() {
       type: 'Hardware',
       contactPerson: 'Amit Verma',
       email: 'sales@delltech.com',
-      phone: '+91 22 4567 8901',
-      address: 'Tech Park, Andheri East, Mumbai',
+      phone: '+91 80 4567 8901',
+      address: 'Dell India Centre, Domlur, Bengaluru',
       website: 'https://dell.com',
       isActive: true,
       contractEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-      companyId: nationalPlastics.id,
+      companyId: nationalGroupIndia.id,
     },
   });
 
   const vendor2 = await prisma.vendor.upsert({
-    where: { companyId_code: { companyId: nationalPlastics.id, code: 'MS-001' } },
+    where: { companyId_code: { companyId: nationalGroupIndia.id, code: 'MS-001' } },
     update: {},
     create: {
       code: 'MS-001',
@@ -257,21 +663,23 @@ async function main() {
       contactPerson: 'Neha Gupta',
       email: 'enterprise@microsoft.com',
       phone: '+91 80 4567 8902',
-      address: 'Microsoft Campus, Bangalore',
+      address: 'Microsoft Campus, Bellandur, Bengaluru',
       website: 'https://microsoft.com',
       isActive: true,
       contractEnd: new Date(Date.now() + 730 * 24 * 60 * 60 * 1000),
-      companyId: nationalPlastics.id,
+      companyId: nationalGroupIndia.id,
     },
   });
 
-  // Create System Assets
+  // ==========================================
+  // CREATE SYSTEM ASSETS
+  // ==========================================
   console.log('Creating system assets...');
   await prisma.systemAsset.upsert({
-    where: { assetTag: 'NPL-DT-001' },
+    where: { assetTag: 'NGI-DT-001' },
     update: {},
     create: {
-      assetTag: 'NPL-DT-001',
+      assetTag: 'NGI-DT-001',
       name: 'Dell OptiPlex 7090',
       type: 'DESKTOP',
       manufacturer: 'Dell',
@@ -285,17 +693,17 @@ async function main() {
       warrantyExpiry: new Date('2026-01-15'),
       purchasePrice: 85000,
       status: 'ASSIGNED',
-      location: 'IT Department - Floor 2',
+      location: 'Corporate Office - IT Department, 7th Floor, 909 Lavelle',
       assignedToId: employee1.id,
       vendorId: vendor1.id,
     },
   });
 
   await prisma.systemAsset.upsert({
-    where: { assetTag: 'NPL-LT-001' },
+    where: { assetTag: 'NGI-LT-001' },
     update: {},
     create: {
-      assetTag: 'NPL-LT-001',
+      assetTag: 'NGI-LT-001',
       name: 'Dell Latitude 5520',
       type: 'LAPTOP',
       manufacturer: 'Dell',
@@ -309,7 +717,7 @@ async function main() {
       warrantyExpiry: new Date('2026-03-20'),
       purchasePrice: 95000,
       status: 'ASSIGNED',
-      location: 'HR Department - Floor 1',
+      location: 'Corporate Office - HR Department, 7th Floor, 909 Lavelle',
       assignedToId: employee2.id,
       vendorId: vendor1.id,
     },
@@ -354,10 +762,12 @@ async function main() {
     },
   });
 
-  // Create Policies
+  // ==========================================
+  // CREATE POLICIES
+  // ==========================================
   console.log('Creating policies...');
   await prisma.policy.upsert({
-    where: { companyId_code: { companyId: nationalPlastics.id, code: 'LEAVE-POL-2024' } },
+    where: { companyId_code: { companyId: nationalGroupIndia.id, code: 'LEAVE-POL-2024' } },
     update: {},
     create: {
       code: 'LEAVE-POL-2024',
@@ -366,15 +776,15 @@ async function main() {
       category: 'HR',
       version: '2.0',
       effectiveDate: new Date('2024-01-01'),
-      content: 'This policy outlines the leave entitlements for all employees...',
+      content: 'This policy outlines the leave entitlements for all employees of National Group India and its subsidiaries...',
       status: 'PUBLISHED',
       createdBy: hrManager.id,
-      companyId: nationalPlastics.id,
+      companyId: nationalGroupIndia.id,
     },
   });
 
   await prisma.policy.upsert({
-    where: { companyId_code: { companyId: nationalPlastics.id, code: 'IT-SEC-POL' } },
+    where: { companyId_code: { companyId: nationalGroupIndia.id, code: 'IT-SEC-POL' } },
     update: {},
     create: {
       code: 'IT-SEC-POL',
@@ -383,15 +793,15 @@ async function main() {
       category: 'IT_SECURITY',
       version: '3.1',
       effectiveDate: new Date('2024-01-01'),
-      content: 'This policy defines the security guidelines for all IT systems...',
+      content: 'This policy defines the security guidelines for all IT systems across National Group India...',
       status: 'PUBLISHED',
       createdBy: itManager.id,
-      companyId: nationalPlastics.id,
+      companyId: nationalGroupIndia.id,
     },
   });
 
   await prisma.policy.upsert({
-    where: { companyId_code: { companyId: nationalPlastics.id, code: 'EXP-POL' } },
+    where: { companyId_code: { companyId: nationalGroupIndia.id, code: 'EXP-POL' } },
     update: {},
     create: {
       code: 'EXP-POL',
@@ -400,10 +810,10 @@ async function main() {
       category: 'OPERATIONAL',
       version: '1.5',
       effectiveDate: new Date('2024-01-01'),
-      content: 'This policy outlines the procedures for expense reimbursement...',
+      content: 'This policy outlines the procedures for expense reimbursement for all National Group entities...',
       status: 'PUBLISHED',
-      createdBy: superAdmin.id,
-      companyId: nationalPlastics.id,
+      createdBy: financeHead.id,
+      companyId: nationalGroupIndia.id,
     },
   });
 
@@ -478,7 +888,9 @@ async function main() {
     },
   });
 
-  // Create Events
+  // ==========================================
+  // CREATE EVENTS
+  // ==========================================
   console.log('Creating events...');
   await prisma.event.create({
     data: {
@@ -486,23 +898,24 @@ async function main() {
       description: 'Monthly company-wide meeting to discuss updates and Q&A',
       startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
-      location: 'Main Auditorium',
+      location: 'Corporate Office - 7th Floor, 909 Lavelle, Bengaluru',
       type: 'COMPANY_EVENT',
       isAllDay: false,
-      companyId: nationalPlastics.id,
-      creatorId: superAdmin.id,
+      companyId: nationalGroupIndia.id,
+      creatorId: ceo.id,
     },
   });
 
   await prisma.event.create({
     data: {
-      title: 'Holi Celebration',
-      description: 'Holi festival celebration at office',
-      startDate: new Date('2024-03-25'),
-      endDate: new Date('2024-03-25'),
-      location: 'Office Premises',
-      type: 'HOLIDAY',
+      title: 'Foundation Day Celebration',
+      description: 'Celebrating 76 years of National Group India - Since 1949',
+      startDate: new Date('2025-01-15'),
+      endDate: new Date('2025-01-15'),
+      location: 'Head Office - National Arcade, Tirthahalli',
+      type: 'COMPANY_EVENT',
       isAllDay: true,
+      companyId: nationalGroupIndia.id,
       creatorId: hrManager.id,
     },
   });
@@ -533,13 +946,25 @@ async function main() {
     },
   });
 
+  // ==========================================
+  // SUCCESS OUTPUT
+  // ==========================================
   console.log('✅ Database seeded successfully!');
   console.log('');
+  console.log('🏢 Companies Created:');
+  console.log('   1. National Group India (Parent) - NGI');
+  console.log('   2. National Infrabuild Pvt Ltd - NIB');
+  console.log('   3. National Consulting India - NCI');
+  console.log('   4. Rainland Autocorp Pvt Ltd - RAC');
+  console.log('   5. iSky Transport Systems - IST');
+  console.log('   6. National Resource Pvt Ltd - NRE');
+  console.log('');
   console.log('📧 Default login credentials:');
-  console.log('   Super Admin: admin@nationalgroup.in / Password@123');
-  console.log('   IT Manager: itmanager@nationalgroup.in / Password@123');
-  console.log('   HR Manager: hrmanager@nationalgroup.in / Password@123');
-  console.log('   Employee: john.doe@nationalgroup.in / Password@123');
+  console.log('   CEO: ceo@nationalgroupindia.com / Password@123');
+  console.log('   Admin: admin@nationalgroupindia.com / Password@123');
+  console.log('   CIO: it.head@nationalgroupindia.com / Password@123');
+  console.log('   CHRO: hr.head@nationalgroupindia.com / Password@123');
+  console.log('   CFO: finance.head@nationalgroupindia.com / Password@123');
 }
 
 main()
