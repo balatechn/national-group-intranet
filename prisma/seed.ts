@@ -817,134 +817,152 @@ async function main() {
     },
   });
 
-  // Create sample IT Tickets
+  // Create sample IT Tickets (skip if already exist)
   console.log('Creating IT tickets...');
-  await prisma.iTTicket.create({
-    data: {
-      ticketNumber: 'TKT-2024-0001',
-      subject: 'Unable to access email',
-      description: 'Getting authentication error when trying to access Outlook',
-      category: 'EMAIL',
-      priority: 'HIGH',
-      status: 'OPEN',
-      creatorId: employee1.id,
-      slaDeadline: new Date(Date.now() + 4 * 60 * 60 * 1000), // 4 hours
-    },
-  });
+  const existingTicket1 = await prisma.iTTicket.findUnique({ where: { ticketNumber: 'TKT-2024-0001' } });
+  if (!existingTicket1) {
+    await prisma.iTTicket.create({
+      data: {
+        ticketNumber: 'TKT-2024-0001',
+        subject: 'Unable to access email',
+        description: 'Getting authentication error when trying to access Outlook',
+        category: 'EMAIL',
+        priority: 'HIGH',
+        status: 'OPEN',
+        creatorId: employee1.id,
+        slaDeadline: new Date(Date.now() + 4 * 60 * 60 * 1000),
+      },
+    });
+  }
 
-  await prisma.iTTicket.create({
-    data: {
-      ticketNumber: 'TKT-2024-0002',
-      subject: 'Laptop running slow',
-      description: 'System performance has degraded significantly',
-      category: 'HARDWARE',
-      priority: 'MEDIUM',
-      status: 'IN_PROGRESS',
-      creatorId: employee2.id,
-      assigneeId: itManager.id,
-      slaDeadline: new Date(Date.now() + 8 * 60 * 60 * 1000), // 8 hours
-    },
-  });
+  const existingTicket2 = await prisma.iTTicket.findUnique({ where: { ticketNumber: 'TKT-2024-0002' } });
+  if (!existingTicket2) {
+    await prisma.iTTicket.create({
+      data: {
+        ticketNumber: 'TKT-2024-0002',
+        subject: 'Laptop running slow',
+        description: 'System performance has degraded significantly',
+        category: 'HARDWARE',
+        priority: 'MEDIUM',
+        status: 'IN_PROGRESS',
+        creatorId: employee2.id,
+        assigneeId: itManager.id,
+        slaDeadline: new Date(Date.now() + 8 * 60 * 60 * 1000),
+      },
+    });
+  }
 
-  // Create sample IT Requests
+  // Create sample IT Requests (skip if already exist)
   console.log('Creating IT requests...');
-  await prisma.iTRequest.create({
-    data: {
-      requestNumber: 'REQ-2024-0001',
-      subject: 'New laptop request',
-      description: 'Request for a new laptop for project work',
-      type: 'NEW_HARDWARE',
-      status: 'PENDING_APPROVAL',
-      requestorId: employee1.id,
-      justification: 'Current laptop is 4 years old and unable to handle development workload',
-    },
-  });
+  const existingRequest = await prisma.iTRequest.findUnique({ where: { requestNumber: 'REQ-2024-0001' } });
+  if (!existingRequest) {
+    await prisma.iTRequest.create({
+      data: {
+        requestNumber: 'REQ-2024-0001',
+        subject: 'New laptop request',
+        description: 'Request for a new laptop for project work',
+        type: 'NEW_HARDWARE',
+        status: 'PENDING_APPROVAL',
+        requestorId: employee1.id,
+        justification: 'Current laptop is 4 years old and unable to handle development workload',
+      },
+    });
+  }
 
-  // Create sample Tasks
+  // Create sample Tasks (only if none exist)
   console.log('Creating tasks...');
-  await prisma.task.create({
-    data: {
-      title: 'Complete quarterly IT audit',
-      description: 'Perform security audit of all systems and document findings',
-      status: 'IN_PROGRESS',
-      priority: 'HIGH',
-      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-      creatorId: superAdmin.id,
-      assigneeId: itManager.id,
-      departmentId: itDept.id,
-    },
-  });
+  const taskCount = await prisma.task.count();
+  if (taskCount === 0) {
+    await prisma.task.create({
+      data: {
+        title: 'Complete quarterly IT audit',
+        description: 'Perform security audit of all systems and document findings',
+        status: 'IN_PROGRESS',
+        priority: 'HIGH',
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        creatorId: superAdmin.id,
+        assigneeId: itManager.id,
+        departmentId: corpItDept.id,
+      },
+    });
 
-  await prisma.task.create({
-    data: {
-      title: 'Update employee handbook',
-      description: 'Review and update the employee handbook for 2024',
-      status: 'TODO',
-      priority: 'MEDIUM',
-      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
-      creatorId: hrManager.id,
-      assigneeId: employee2.id,
-      departmentId: hrDept.id,
-    },
-  });
+    await prisma.task.create({
+      data: {
+        title: 'Update employee handbook',
+        description: 'Review and update the employee handbook for 2024',
+        status: 'TODO',
+        priority: 'MEDIUM',
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
+        creatorId: hrManager.id,
+        assigneeId: employee2.id,
+        departmentId: corpHrDept.id,
+      },
+    });
+  }
 
   // ==========================================
   // CREATE EVENTS
   // ==========================================
   console.log('Creating events...');
-  await prisma.event.create({
-    data: {
-      title: 'Monthly Town Hall',
-      description: 'Monthly company-wide meeting to discuss updates and Q&A',
-      startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
-      location: 'Corporate Office - 7th Floor, 909 Lavelle, Bengaluru',
-      type: 'COMPANY_EVENT',
-      isAllDay: false,
-      companyId: nationalGroupIndia.id,
-      creatorId: ceo.id,
-    },
-  });
+  const eventCount = await prisma.event.count();
+  if (eventCount === 0) {
+    await prisma.event.create({
+      data: {
+        title: 'Monthly Town Hall',
+        description: 'Monthly company-wide meeting to discuss updates and Q&A',
+        startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
+        location: 'Corporate Office - 7th Floor, 909 Lavelle, Bengaluru',
+        type: 'COMPANY_EVENT',
+        isAllDay: false,
+        companyId: nationalGroupIndia.id,
+        creatorId: ceo.id,
+      },
+    });
 
-  await prisma.event.create({
-    data: {
-      title: 'Foundation Day Celebration',
-      description: 'Celebrating 76 years of National Group India - Since 1949',
-      startDate: new Date('2025-01-15'),
-      endDate: new Date('2025-01-15'),
-      location: 'Head Office - National Arcade, Tirthahalli',
-      type: 'COMPANY_EVENT',
-      isAllDay: true,
-      companyId: nationalGroupIndia.id,
-      creatorId: hrManager.id,
-    },
-  });
+    await prisma.event.create({
+      data: {
+        title: 'Foundation Day Celebration',
+        description: 'Celebrating 76 years of National Group India - Since 1949',
+        startDate: new Date('2025-01-15'),
+        endDate: new Date('2025-01-15'),
+        location: 'Head Office - National Arcade, Tirthahalli',
+        type: 'COMPANY_EVENT',
+        isAllDay: true,
+        companyId: nationalGroupIndia.id,
+        creatorId: hrManager.id,
+      },
+    });
+  }
 
-  // Create Shared Folders
+  // Create Shared Folders (only if none exist)
   console.log('Creating shared folders...');
-  await prisma.sharedFolder.create({
-    data: {
-      name: 'Company Policies',
-      description: 'All company policy documents',
-      driveId: 'placeholder-drive-id',
-      folderId: 'placeholder-folder-policies',
-      webUrl: 'https://onedrive.sharepoint.com/policies',
-      isCompanyWide: true,
-      createdBy: superAdmin.id,
-    },
-  });
+  const folderCount = await prisma.sharedFolder.count();
+  if (folderCount === 0) {
+    await prisma.sharedFolder.create({
+      data: {
+        name: 'Company Policies',
+        description: 'All company policy documents',
+        driveId: 'placeholder-drive-id',
+        folderId: 'placeholder-folder-policies',
+        webUrl: 'https://onedrive.sharepoint.com/policies',
+        isCompanyWide: true,
+        createdBy: superAdmin.id,
+      },
+    });
 
-  await prisma.sharedFolder.create({
-    data: {
-      name: 'IT Resources',
-      description: 'IT documentation and resources',
-      driveId: 'placeholder-drive-id',
-      folderId: 'placeholder-folder-it',
-      webUrl: 'https://onedrive.sharepoint.com/it-resources',
-      departmentId: itDept.id,
-      createdBy: itManager.id,
-    },
-  });
+    await prisma.sharedFolder.create({
+      data: {
+        name: 'IT Resources',
+        description: 'IT documentation and resources',
+        driveId: 'placeholder-drive-id',
+        folderId: 'placeholder-folder-it',
+        webUrl: 'https://onedrive.sharepoint.com/it-resources',
+        departmentId: corpItDept.id,
+        createdBy: itManager.id,
+      },
+    });
+  }
 
   // ==========================================
   // SUCCESS OUTPUT
