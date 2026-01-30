@@ -1,0 +1,1067 @@
+// ==========================================
+// NATIONAL GROUP INTRANET - PRISMA SCHEMA
+// Enterprise Database Schema
+// ==========================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  IT_ADMIN
+  HR_ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum ProjectStatus {
+  PLANNED
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_FOR_USER
+  RESOLVED
+  CLOSED
+}
+
+enum TicketCategory {
+  HARDWARE
+  SOFTWARE
+  NETWORK
+  ACCESS
+  EMAIL
+  OTHER
+}
+
+enum ITRequestType {
+  NEW_HARDWARE
+  NEW_SOFTWARE
+  ACCESS_REQUEST
+  MODIFICATION
+  REMOVAL
+}
+
+enum ITRequestStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AssetStatus {
+  AVAILABLE
+  ASSIGNED
+  UNDER_MAINTENANCE
+  RETIRED
+  DISPOSED
+}
+
+enum AssetType {
+  DESKTOP
+  LAPTOP
+  MACBOOK
+  SERVER
+  PRINTER
+  MONITOR
+  OTHER
+}
+
+enum LicenseType {
+  PERPETUAL
+  SUBSCRIPTION
+  FREE
+  TRIAL
+}
+
+enum EventType {
+  MEETING
+  HOLIDAY
+  MAINTENANCE
+  TRAINING
+  COMPANY_EVENT
+  DEPARTMENT_EVENT
+  OTHER
+}
+
+enum PolicyCategory {
+  HR
+  IT_SECURITY
+  COMPLIANCE
+  OPERATIONAL
+  GENERAL
+}
+
+enum PolicyStatus {
+  DRAFT
+  UNDER_REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum NotificationType {
+  TASK_ASSIGNED
+  TASK_DUE
+  TASK_COMPLETED
+  TICKET_CREATED
+  TICKET_UPDATED
+  TICKET_RESOLVED
+  REQUEST_SUBMITTED
+  REQUEST_APPROVED
+  REQUEST_REJECTED
+  EVENT_REMINDER
+  ANNOUNCEMENT
+  POLICY_UPDATE
+  SYSTEM_ALERT
+}
+
+// ==========================================
+// USER & AUTHENTICATION
+// ==========================================
+
+model User {
+  id            String     @id @default(cuid())
+  employeeId    String     @unique
+  email         String     @unique
+  password      String
+  firstName     String
+  lastName      String
+  displayName   String?
+  phone         String?
+  avatar        String?
+  role          UserRole   @default(EMPLOYEE)
+  status        UserStatus @default(ACTIVE)
+  jobTitle      String?
+  
+  companyId     String?
+  company       Company?   @relation(fields: [companyId], references: [id])
+  
+  departmentId  String?
+  department    Department? @relation(fields: [departmentId], references: [id])
+  
+  managerId     String?
+  manager       User?      @relation("UserManager", fields: [managerId], references: [id])
+  subordinates  User[]     @relation("UserManager")
+  
+  // Relations
+  createdTasks       Task[]        @relation("TaskCreator")
+  assignedTasks      Task[]        @relation("TaskAssignee")
+  
+  createdTickets     ITTicket[]    @relation("TicketCreator")
+  assignedTickets    ITTicket[]    @relation("TicketAssignee")
+  ticketComments     TicketComment[]
+  
+  itRequests         ITRequest[]   @relation("RequestCreator")
+  approvedRequests   ITRequestApproval[]
+  
+  projectsOwned      Project[]     @relation("ProjectOwner")
+  projectMembers     ProjectMember[]
+  
+  eventsCreated      Event[]       @relation("EventCreator")
+  eventAttendees     EventAttendee[]
+  
+  notifications      Notification[]
+  auditLogs          AuditLog[]
+  
+  // Asset assignments
+  assignedSystems    SystemAsset[]
+  assignedMobiles    MobileDevice[]
+  
+  // Department Head
+  departmentsHeaded  Department[]  @relation("DepartmentHead")
+  
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  lastLoginAt   DateTime?
+  
+  @@index([companyId])
+  @@index([departmentId])
+  @@index([managerId])
+  @@index([email])
+  @@index([employeeId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  
+  @@index([userId])
+}
+
+// ==========================================
+// ORGANIZATION STRUCTURE
+// ==========================================
+
+model Company {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  name          String
+  shortName     String?
+  description   String?  @db.Text
+  logo          String?
+  website       String?
+  email         String?
+  phone         String?
+  address       String?  @db.Text
+  city          String?
+  state         String?
+  country       String?
+  postalCode    String?
+  taxId         String?
+  isActive      Boolean  @default(true)
+  
+  // Relations
+  departments   Department[]
+  users         User[]
+  projects      Project[]
+  events        Event[]
+  policies      Policy[]
+  systemAssets  SystemAsset[]
+  softwareAssets Software[]
+  mobileDevices MobileDevice[]
+  vendors       Vendor[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([code])
+  @@index([isActive])
+}
+
+model Department {
+  id            String   @id @default(cuid())
+  code          String
+  name          String
+  description   String?  @db.Text
+  isActive      Boolean  @default(true)
+  
+  companyId     String
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  headId        String?
+  head          User?    @relation("DepartmentHead", fields: [headId], references: [id])
+  
+  parentId      String?
+  parent        Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id])
+  children      Department[] @relation("DepartmentHierarchy")
+  
+  // Relations
+  users         User[]
+  tasks         Task[]
+  projects      Project[]
+  events        Event[]
+  policies      Policy[]
+  systemAssets  SystemAsset[]
+  softwareAssets Software[]
+  sharedFolders SharedFolder[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@unique([companyId, code])
+  @@index([companyId])
+  @@index([headId])
+  @@index([isActive])
+}
+
+// ==========================================
+// TASKS
+// ==========================================
+
+model Task {
+  id            String       @id @default(cuid())
+  title         String
+  description   String?      @db.Text
+  priority      TaskPriority @default(MEDIUM)
+  status        TaskStatus   @default(TODO)
+  dueDate       DateTime?
+  completedAt   DateTime?
+  estimatedHours Float?
+  actualHours   Float?
+  
+  creatorId     String
+  creator       User         @relation("TaskCreator", fields: [creatorId], references: [id])
+  
+  assigneeId    String?
+  assignee      User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  
+  departmentId  String?
+  department    Department?  @relation(fields: [departmentId], references: [id])
+  
+  projectId     String?
+  project       Project?     @relation(fields: [projectId], references: [id])
+  
+  ticketId      String?
+  ticket        ITTicket?    @relation(fields: [ticketId], references: [id])
+  
+  parentId      String?
+  parent        Task?        @relation("TaskSubtasks", fields: [parentId], references: [id])
+  subtasks      Task[]       @relation("TaskSubtasks")
+  
+  comments      TaskComment[]
+  
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  
+  @@index([creatorId])
+  @@index([assigneeId])
+  @@index([departmentId])
+  @@index([projectId])
+  @@index([status])
+  @@index([priority])
+  @@index([dueDate])
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  authorId  String
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([taskId])
+  @@index([authorId])
+}
+
+// ==========================================
+// PROJECTS
+// ==========================================
+
+model Project {
+  id            String        @id @default(cuid())
+  code          String
+  name          String
+  description   String?       @db.Text
+  status        ProjectStatus @default(PLANNED)
+  startDate     DateTime?
+  endDate       DateTime?
+  actualEndDate DateTime?
+  budget        Float?
+  
+  companyId     String
+  company       Company       @relation(fields: [companyId], references: [id])
+  
+  departmentId  String?
+  department    Department?   @relation(fields: [departmentId], references: [id])
+  
+  ownerId       String
+  owner         User          @relation("ProjectOwner", fields: [ownerId], references: [id])
+  
+  // Relations
+  members       ProjectMember[]
+  tasks         Task[]
+  milestones    ProjectMilestone[]
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  @@unique([companyId, code])
+  @@index([companyId])
+  @@index([departmentId])
+  @@index([ownerId])
+  @@index([status])
+}
+
+model ProjectMember {
+  id        String   @id @default(cuid())
+  role      String?
+  
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  joinedAt  DateTime @default(now())
+  
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model ProjectMilestone {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  dueDate     DateTime?
+  completedAt DateTime?
+  
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([projectId])
+}
+
+// ==========================================
+// EVENTS & CALENDAR
+// ==========================================
+
+model Event {
+  id            String    @id @default(cuid())
+  title         String
+  description   String?   @db.Text
+  type          EventType @default(OTHER)
+  location      String?
+  isAllDay      Boolean   @default(false)
+  startDate     DateTime
+  endDate       DateTime
+  recurrence    String?
+  isPublic      Boolean   @default(true)
+  
+  companyId     String?
+  company       Company?  @relation(fields: [companyId], references: [id])
+  
+  departmentId  String?
+  department    Department? @relation(fields: [departmentId], references: [id])
+  
+  creatorId     String
+  creator       User      @relation("EventCreator", fields: [creatorId], references: [id])
+  
+  // Relations
+  attendees     EventAttendee[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([companyId])
+  @@index([departmentId])
+  @@index([creatorId])
+  @@index([startDate])
+  @@index([type])
+}
+
+model EventAttendee {
+  id        String   @id @default(cuid())
+  status    String   @default("pending") // pending, accepted, declined, tentative
+  
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+}
+
+// ==========================================
+// POLICIES & DOCUMENTS
+// ==========================================
+
+model Policy {
+  id            String         @id @default(cuid())
+  code          String
+  title         String
+  description   String?        @db.Text
+  content       String?        @db.Text
+  category      PolicyCategory
+  status        PolicyStatus   @default(DRAFT)
+  version       String         @default("1.0")
+  effectiveDate DateTime?
+  expiryDate    DateTime?
+  fileUrl       String?
+  
+  companyId     String?
+  company       Company?       @relation(fields: [companyId], references: [id])
+  
+  departmentId  String?
+  department    Department?    @relation(fields: [departmentId], references: [id])
+  
+  // Version history
+  versions      PolicyVersion[]
+  
+  createdBy     String
+  approvedBy    String?
+  
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  publishedAt   DateTime?
+  
+  @@unique([companyId, code])
+  @@index([companyId])
+  @@index([departmentId])
+  @@index([category])
+  @@index([status])
+}
+
+model PolicyVersion {
+  id          String   @id @default(cuid())
+  version     String
+  content     String?  @db.Text
+  fileUrl     String?
+  changeNotes String?  @db.Text
+  
+  policyId    String
+  policy      Policy   @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  
+  createdBy   String
+  createdAt   DateTime @default(now())
+  
+  @@index([policyId])
+}
+
+// ==========================================
+// IT TICKETS
+// ==========================================
+
+model ITTicket {
+  id            String         @id @default(cuid())
+  ticketNumber  String         @unique
+  subject       String
+  description   String         @db.Text
+  category      TicketCategory
+  priority      TicketPriority @default(MEDIUM)
+  status        TicketStatus   @default(OPEN)
+  
+  creatorId     String
+  creator       User           @relation("TicketCreator", fields: [creatorId], references: [id])
+  
+  assigneeId    String?
+  assignee      User?          @relation("TicketAssignee", fields: [assigneeId], references: [id])
+  
+  // SLA tracking
+  slaDeadline   DateTime?
+  resolvedAt    DateTime?
+  closedAt      DateTime?
+  
+  // Related entities
+  systemAssetId String?
+  systemAsset   SystemAsset?   @relation(fields: [systemAssetId], references: [id])
+  
+  softwareId    String?
+  software      Software?      @relation(fields: [softwareId], references: [id])
+  
+  // Relations
+  comments      TicketComment[]
+  tasks         Task[]
+  
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  @@index([creatorId])
+  @@index([assigneeId])
+  @@index([status])
+  @@index([priority])
+  @@index([category])
+  @@index([ticketNumber])
+}
+
+model TicketComment {
+  id          String   @id @default(cuid())
+  content     String   @db.Text
+  isInternal  Boolean  @default(false)
+  
+  ticketId    String
+  ticket      ITTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  authorId    String
+  author      User     @relation(fields: [authorId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([ticketId])
+  @@index([authorId])
+}
+
+// ==========================================
+// IT REQUESTS
+// ==========================================
+
+model ITRequest {
+  id            String          @id @default(cuid())
+  requestNumber String          @unique
+  type          ITRequestType
+  subject       String
+  description   String          @db.Text
+  justification String?         @db.Text
+  status        ITRequestStatus @default(DRAFT)
+  
+  requestorId   String
+  requestor     User            @relation("RequestCreator", fields: [requestorId], references: [id])
+  
+  // Request details (JSON for flexibility)
+  details       Json?
+  
+  // Approval workflow
+  approvals     ITRequestApproval[]
+  
+  // Linked assets (after completion)
+  systemAssetId String?
+  softwareId    String?
+  
+  completedAt   DateTime?
+  
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  
+  @@index([requestorId])
+  @@index([status])
+  @@index([type])
+  @@index([requestNumber])
+}
+
+model ITRequestApproval {
+  id            String         @id @default(cuid())
+  level         Int            @default(1)
+  status        ApprovalStatus @default(PENDING)
+  comments      String?        @db.Text
+  
+  requestId     String
+  request       ITRequest      @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  
+  approverId    String
+  approver      User           @relation(fields: [approverId], references: [id])
+  
+  approvedAt    DateTime?
+  
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  @@unique([requestId, approverId, level])
+  @@index([requestId])
+  @@index([approverId])
+  @@index([status])
+}
+
+// ==========================================
+// ASSET MANAGEMENT - SYSTEMS
+// ==========================================
+
+model SystemAsset {
+  id              String      @id @default(cuid())
+  assetTag        String      @unique
+  serialNumber    String?
+  name            String
+  type            AssetType
+  manufacturer    String?
+  model           String?
+  status          AssetStatus @default(AVAILABLE)
+  
+  // Configuration
+  processor       String?
+  ram             String?
+  storage         String?
+  operatingSystem String?
+  osVersion       String?
+  
+  // Assignment
+  companyId       String?
+  company         Company?    @relation(fields: [companyId], references: [id])
+  
+  departmentId    String?
+  department      Department? @relation(fields: [departmentId], references: [id])
+  
+  assignedToId    String?
+  assignedTo      User?       @relation(fields: [assignedToId], references: [id])
+  
+  assignedAt      DateTime?
+  
+  // Dates
+  purchaseDate    DateTime?
+  warrantyExpiry  DateTime?
+  
+  // Cost
+  purchasePrice   Float?
+  
+  // Vendor
+  vendorId        String?
+  vendor          Vendor?     @relation(fields: [vendorId], references: [id])
+  
+  // AMC
+  amcStartDate    DateTime?
+  amcEndDate      DateTime?
+  amcVendorId     String?
+  
+  // Location
+  location        String?
+  
+  notes           String?     @db.Text
+  
+  // Relations
+  tickets         ITTicket[]
+  installedSoftware AssetSoftware[]
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@index([companyId])
+  @@index([departmentId])
+  @@index([assignedToId])
+  @@index([vendorId])
+  @@index([status])
+  @@index([type])
+  @@index([assetTag])
+}
+
+// ==========================================
+// ASSET MANAGEMENT - SOFTWARE
+// ==========================================
+
+model Software {
+  id              String      @id @default(cuid())
+  name            String
+  version         String?
+  publisher       String?
+  description     String?     @db.Text
+  category        String?
+  licenseType     LicenseType @default(PERPETUAL)
+  licenseKey      String?
+  totalLicenses   Int         @default(1)
+  usedLicenses    Int         @default(0)
+  
+  companyId       String?
+  company         Company?    @relation(fields: [companyId], references: [id])
+  
+  departmentId    String?
+  department      Department? @relation(fields: [departmentId], references: [id])
+  
+  // Cost
+  purchasePrice   Float?
+  renewalPrice    Float?
+  
+  // Dates
+  purchaseDate    DateTime?
+  expiryDate      DateTime?
+  renewalDate     DateTime?
+  
+  // Vendor
+  vendorId        String?
+  vendor          Vendor?     @relation(fields: [vendorId], references: [id])
+  
+  notes           String?     @db.Text
+  isActive        Boolean     @default(true)
+  
+  // Relations
+  tickets         ITTicket[]
+  installations   AssetSoftware[]
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@index([companyId])
+  @@index([departmentId])
+  @@index([vendorId])
+  @@index([licenseType])
+  @@index([expiryDate])
+  @@index([isActive])
+}
+
+model AssetSoftware {
+  id          String      @id @default(cuid())
+  
+  assetId     String
+  asset       SystemAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  
+  softwareId  String
+  software    Software    @relation(fields: [softwareId], references: [id])
+  
+  installedAt DateTime    @default(now())
+  
+  @@unique([assetId, softwareId])
+  @@index([assetId])
+  @@index([softwareId])
+}
+
+// ==========================================
+// ASSET MANAGEMENT - MOBILE DEVICES
+// ==========================================
+
+model MobileDevice {
+  id              String      @id @default(cuid())
+  assetTag        String      @unique
+  imei            String?
+  serialNumber    String?
+  
+  deviceType      String      // Phone, Tablet, etc.
+  manufacturer    String?
+  model           String?
+  status          AssetStatus @default(AVAILABLE)
+  
+  // SIM Details
+  simNumber       String?
+  operator        String?
+  mobileNumber    String?
+  planType        String?
+  planDetails     String?
+  
+  // Assignment
+  companyId       String?
+  company         Company?    @relation(fields: [companyId], references: [id])
+  
+  assignedToId    String?
+  assignedTo      User?       @relation(fields: [assignedToId], references: [id])
+  
+  assignedAt      DateTime?
+  
+  // Dates
+  purchaseDate    DateTime?
+  warrantyExpiry  DateTime?
+  
+  // Cost
+  purchasePrice   Float?
+  monthlyPlanCost Float?
+  
+  notes           String?     @db.Text
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@index([companyId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([assetTag])
+}
+
+// ==========================================
+// VENDORS
+// ==========================================
+
+model Vendor {
+  id              String        @id @default(cuid())
+  code            String
+  name            String
+  type            String?       // Hardware, Software, Services, etc.
+  description     String?       @db.Text
+  
+  // Contact Info
+  contactPerson   String?
+  email           String?
+  phone           String?
+  website         String?
+  
+  // Address
+  address         String?       @db.Text
+  city            String?
+  state           String?
+  country         String?
+  postalCode      String?
+  
+  // Tax & Legal
+  taxId           String?
+  panNumber       String?
+  gstNumber       String?
+  
+  // Contract
+  contractStart   DateTime?
+  contractEnd     DateTime?
+  
+  notes           String?       @db.Text
+  isActive        Boolean       @default(true)
+  
+  companyId       String?
+  company         Company?      @relation(fields: [companyId], references: [id])
+  
+  // Relations
+  systemAssets    SystemAsset[]
+  software        Software[]
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@unique([companyId, code])
+  @@index([companyId])
+  @@index([isActive])
+}
+
+// ==========================================
+// SHARED DRIVES / ONEDRIVE INTEGRATION
+// ==========================================
+
+model SharedFolder {
+  id              String      @id @default(cuid())
+  name            String
+  description     String?
+  driveId         String      // OneDrive drive ID
+  folderId        String      // OneDrive folder ID
+  webUrl          String?     // Direct link to folder
+  
+  isCompanyWide   Boolean     @default(false)
+  
+  departmentId    String?
+  department      Department? @relation(fields: [departmentId], references: [id])
+  
+  // Permissions
+  permissions     FolderPermission[]
+  
+  createdBy       String
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  
+  @@index([departmentId])
+  @@index([isCompanyWide])
+}
+
+model FolderPermission {
+  id          String       @id @default(cuid())
+  role        String       // read, write, owner
+  
+  folderId    String
+  folder      SharedFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  
+  userId      String?
+  
+  // Or role-based
+  userRole    UserRole?
+  
+  createdAt   DateTime     @default(now())
+  
+  @@index([folderId])
+  @@index([userId])
+}
+
+// ==========================================
+// NOTIFICATIONS
+// ==========================================
+
+model Notification {
+  id          String           @id @default(cuid())
+  type        NotificationType
+  title       String
+  message     String           @db.Text
+  link        String?
+  isRead      Boolean          @default(false)
+  
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime         @default(now())
+  readAt      DateTime?
+  
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// ==========================================
+// AUDIT LOGS
+// ==========================================
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String   // CREATE, UPDATE, DELETE, LOGIN, LOGOUT, etc.
+  entity      String   // User, Task, Ticket, etc.
+  entityId    String?
+  oldValues   Json?
+  newValues   Json?
+  ipAddress   String?
+  userAgent   String?
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([entity])
+  @@index([entityId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// ==========================================
+// ANNOUNCEMENTS
+// ==========================================
+
+model Announcement {
+  id            String    @id @default(cuid())
+  title         String
+  content       String    @db.Text
+  priority      String    @default("normal") // low, normal, high, urgent
+  isPinned      Boolean   @default(false)
+  publishedAt   DateTime?
+  expiresAt     DateTime?
+  isActive      Boolean   @default(true)
+  
+  createdBy     String
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([isActive])
+  @@index([publishedAt])
+  @@index([isPinned])
+}
+
+// ==========================================
+// SYSTEM SETTINGS
+// ==========================================
+
+model SystemSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String   @db.Text
+  description String?
+  group       String?  // general, email, onedrive, etc.
+  
+  updatedAt   DateTime @updatedAt
+  
+  @@index([group])
+}
