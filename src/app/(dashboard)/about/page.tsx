@@ -8,7 +8,8 @@ import {
 } from '@/components/ui';
 import { prisma } from '@/lib/db';
 
-export const dynamic = 'force-dynamic';
+// Revalidate every 5 minutes
+export const revalidate = 300;
 
 async function getGroupStats() {
   const [companiesCount, employeesCount, departmentsCount] = await Promise.all([

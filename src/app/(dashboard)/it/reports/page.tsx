@@ -17,7 +17,8 @@ import {
 } from 'lucide-react';
 import { prisma } from '@/lib/db';
 
-export const dynamic = 'force-dynamic';
+// Revalidate every 2 minutes
+export const revalidate = 120;
 
 async function getITStats() {
   const [

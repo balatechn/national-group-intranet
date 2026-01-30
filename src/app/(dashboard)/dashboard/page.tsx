@@ -34,7 +34,8 @@ import {
   Badge,
 } from '@/components/ui';
 
-export const dynamic = 'force-dynamic';
+// Revalidate every 60 seconds for fresh data
+export const revalidate = 60;
 
 // Quick Access Apps - SharePoint style
 const quickAccessApps = [

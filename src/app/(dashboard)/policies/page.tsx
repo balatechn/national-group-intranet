@@ -23,7 +23,8 @@ import {
 import { prisma } from '@/lib/db';
 import { formatDate, getStatusColor } from '@/lib/utils';
 
-export const dynamic = 'force-dynamic';
+// Revalidate every 2 minutes
+export const revalidate = 120;
 
 async function getPolicies(params: {
   category?: string;

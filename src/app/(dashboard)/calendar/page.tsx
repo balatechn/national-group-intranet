@@ -26,7 +26,8 @@ import {
 } from '@/components/ui';
 import { formatDate } from '@/lib/utils';
 
-export const dynamic = 'force-dynamic';
+// Revalidate every 60 seconds
+export const revalidate = 60;
 
 // Mock data for demonstration - in production, fetch from API
 const mockEvents = [

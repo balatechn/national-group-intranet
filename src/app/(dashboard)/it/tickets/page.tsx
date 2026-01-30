@@ -26,7 +26,8 @@ import {
 import { getTickets } from '@/actions/tickets';
 import { formatDateTime, getInitials, getStatusColor, getPriorityColor, calculateSLAStatus } from '@/lib/utils';
 
-export const dynamic = 'force-dynamic';
+// Revalidate every 30 seconds for fresh ticket data
+export const revalidate = 30;
 
 export default async function ITTicketsPage({
   searchParams,

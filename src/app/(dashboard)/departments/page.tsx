@@ -24,7 +24,8 @@ import {
 import { prisma } from '@/lib/db';
 import { getInitials } from '@/lib/utils';
 
-export const dynamic = 'force-dynamic';
+// Revalidate every 60 seconds
+export const revalidate = 60;
 
 async function getDepartments(params: {
   companyId?: string;

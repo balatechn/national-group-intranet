@@ -23,7 +23,8 @@ import {
 import { getSystemAssets } from '@/actions/assets';
 import { formatDate, getStatusColor } from '@/lib/utils';
 
-export const dynamic = 'force-dynamic';
+// Revalidate every 2 minutes
+export const revalidate = 120;
 
 export default async function SystemAssetsPage({
   searchParams,

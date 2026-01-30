@@ -26,7 +26,8 @@ import {
 import { getTasks } from '@/actions/tasks';
 import { formatDate, getInitials, getStatusColor, getPriorityColor } from '@/lib/utils';
 
-export const dynamic = 'force-dynamic';
+// Revalidate every 30 seconds for fresh task data
+export const revalidate = 30;
 
 export default async function TasksPage({
   searchParams,

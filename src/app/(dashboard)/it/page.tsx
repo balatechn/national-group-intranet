@@ -17,7 +17,8 @@ import {
   CardTitle,
 } from '@/components/ui';
 
-export const dynamic = 'force-dynamic';
+// Revalidate every 60 seconds
+export const revalidate = 60;
 
 const itModules = [
   {

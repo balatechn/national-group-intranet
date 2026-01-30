@@ -12,7 +12,8 @@ import {
 } from '@/components/ui';
 import { getCompanies } from '@/actions/companies';
 
-export const dynamic = 'force-dynamic';
+// Revalidate every 60 seconds
+export const revalidate = 60;
 
 export default async function CompaniesPage() {
   const { companies } = await getCompanies({ isActive: true });

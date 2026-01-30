@@ -26,7 +26,8 @@ import {
 import { getITRequests } from '@/actions/it-requests';
 import { formatDateTime, getInitials, getStatusColor } from '@/lib/utils';
 
-export const dynamic = 'force-dynamic';
+// Revalidate every 30 seconds for fresh request data
+export const revalidate = 30;
 
 export default async function ITRequestsPage({
   searchParams,

@@ -20,7 +20,8 @@ import {
 import { prisma } from '@/lib/db';
 import { formatDate, getInitials, getStatusColor } from '@/lib/utils';
 
-export const dynamic = 'force-dynamic';
+// Revalidate every 60 seconds
+export const revalidate = 60;
 
 async function getProjects(params: {
   status?: string;
