@@ -23,13 +23,14 @@ import {
 import { getSoftware } from '@/actions/assets';
 import { formatDate, getStatusColor } from '@/lib/utils';
 
+export const dynamic = 'force-dynamic';
+
 export default async function SoftwarePage({
   searchParams,
 }: {
-  searchParams: { status?: string; licenseType?: string; page?: string };
+  searchParams: { licenseType?: string; page?: string };
 }) {
   const { software, pagination } = await getSoftware({
-    status: searchParams.status,
     licenseType: searchParams.licenseType,
     page: searchParams.page ? parseInt(searchParams.page) : 1,
     limit: 10,
@@ -72,7 +73,7 @@ export default async function SoftwarePage({
               <div>
                 <p className="text-sm font-medium text-text-secondary">Active Licenses</p>
                 <p className="mt-1 text-2xl font-bold">
-                  {software.filter((s) => s.status === 'ACTIVE').length}
+                  {software.filter((s) => s.isActive).length}
                 </p>
               </div>
               <div className="rounded-lg bg-success-light p-3">
@@ -108,7 +109,10 @@ export default async function SoftwarePage({
               <div>
                 <p className="text-sm font-medium text-text-secondary">Expired</p>
                 <p className="mt-1 text-2xl font-bold">
-                  {software.filter((s) => s.status === 'EXPIRED').length}
+                  {software.filter((s) => {
+                    if (!s.expiryDate) return false;
+                    return new Date(s.expiryDate) < new Date();
+                  }).length}
                 </p>
               </div>
               <div className="rounded-lg bg-danger-light p-3">
@@ -120,6 +124,7 @@ export default async function SoftwarePage({
       </div>
 
       {/* Filters */}
+      {/* Filters */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -127,17 +132,6 @@ export default async function SoftwarePage({
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
               <Input placeholder="Search software..." className="pl-9" />
             </div>
-            <Select defaultValue={searchParams.status || 'all'}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="EXPIRED">Expired</SelectItem>
-                <SelectItem value="DISCONTINUED">Discontinued</SelectItem>
-              </SelectContent>
-            </Select>
             <Select defaultValue={searchParams.licenseType || 'all'}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="License" />
@@ -146,10 +140,8 @@ export default async function SoftwarePage({
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="PERPETUAL">Perpetual</SelectItem>
                 <SelectItem value="SUBSCRIPTION">Subscription</SelectItem>
-                <SelectItem value="SITE_LICENSE">Site License</SelectItem>
-                <SelectItem value="PER_USER">Per User</SelectItem>
-                <SelectItem value="PER_DEVICE">Per Device</SelectItem>
-                <SelectItem value="OPEN_SOURCE">Open Source</SelectItem>
+                <SelectItem value="FREE">Free</SelectItem>
+                <SelectItem value="TRIAL">Trial</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -196,23 +188,25 @@ export default async function SoftwarePage({
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">
-                      <p>{item.licensesUsed} / {item.totalLicenses}</p>
+                      <p>{item.usedLicenses} / {item.totalLicenses}</p>
                       <div className="mt-1 h-2 w-24 rounded-full bg-gray-200">
                         <div
                           className={`h-2 rounded-full ${
-                            item.licensesUsed / item.totalLicenses > 0.9
+                            item.usedLicenses / item.totalLicenses > 0.9
                               ? 'bg-danger'
-                              : item.licensesUsed / item.totalLicenses > 0.7
+                              : item.usedLicenses / item.totalLicenses > 0.7
                               ? 'bg-warning'
                               : 'bg-success'
                           }`}
-                          style={{ width: `${(item.licensesUsed / item.totalLicenses) * 100}%` }}
+                          style={{ width: `${(item.usedLicenses / item.totalLicenses) * 100}%` }}
                         />
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={getStatusColor(item.status)}>{item.status}</Badge>
+                    <Badge className={item.isActive ? 'bg-success' : 'bg-gray-400'}>
+                      {item.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     {item.vendor ? (

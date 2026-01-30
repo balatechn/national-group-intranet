@@ -23,6 +23,8 @@ import {
   Badge,
 } from '@/components/ui';
 
+export const dynamic = 'force-dynamic';
+
 // Stats data - In production, this would come from the database
 const stats = [
   {

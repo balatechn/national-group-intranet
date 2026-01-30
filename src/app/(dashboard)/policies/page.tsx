@@ -23,6 +23,8 @@ import {
 import { prisma } from '@/lib/db';
 import { formatDate, getStatusColor } from '@/lib/utils';
 
+export const dynamic = 'force-dynamic';
+
 async function getPolicies(params: {
   category?: string;
   company?: string;
@@ -51,17 +53,8 @@ async function getPolicies(params: {
     where,
     include: {
       company: true,
-      createdBy: {
-        select: {
-          firstName: true,
-          lastName: true,
-        },
-      },
     },
-    orderBy: [
-      { isPinned: 'desc' },
-      { effectiveDate: 'desc' },
-    ],
+    orderBy: { effectiveDate: 'desc' },
   });
 
   return policies;
@@ -77,11 +70,9 @@ async function getCompanies() {
 
 const categoryColors: Record<string, string> = {
   HR: 'bg-purple-100 text-purple-800',
-  IT: 'bg-blue-100 text-blue-800',
-  FINANCE: 'bg-green-100 text-green-800',
-  ADMIN: 'bg-orange-100 text-orange-800',
-  OPERATIONS: 'bg-yellow-100 text-yellow-800',
+  IT_SECURITY: 'bg-blue-100 text-blue-800',
   COMPLIANCE: 'bg-red-100 text-red-800',
+  OPERATIONAL: 'bg-yellow-100 text-yellow-800',
   GENERAL: 'bg-gray-100 text-gray-800',
 };
 
@@ -146,7 +137,7 @@ export default async function PoliciesPage({
               <div>
                 <p className="text-sm font-medium text-text-secondary">HR Policies</p>
                 <p className="mt-1 text-2xl font-bold">
-                  {policies.filter((p) => p.category === 'HR').length}
+                  {policies.filter((p) => p.category === 'HR' as any).length}
                 </p>
               </div>
               <div className="rounded-lg bg-purple-100 p-3">
@@ -159,9 +150,9 @@ export default async function PoliciesPage({
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-text-secondary">IT Policies</p>
+                <p className="text-sm font-medium text-text-secondary">IT Security Policies</p>
                 <p className="mt-1 text-2xl font-bold">
-                  {policies.filter((p) => p.category === 'IT').length}
+                  {policies.filter((p) => p.category === 'IT_SECURITY' as any).length}
                 </p>
               </div>
               <div className="rounded-lg bg-blue-100 p-3">
@@ -202,11 +193,9 @@ export default async function PoliciesPage({
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 <SelectItem value="HR">HR</SelectItem>
-                <SelectItem value="IT">IT</SelectItem>
-                <SelectItem value="FINANCE">Finance</SelectItem>
-                <SelectItem value="ADMIN">Admin</SelectItem>
-                <SelectItem value="OPERATIONS">Operations</SelectItem>
+                <SelectItem value="IT_SECURITY">IT Security</SelectItem>
                 <SelectItem value="COMPLIANCE">Compliance</SelectItem>
+                <SelectItem value="OPERATIONAL">Operational</SelectItem>
                 <SelectItem value="GENERAL">General</SelectItem>
               </SelectContent>
             </Select>

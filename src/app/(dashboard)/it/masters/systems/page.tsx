@@ -20,22 +20,24 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui';
-import { getAssets } from '@/actions/assets';
+import { getSystemAssets } from '@/actions/assets';
 import { formatDate, getStatusColor } from '@/lib/utils';
+
+export const dynamic = 'force-dynamic';
 
 export default async function SystemAssetsPage({
   searchParams,
 }: {
   searchParams: { status?: string; type?: string; page?: string };
 }) {
-  const { assets, pagination } = await getAssets({
+  const { assets, pagination } = await getSystemAssets({
     status: searchParams.status,
     type: searchParams.type,
     page: searchParams.page ? parseInt(searchParams.page) : 1,
     limit: 10,
   });
 
-  const assetTypeIcons: Record<string, React.ReactNode> = {
+  const typeIcons: Record<string, React.ReactNode> = {
     DESKTOP: <Monitor className="h-5 w-5" />,
     LAPTOP: <Laptop className="h-5 w-5" />,
     SERVER: <Server className="h-5 w-5" />,
@@ -81,7 +83,7 @@ export default async function SystemAssetsPage({
               <div>
                 <p className="text-sm font-medium text-text-secondary">Active</p>
                 <p className="mt-1 text-2xl font-bold">
-                  {assets.filter((a) => a.status === 'ACTIVE').length}
+                  {assets.filter((a) => a.status === 'AVAILABLE').length}
                 </p>
               </div>
               <div className="rounded-lg bg-success-light p-3">
@@ -96,7 +98,7 @@ export default async function SystemAssetsPage({
               <div>
                 <p className="text-sm font-medium text-text-secondary">In Maintenance</p>
                 <p className="mt-1 text-2xl font-bold">
-                  {assets.filter((a) => a.status === 'MAINTENANCE').length}
+                  {assets.filter((a) => a.status === 'UNDER_MAINTENANCE').length}
                 </p>
               </div>
               <div className="rounded-lg bg-warning-light p-3">
@@ -184,7 +186,7 @@ export default async function SystemAssetsPage({
                     >
                       <div className="flex items-center gap-3">
                         <div className="rounded-lg bg-primary-100 p-2 text-primary">
-                          {assetTypeIcons[asset.assetType] || <Monitor className="h-5 w-5" />}
+                          {typeIcons[asset.type] || <Monitor className="h-5 w-5" />}
                         </div>
                         <div>
                           <p className="font-medium text-text-primary hover:text-primary">
@@ -196,11 +198,11 @@ export default async function SystemAssetsPage({
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{asset.assetType}</Badge>
+                    <Badge variant="outline">{asset.type}</Badge>
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">
-                      <p>{asset.brand} {asset.model}</p>
+                      <p>{asset.manufacturer} {asset.model}</p>
                       {asset.serialNumber && (
                         <p className="text-xs text-text-muted">S/N: {asset.serialNumber}</p>
                       )}

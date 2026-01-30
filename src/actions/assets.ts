@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/db';
 import { generateAssetTag } from '@/lib/utils';
+import type { Prisma } from '@prisma/client';
 import {
   createSystemAssetSchema,
   updateSystemAssetSchema,
@@ -116,16 +117,36 @@ export async function createSystemAsset(data: CreateSystemAssetInput) {
   // Generate asset tag if not provided
   const assetTag = validated.assetTag || generateAssetTag(validated.type);
 
-  // Set assignedAt if assignedToId is provided
-  const assetData = {
-    ...validated,
+  // Build create data
+  const assetData: Prisma.SystemAssetCreateInput = {
     assetTag,
+    name: validated.name,
+    type: validated.type,
+    serialNumber: validated.serialNumber,
+    manufacturer: validated.manufacturer,
+    model: validated.model,
+    status: validated.assignedToId ? 'ASSIGNED' : (validated.status || 'AVAILABLE'),
+    processor: validated.processor,
+    ram: validated.ram,
+    storage: validated.storage,
+    operatingSystem: validated.operatingSystem,
+    osVersion: validated.osVersion,
+    purchaseDate: validated.purchaseDate,
+    warrantyExpiry: validated.warrantyExpiry,
+    purchasePrice: validated.purchasePrice,
+    amcStartDate: validated.amcStartDate,
+    amcEndDate: validated.amcEndDate,
+    location: validated.location,
+    notes: validated.notes,
     assignedAt: validated.assignedToId ? new Date() : null,
-    status: validated.assignedToId ? 'ASSIGNED' : validated.status,
+    company: validated.companyId ? { connect: { id: validated.companyId } } : undefined,
+    department: validated.departmentId ? { connect: { id: validated.departmentId } } : undefined,
+    assignedTo: validated.assignedToId ? { connect: { id: validated.assignedToId } } : undefined,
+    vendor: validated.vendorId ? { connect: { id: validated.vendorId } } : undefined,
   };
 
   const asset = await prisma.systemAsset.create({
-    data: assetData as Record<string, unknown>,
+    data: assetData,
   });
 
   revalidatePath('/it/masters/systems');
@@ -138,7 +159,27 @@ export async function updateSystemAsset(id: string, data: UpdateSystemAssetInput
   // Get current asset to check assignment changes
   const currentAsset = await prisma.systemAsset.findUnique({ where: { id } });
 
-  const updateData: Record<string, unknown> = { ...validated };
+  const updateData: Prisma.SystemAssetUpdateInput = {
+    assetTag: validated.assetTag,
+    name: validated.name,
+    type: validated.type,
+    serialNumber: validated.serialNumber,
+    manufacturer: validated.manufacturer,
+    model: validated.model,
+    status: validated.status,
+    processor: validated.processor,
+    ram: validated.ram,
+    storage: validated.storage,
+    operatingSystem: validated.operatingSystem,
+    osVersion: validated.osVersion,
+    purchaseDate: validated.purchaseDate,
+    warrantyExpiry: validated.warrantyExpiry,
+    purchasePrice: validated.purchasePrice,
+    amcStartDate: validated.amcStartDate,
+    amcEndDate: validated.amcEndDate,
+    location: validated.location,
+    notes: validated.notes,
+  };
 
   // Handle assignment changes
   if (validated.assignedToId !== undefined) {
@@ -146,11 +187,27 @@ export async function updateSystemAsset(id: string, data: UpdateSystemAssetInput
       // New assignment
       updateData.assignedAt = new Date();
       updateData.status = 'ASSIGNED';
+      updateData.assignedTo = { connect: { id: validated.assignedToId } };
     } else if (!validated.assignedToId && currentAsset?.assignedToId) {
       // Removing assignment
       updateData.assignedAt = null;
       updateData.status = 'AVAILABLE';
+      updateData.assignedTo = { disconnect: true };
+    } else if (validated.assignedToId) {
+      // Update assignment
+      updateData.assignedTo = { connect: { id: validated.assignedToId } };
     }
+  }
+
+  // Handle relations
+  if (validated.companyId !== undefined) {
+    updateData.company = validated.companyId ? { connect: { id: validated.companyId } } : { disconnect: true };
+  }
+  if (validated.departmentId !== undefined) {
+    updateData.department = validated.departmentId ? { connect: { id: validated.departmentId } } : { disconnect: true };
+  }
+  if (validated.vendorId !== undefined) {
+    updateData.vendor = validated.vendorId ? { connect: { id: validated.vendorId } } : { disconnect: true };
   }
 
   const asset = await prisma.systemAsset.update({
@@ -266,8 +323,28 @@ export async function getSoftwareById(id: string) {
 export async function createSoftware(data: CreateSoftwareInput) {
   const validated = createSoftwareSchema.parse(data);
 
+  const softwareData: Prisma.SoftwareCreateInput = {
+    name: validated.name,
+    version: validated.version,
+    publisher: validated.publisher,
+    description: validated.description,
+    category: validated.category,
+    licenseType: validated.licenseType,
+    licenseKey: validated.licenseKey,
+    totalLicenses: validated.totalLicenses,
+    purchasePrice: validated.purchasePrice,
+    renewalPrice: validated.renewalPrice,
+    purchaseDate: validated.purchaseDate,
+    expiryDate: validated.expiryDate,
+    renewalDate: validated.renewalDate,
+    notes: validated.notes,
+    company: validated.companyId ? { connect: { id: validated.companyId } } : undefined,
+    department: validated.departmentId ? { connect: { id: validated.departmentId } } : undefined,
+    vendor: validated.vendorId ? { connect: { id: validated.vendorId } } : undefined,
+  };
+
   const software = await prisma.software.create({
-    data: validated as Record<string, unknown>,
+    data: softwareData,
   });
 
   revalidatePath('/it/masters/software');
@@ -277,9 +354,36 @@ export async function createSoftware(data: CreateSoftwareInput) {
 export async function updateSoftware(id: string, data: UpdateSoftwareInput) {
   const validated = updateSoftwareSchema.parse(data);
 
+  const updateData: Prisma.SoftwareUpdateInput = {
+    name: validated.name,
+    version: validated.version,
+    publisher: validated.publisher,
+    description: validated.description,
+    category: validated.category,
+    licenseType: validated.licenseType,
+    licenseKey: validated.licenseKey,
+    totalLicenses: validated.totalLicenses,
+    purchasePrice: validated.purchasePrice,
+    renewalPrice: validated.renewalPrice,
+    purchaseDate: validated.purchaseDate,
+    expiryDate: validated.expiryDate,
+    renewalDate: validated.renewalDate,
+    notes: validated.notes,
+  };
+
+  if (validated.companyId !== undefined) {
+    updateData.company = validated.companyId ? { connect: { id: validated.companyId } } : { disconnect: true };
+  }
+  if (validated.departmentId !== undefined) {
+    updateData.department = validated.departmentId ? { connect: { id: validated.departmentId } } : { disconnect: true };
+  }
+  if (validated.vendorId !== undefined) {
+    updateData.vendor = validated.vendorId ? { connect: { id: validated.vendorId } } : { disconnect: true };
+  }
+
   const software = await prisma.software.update({
     where: { id },
-    data: validated as Record<string, unknown>,
+    data: updateData,
   });
 
   revalidatePath('/it/masters/software');
@@ -367,13 +471,31 @@ export async function createMobileDevice(data: CreateMobileDeviceInput) {
 
   const assetTag = validated.assetTag || generateAssetTag('MOB');
 
+  const deviceData: Prisma.MobileDeviceCreateInput = {
+    assetTag,
+    imei: validated.imei,
+    serialNumber: validated.serialNumber,
+    deviceType: validated.deviceType,
+    manufacturer: validated.manufacturer,
+    model: validated.model,
+    status: validated.assignedToId ? 'ASSIGNED' : (validated.status || 'AVAILABLE'),
+    simNumber: validated.simNumber,
+    operator: validated.operator,
+    mobileNumber: validated.mobileNumber,
+    planType: validated.planType,
+    planDetails: validated.planDetails,
+    purchaseDate: validated.purchaseDate,
+    warrantyExpiry: validated.warrantyExpiry,
+    purchasePrice: validated.purchasePrice,
+    monthlyPlanCost: validated.monthlyPlanCost,
+    notes: validated.notes,
+    assignedAt: validated.assignedToId ? new Date() : null,
+    company: validated.companyId ? { connect: { id: validated.companyId } } : undefined,
+    assignedTo: validated.assignedToId ? { connect: { id: validated.assignedToId } } : undefined,
+  };
+
   const device = await prisma.mobileDevice.create({
-    data: {
-      ...validated,
-      assetTag,
-      assignedAt: validated.assignedToId ? new Date() : null,
-      status: validated.assignedToId ? 'ASSIGNED' : validated.status,
-    } as Record<string, unknown>,
+    data: deviceData,
   });
 
   revalidatePath('/it/masters/mobiles');
@@ -383,9 +505,36 @@ export async function createMobileDevice(data: CreateMobileDeviceInput) {
 export async function updateMobileDevice(id: string, data: UpdateMobileDeviceInput) {
   const validated = updateMobileDeviceSchema.parse(data);
 
+  const updateData: Prisma.MobileDeviceUpdateInput = {
+    assetTag: validated.assetTag,
+    imei: validated.imei,
+    serialNumber: validated.serialNumber,
+    deviceType: validated.deviceType,
+    manufacturer: validated.manufacturer,
+    model: validated.model,
+    status: validated.status,
+    simNumber: validated.simNumber,
+    operator: validated.operator,
+    mobileNumber: validated.mobileNumber,
+    planType: validated.planType,
+    planDetails: validated.planDetails,
+    purchaseDate: validated.purchaseDate,
+    warrantyExpiry: validated.warrantyExpiry,
+    purchasePrice: validated.purchasePrice,
+    monthlyPlanCost: validated.monthlyPlanCost,
+    notes: validated.notes,
+  };
+
+  if (validated.companyId !== undefined) {
+    updateData.company = validated.companyId ? { connect: { id: validated.companyId } } : { disconnect: true };
+  }
+  if (validated.assignedToId !== undefined) {
+    updateData.assignedTo = validated.assignedToId ? { connect: { id: validated.assignedToId } } : { disconnect: true };
+  }
+
   const device = await prisma.mobileDevice.update({
     where: { id },
-    data: validated as Record<string, unknown>,
+    data: updateData,
   });
 
   revalidatePath('/it/masters/mobiles');
@@ -472,8 +621,32 @@ export async function getVendorById(id: string) {
 export async function createVendor(data: CreateVendorInput) {
   const validated = createVendorSchema.parse(data);
 
+  const vendorData: Prisma.VendorCreateInput = {
+    code: validated.code,
+    name: validated.name,
+    type: validated.type,
+    description: validated.description,
+    contactPerson: validated.contactPerson,
+    email: validated.email || undefined,
+    phone: validated.phone,
+    website: validated.website || undefined,
+    address: validated.address,
+    city: validated.city,
+    state: validated.state,
+    country: validated.country,
+    postalCode: validated.postalCode,
+    taxId: validated.taxId,
+    panNumber: validated.panNumber,
+    gstNumber: validated.gstNumber,
+    contractStart: validated.contractStart,
+    contractEnd: validated.contractEnd,
+    notes: validated.notes,
+    isActive: validated.isActive,
+    company: validated.companyId ? { connect: { id: validated.companyId } } : undefined,
+  };
+
   const vendor = await prisma.vendor.create({
-    data: validated as Record<string, unknown>,
+    data: vendorData,
   });
 
   revalidatePath('/it/masters/vendors');
@@ -483,9 +656,36 @@ export async function createVendor(data: CreateVendorInput) {
 export async function updateVendor(id: string, data: UpdateVendorInput) {
   const validated = updateVendorSchema.parse(data);
 
+  const updateData: Prisma.VendorUpdateInput = {
+    code: validated.code,
+    name: validated.name,
+    type: validated.type,
+    description: validated.description,
+    contactPerson: validated.contactPerson,
+    email: validated.email || undefined,
+    phone: validated.phone,
+    website: validated.website || undefined,
+    address: validated.address,
+    city: validated.city,
+    state: validated.state,
+    country: validated.country,
+    postalCode: validated.postalCode,
+    taxId: validated.taxId,
+    panNumber: validated.panNumber,
+    gstNumber: validated.gstNumber,
+    contractStart: validated.contractStart,
+    contractEnd: validated.contractEnd,
+    notes: validated.notes,
+    isActive: validated.isActive,
+  };
+
+  if (validated.companyId !== undefined) {
+    updateData.company = validated.companyId ? { connect: { id: validated.companyId } } : { disconnect: true };
+  }
+
   const vendor = await prisma.vendor.update({
     where: { id },
-    data: validated as Record<string, unknown>,
+    data: updateData,
   });
 
   revalidatePath('/it/masters/vendors');

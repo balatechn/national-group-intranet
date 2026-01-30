@@ -23,14 +23,15 @@ import {
 import { getMobileDevices } from '@/actions/assets';
 import { formatDate, getStatusColor } from '@/lib/utils';
 
+export const dynamic = 'force-dynamic';
+
 export default async function MobileDevicesPage({
   searchParams,
 }: {
-  searchParams: { status?: string; deviceType?: string; page?: string };
+  searchParams: { status?: string; page?: string };
 }) {
   const { devices, pagination } = await getMobileDevices({
     status: searchParams.status,
-    deviceType: searchParams.deviceType,
     page: searchParams.page ? parseInt(searchParams.page) : 1,
     limit: 10,
   });
@@ -70,9 +71,9 @@ export default async function MobileDevicesPage({
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-text-secondary">Active</p>
+                <p className="text-sm font-medium text-text-secondary">Available</p>
                 <p className="mt-1 text-2xl font-bold">
-                  {devices.filter((d) => d.status === 'ACTIVE').length}
+                  {devices.filter((d) => d.status === 'AVAILABLE').length}
                 </p>
               </div>
               <div className="rounded-lg bg-success-light p-3">
@@ -87,7 +88,7 @@ export default async function MobileDevicesPage({
               <div>
                 <p className="text-sm font-medium text-text-secondary">Phones</p>
                 <p className="mt-1 text-2xl font-bold">
-                  {devices.filter((d) => d.deviceType === 'PHONE').length}
+                  {devices.filter((d) => d.deviceType.toUpperCase() === 'PHONE').length}
                 </p>
               </div>
               <div className="rounded-lg bg-info-light p-3">
@@ -127,22 +128,11 @@ export default async function MobileDevicesPage({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="INACTIVE">Inactive</SelectItem>
-                <SelectItem value="LOST">Lost</SelectItem>
-                <SelectItem value="STOLEN">Stolen</SelectItem>
+                <SelectItem value="AVAILABLE">Available</SelectItem>
+                <SelectItem value="ASSIGNED">Assigned</SelectItem>
+                <SelectItem value="UNDER_MAINTENANCE">Under Maintenance</SelectItem>
                 <SelectItem value="RETIRED">Retired</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select defaultValue={searchParams.deviceType || 'all'}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="PHONE">Phone</SelectItem>
-                <SelectItem value="TABLET">Tablet</SelectItem>
-                <SelectItem value="HOTSPOT">Hotspot</SelectItem>
+                <SelectItem value="DISPOSED">Disposed</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -181,9 +171,9 @@ export default async function MobileDevicesPage({
                         </div>
                         <div>
                           <p className="font-medium text-text-primary hover:text-primary">
-                            {device.brand} {device.model}
+                            {device.manufacturer} {device.model}
                           </p>
-                          <p className="text-xs text-text-muted">IMEI: {device.imei}</p>
+                          <p className="text-xs text-text-muted">IMEI: {device.imei || 'N/A'}</p>
                         </div>
                       </div>
                     </Link>
@@ -192,8 +182,8 @@ export default async function MobileDevicesPage({
                     <Badge variant="outline">{device.deviceType}</Badge>
                   </TableCell>
                   <TableCell>
-                    {device.phoneNumber ? (
-                      <span className="text-sm">{device.phoneNumber}</span>
+                    {device.mobileNumber ? (
+                      <span className="text-sm">{device.mobileNumber}</span>
                     ) : (
                       <span className="text-text-muted">—</span>
                     )}
@@ -211,18 +201,18 @@ export default async function MobileDevicesPage({
                     )}
                   </TableCell>
                   <TableCell>
-                    {device.planExpiry ? (
+                    {device.warrantyExpiry ? (
                       <span
                         className={`text-sm ${
-                          new Date(device.planExpiry) < new Date()
+                          new Date(device.warrantyExpiry) < new Date()
                             ? 'text-danger-dark'
-                            : new Date(device.planExpiry) <
+                            : new Date(device.warrantyExpiry) <
                               new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
                             ? 'text-warning-dark'
                             : 'text-text-secondary'
                         }`}
                       >
-                        {formatDate(device.planExpiry)}
+                        {formatDate(device.warrantyExpiry)}
                       </span>
                     ) : (
                       <span className="text-text-muted">—</span>

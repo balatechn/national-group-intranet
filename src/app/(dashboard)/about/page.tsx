@@ -8,10 +8,12 @@ import {
 } from '@/components/ui';
 import { prisma } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 async function getGroupStats() {
   const [companiesCount, employeesCount, departmentsCount] = await Promise.all([
     prisma.company.count({ where: { isActive: true } }),
-    prisma.user.count({ where: { isActive: true } }),
+    prisma.user.count({ where: { status: 'ACTIVE' } }),
     prisma.department.count(),
   ]);
 

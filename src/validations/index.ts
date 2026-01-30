@@ -188,7 +188,7 @@ export const eventTypeEnum = z.enum([
   'OTHER',
 ]);
 
-export const createEventSchema = z.object({
+const baseEventSchema = z.object({
   title: z.string().min(1, 'Event title is required'),
   description: z.string().optional(),
   type: eventTypeEnum.default('OTHER'),
@@ -201,12 +201,14 @@ export const createEventSchema = z.object({
   companyId: z.string().cuid().optional().nullable(),
   departmentId: z.string().cuid().optional().nullable(),
   attendeeIds: z.array(z.string().cuid()).optional(),
-}).refine((data) => data.endDate >= data.startDate, {
+});
+
+export const createEventSchema = baseEventSchema.refine((data) => data.endDate >= data.startDate, {
   message: 'End date must be after start date',
   path: ['endDate'],
 });
 
-export const updateEventSchema = createEventSchema.partial();
+export const updateEventSchema = baseEventSchema.partial();
 
 // ==========================================
 // POLICY VALIDATIONS

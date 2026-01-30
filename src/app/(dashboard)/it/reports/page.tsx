@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { prisma } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 async function getITStats() {
   const [
     totalTickets,
@@ -33,9 +35,9 @@ async function getITStats() {
     prisma.iTTicket.count({ where: { status: { in: ['OPEN', 'IN_PROGRESS'] } } }),
     prisma.iTTicket.count({ where: { status: 'RESOLVED' } }),
     prisma.iTRequest.count(),
-    prisma.iTRequest.count({ where: { status: 'PENDING' } }),
+    prisma.iTRequest.count({ where: { status: 'PENDING_APPROVAL' } }),
     prisma.systemAsset.count(),
-    prisma.systemAsset.count({ where: { status: 'ACTIVE' } }),
+    prisma.systemAsset.count({ where: { status: 'AVAILABLE' } }),
     prisma.software.count(),
     prisma.software.count({
       where: {

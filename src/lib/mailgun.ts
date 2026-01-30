@@ -3,10 +3,13 @@ import formData from 'form-data';
 
 const mailgun = new Mailgun(formData);
 
-const mg = mailgun.client({
-  username: 'api',
-  key: process.env.MAILGUN_API_KEY || '',
-});
+// Only initialize Mailgun client if API key is provided
+const mg = process.env.MAILGUN_API_KEY 
+  ? mailgun.client({
+      username: 'api',
+      key: process.env.MAILGUN_API_KEY,
+    })
+  : null;
 
 const DOMAIN = process.env.MAILGUN_DOMAIN || '';
 const FROM_EMAIL = process.env.MAILGUN_FROM_EMAIL || 'noreply@nationalgroup.com';
@@ -23,22 +26,21 @@ export interface EmailOptions {
 
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
-    const messageData: Record<string, unknown> = {
+    // Skip if Mailgun is not configured
+    if (!mg) {
+      console.warn('Mailgun not configured, skipping email send');
+      return true;
+    }
+
+    const messageData = {
       from: `${APP_NAME} <${FROM_EMAIL}>`,
       to: Array.isArray(options.to) ? options.to.join(',') : options.to,
       subject: options.subject,
-    };
+      text: options.text || '',
+      html: options.html || '',
+    } as const;
 
-    if (options.template) {
-      messageData.template = options.template;
-      messageData['h:X-Mailgun-Variables'] = JSON.stringify(options.templateVariables || {});
-    } else if (options.html) {
-      messageData.html = options.html;
-    } else if (options.text) {
-      messageData.text = options.text;
-    }
-
-    await mg.messages.create(DOMAIN, messageData);
+    await mg.messages.create(DOMAIN, messageData as any);
     return true;
   } catch (error) {
     console.error('Failed to send email:', error);

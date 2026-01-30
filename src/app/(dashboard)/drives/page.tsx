@@ -17,16 +17,16 @@ import {
 import { prisma } from '@/lib/db';
 import { formatFileSize, formatDate } from '@/lib/utils';
 
+export const dynamic = 'force-dynamic';
+
 async function getSharedFolders(params: {
-  company?: string;
+  department?: string;
   search?: string;
 }) {
-  const where: any = {
-    isActive: true,
-  };
+  const where: Record<string, unknown> = {};
   
-  if (params.company && params.company !== 'all') {
-    where.companyId = params.company;
+  if (params.department && params.department !== 'all') {
+    where.departmentId = params.department;
   }
   
   if (params.search) {
@@ -36,14 +36,7 @@ async function getSharedFolders(params: {
   const folders = await prisma.sharedFolder.findMany({
     where,
     include: {
-      company: true,
       department: true,
-      owner: {
-        select: {
-          firstName: true,
-          lastName: true,
-        },
-      },
       _count: {
         select: {
           permissions: true,
@@ -56,10 +49,10 @@ async function getSharedFolders(params: {
   return folders;
 }
 
-async function getCompanies() {
-  return prisma.company.findMany({
+async function getDepartments() {
+  return prisma.department.findMany({
     where: { isActive: true },
-    select: { id: true, name: true, shortName: true },
+    select: { id: true, name: true },
     orderBy: { name: 'asc' },
   });
 }
@@ -67,14 +60,14 @@ async function getCompanies() {
 export default async function SharedDrivesPage({
   searchParams,
 }: {
-  searchParams: { company?: string; search?: string };
+  searchParams: { department?: string; search?: string };
 }) {
-  const [folders, companies] = await Promise.all([
+  const [folders, departments] = await Promise.all([
     getSharedFolders({
-      company: searchParams.company,
+      department: searchParams.department,
       search: searchParams.search,
     }),
-    getCompanies(),
+    getDepartments(),
   ]);
 
   return (
@@ -163,15 +156,15 @@ export default async function SharedDrivesPage({
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
               <Input placeholder="Search folders..." className="pl-9" />
             </div>
-            <Select defaultValue={searchParams.company || 'all'}>
+            <Select defaultValue={searchParams.department || 'all'}>
               <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Company" />
+                <SelectValue placeholder="Department" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Companies</SelectItem>
-                {companies.map((company) => (
-                  <SelectItem key={company.id} value={company.id}>
-                    {company.shortName || company.name}
+                <SelectItem value="all">All Departments</SelectItem>
+                {departments.map((dept) => (
+                  <SelectItem key={dept.id} value={dept.id}>
+                    {dept.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -198,8 +191,9 @@ export default async function SharedDrivesPage({
                 </div>
                 
                 <Link
-                  href={`/drives/${folder.id}`}
+                  href={folder.webUrl || `/drives/${folder.id}`}
                   className="mt-4 font-semibold text-text-primary hover:text-primary"
+                  target={folder.webUrl ? '_blank' : undefined}
                 >
                   {folder.name}
                 </Link>
@@ -209,9 +203,11 @@ export default async function SharedDrivesPage({
                 </p>
 
                 <div className="mt-3 flex flex-wrap justify-center gap-2">
-                  <Badge variant="outline" className="text-xs">
-                    {folder.company.shortName || folder.company.name}
-                  </Badge>
+                  {folder.isCompanyWide && (
+                    <Badge variant="outline" className="text-xs">
+                      Company-wide
+                    </Badge>
+                  )}
                   {folder.department && (
                     <Badge variant="secondary" className="text-xs">
                       {folder.department.name}
@@ -224,18 +220,12 @@ export default async function SharedDrivesPage({
                     <Users className="h-3 w-3" />
                     <span>{folder._count.permissions} users</span>
                   </div>
-                  {folder.storageUsed && (
-                    <div className="flex items-center gap-1">
-                      <HardDrive className="h-3 w-3" />
-                      <span>{formatFileSize(folder.storageUsed)}</span>
-                    </div>
-                  )}
                 </div>
 
                 <div className="mt-4 w-full border-t pt-4">
                   <div className="flex justify-between items-center">
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/drives/${folder.id}`}>
+                      <Link href={folder.webUrl || `/drives/${folder.id}`} target={folder.webUrl ? '_blank' : undefined}>
                         Open
                       </Link>
                     </Button>

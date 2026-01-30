@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/db';
+import type { Prisma } from '@prisma/client';
 import {
   sendEmail,
   getRequestApprovalEmail,
@@ -106,13 +107,19 @@ export async function getITRequestById(id: string) {
 export async function createITRequest(data: CreateITRequestInput, requestorId: string) {
   const validated = createITRequestSchema.parse(data);
 
+  const requestData: Prisma.ITRequestCreateInput = {
+    requestNumber: generateRequestNumber(),
+    type: validated.type,
+    subject: validated.subject,
+    description: validated.description,
+    justification: validated.justification,
+    status: 'PENDING_APPROVAL',
+    details: validated.details as Prisma.InputJsonValue | undefined,
+    requestor: { connect: { id: requestorId } },
+  };
+
   const request = await prisma.iTRequest.create({
-    data: {
-      ...validated,
-      requestNumber: generateRequestNumber(),
-      requestorId,
-      status: 'PENDING_APPROVAL',
-    },
+    data: requestData,
     include: {
       requestor: {
         select: {
@@ -162,9 +169,14 @@ export async function createITRequest(data: CreateITRequestInput, requestorId: s
 export async function updateITRequest(id: string, data: UpdateITRequestInput) {
   const validated = updateITRequestSchema.parse(data);
 
+  const updateData: Prisma.ITRequestUpdateInput = {
+    status: validated.status,
+    details: validated.details as Prisma.InputJsonValue | undefined,
+  };
+
   const request = await prisma.iTRequest.update({
     where: { id },
-    data: validated,
+    data: updateData,
   });
 
   revalidatePath('/it/requests');

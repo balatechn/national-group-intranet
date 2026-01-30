@@ -26,6 +26,8 @@ import {
 import { getITRequests } from '@/actions/it-requests';
 import { formatDateTime, getInitials, getStatusColor } from '@/lib/utils';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ITRequestsPage({
   searchParams,
 }: {
@@ -75,7 +77,7 @@ export default async function ITRequestsPage({
               <div>
                 <p className="text-sm font-medium text-text-secondary">Pending Approval</p>
                 <p className="mt-1 text-2xl font-bold">
-                  {requests.filter((r) => r.status === 'PENDING').length}
+                  {requests.filter((r) => r.status === 'PENDING_APPROVAL').length}
                 </p>
               </div>
               <div className="rounded-lg bg-warning-light p-3">
@@ -188,18 +190,18 @@ export default async function ITRequestsPage({
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={request.requester.avatar || ''} />
+                        <AvatarImage src={request.requestor.avatar || ''} />
                         <AvatarFallback>
-                          {getInitials(`${request.requester.firstName} ${request.requester.lastName}`)}
+                          {getInitials(`${request.requestor.firstName} ${request.requestor.lastName}`)}
                         </AvatarFallback>
                       </Avatar>
                       <span className="text-sm">
-                        {request.requester.firstName} {request.requester.lastName}
+                        {request.requestor.firstName} {request.requestor.lastName}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{request.requestType.replace(/_/g, ' ')}</Badge>
+                    <Badge variant="outline">{request.type.replace(/_/g, ' ')}</Badge>
                   </TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(request.status)}>
@@ -212,16 +214,15 @@ export default async function ITRequestsPage({
                     </span>
                   </TableCell>
                   <TableCell>
-                    {request.approver ? (
+                    {request.approvals && request.approvals.length > 0 ? (
                       <div className="flex items-center gap-2">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={request.approver.avatar || ''} />
                           <AvatarFallback>
-                            {getInitials(`${request.approver.firstName} ${request.approver.lastName}`)}
+                            {getInitials(`${request.approvals[0].approver.firstName} ${request.approvals[0].approver.lastName}`)}
                           </AvatarFallback>
                         </Avatar>
                         <span className="text-sm">
-                          {request.approver.firstName} {request.approver.lastName}
+                          {request.approvals[0].approver.firstName} {request.approvals[0].approver.lastName}
                         </span>
                       </div>
                     ) : (

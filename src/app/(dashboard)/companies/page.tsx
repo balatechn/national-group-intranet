@@ -12,6 +12,8 @@ import {
 } from '@/components/ui';
 import { getCompanies } from '@/actions/companies';
 
+export const dynamic = 'force-dynamic';
+
 export default async function CompaniesPage() {
   const { companies } = await getCompanies({ isActive: true });
 

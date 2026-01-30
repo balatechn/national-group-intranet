@@ -19,12 +19,11 @@ async function main() {
       city: 'Mumbai',
       state: 'Maharashtra',
       country: 'India',
-      pincode: '400001',
+      postalCode: '400001',
       phone: '+91 22 1234 5678',
       email: 'info@nationalplastics.in',
       website: 'https://nationalplastics.in',
-      gstNumber: '27AABCN1234A1Z5',
-      panNumber: 'AABCN1234A',
+      taxId: '27AABCN1234A1Z5',
       isActive: true,
     },
   });
@@ -40,12 +39,11 @@ async function main() {
       city: 'Pune',
       state: 'Maharashtra',
       country: 'India',
-      pincode: '411001',
+      postalCode: '411001',
       phone: '+91 20 1234 5678',
       email: 'info@nationalindustries.in',
       website: 'https://nationalindustries.in',
-      gstNumber: '27AABCN5678B1Z5',
-      panNumber: 'AABCN5678B',
+      taxId: '27AABCN5678B1Z5',
       isActive: true,
     },
   });
@@ -61,12 +59,11 @@ async function main() {
       city: 'Delhi',
       state: 'Delhi',
       country: 'India',
-      pincode: '110001',
+      postalCode: '110001',
       phone: '+91 11 1234 5678',
       email: 'info@nationaltrading.in',
       website: 'https://nationaltrading.in',
-      gstNumber: '07AABCN9012C1Z5',
-      panNumber: 'AABCN9012C',
+      taxId: '07AABCN9012C1Z5',
       isActive: true,
     },
   });
@@ -74,7 +71,7 @@ async function main() {
   // Create Departments
   console.log('Creating departments...');
   const itDept = await prisma.department.upsert({
-    where: { code: 'NPL-IT' },
+    where: { companyId_code: { companyId: nationalPlastics.id, code: 'NPL-IT' } },
     update: {},
     create: {
       name: 'Information Technology',
@@ -84,7 +81,7 @@ async function main() {
   });
 
   const hrDept = await prisma.department.upsert({
-    where: { code: 'NPL-HR' },
+    where: { companyId_code: { companyId: nationalPlastics.id, code: 'NPL-HR' } },
     update: {},
     create: {
       name: 'Human Resources',
@@ -94,7 +91,7 @@ async function main() {
   });
 
   const financeDept = await prisma.department.upsert({
-    where: { code: 'NPL-FIN' },
+    where: { companyId_code: { companyId: nationalPlastics.id, code: 'NPL-FIN' } },
     update: {},
     create: {
       name: 'Finance & Accounts',
@@ -104,7 +101,7 @@ async function main() {
   });
 
   const opsDept = await prisma.department.upsert({
-    where: { code: 'NPL-OPS' },
+    where: { companyId_code: { companyId: nationalPlastics.id, code: 'NPL-OPS' } },
     update: {},
     create: {
       name: 'Operations',
@@ -114,7 +111,7 @@ async function main() {
   });
 
   const salesDept = await prisma.department.upsert({
-    where: { code: 'NPL-SALES' },
+    where: { companyId_code: { companyId: nationalPlastics.id, code: 'NPL-SALES' } },
     update: {},
     create: {
       name: 'Sales & Marketing',
@@ -140,9 +137,8 @@ async function main() {
       phone: '+91 9876543210',
       companyId: nationalPlastics.id,
       departmentId: itDept.id,
-      designation: 'System Administrator',
-      isActive: true,
-      emailVerified: new Date(),
+      jobTitle: 'System Administrator',
+      status: 'ACTIVE',
     },
   });
 
@@ -159,9 +155,8 @@ async function main() {
       phone: '+91 9876543211',
       companyId: nationalPlastics.id,
       departmentId: itDept.id,
-      designation: 'IT Manager',
-      isActive: true,
-      emailVerified: new Date(),
+      jobTitle: 'IT Manager',
+      status: 'ACTIVE',
     },
   });
 
@@ -174,13 +169,12 @@ async function main() {
       password: passwordHash,
       firstName: 'Priya',
       lastName: 'Sharma',
-      role: 'HR_MANAGER',
+      role: 'HR_ADMIN',
       phone: '+91 9876543212',
       companyId: nationalPlastics.id,
       departmentId: hrDept.id,
-      designation: 'HR Manager',
-      isActive: true,
-      emailVerified: new Date(),
+      jobTitle: 'HR Manager',
+      status: 'ACTIVE',
     },
   });
 
@@ -197,10 +191,9 @@ async function main() {
       phone: '+91 9876543213',
       companyId: nationalPlastics.id,
       departmentId: itDept.id,
-      designation: 'Software Developer',
-      reportingTo: itManager.id,
-      isActive: true,
-      emailVerified: new Date(),
+      jobTitle: 'Software Developer',
+      managerId: itManager.id,
+      status: 'ACTIVE',
     },
   });
 
@@ -217,10 +210,9 @@ async function main() {
       phone: '+91 9876543214',
       companyId: nationalPlastics.id,
       departmentId: hrDept.id,
-      designation: 'HR Executive',
-      reportingTo: hrManager.id,
-      isActive: true,
-      emailVerified: new Date(),
+      jobTitle: 'HR Executive',
+      managerId: hrManager.id,
+      status: 'ACTIVE',
     },
   });
 
@@ -238,36 +230,38 @@ async function main() {
   // Create Vendors
   console.log('Creating vendors...');
   const vendor1 = await prisma.vendor.upsert({
-    where: { email: 'sales@delltech.com' },
+    where: { companyId_code: { companyId: nationalPlastics.id, code: 'DELL-001' } },
     update: {},
     create: {
+      code: 'DELL-001',
       name: 'Dell Technologies',
+      type: 'Hardware',
       contactPerson: 'Amit Verma',
       email: 'sales@delltech.com',
       phone: '+91 22 4567 8901',
       address: 'Tech Park, Andheri East, Mumbai',
-      category: 'HARDWARE',
       website: 'https://dell.com',
-      status: 'ACTIVE',
-      isPreferred: true,
-      contractExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      isActive: true,
+      contractEnd: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      companyId: nationalPlastics.id,
     },
   });
 
   const vendor2 = await prisma.vendor.upsert({
-    where: { email: 'enterprise@microsoft.com' },
+    where: { companyId_code: { companyId: nationalPlastics.id, code: 'MS-001' } },
     update: {},
     create: {
+      code: 'MS-001',
       name: 'Microsoft India',
+      type: 'Software',
       contactPerson: 'Neha Gupta',
       email: 'enterprise@microsoft.com',
       phone: '+91 80 4567 8902',
       address: 'Microsoft Campus, Bangalore',
-      category: 'SOFTWARE',
       website: 'https://microsoft.com',
-      status: 'ACTIVE',
-      isPreferred: true,
-      contractExpiry: new Date(Date.now() + 730 * 24 * 60 * 60 * 1000),
+      isActive: true,
+      contractEnd: new Date(Date.now() + 730 * 24 * 60 * 60 * 1000),
+      companyId: nationalPlastics.id,
     },
   });
 
@@ -279,8 +273,8 @@ async function main() {
     create: {
       assetTag: 'NPL-DT-001',
       name: 'Dell OptiPlex 7090',
-      assetType: 'DESKTOP',
-      brand: 'Dell',
+      type: 'DESKTOP',
+      manufacturer: 'Dell',
       model: 'OptiPlex 7090',
       serialNumber: 'DELL123456789',
       processor: 'Intel Core i7-11700',
@@ -290,7 +284,7 @@ async function main() {
       purchaseDate: new Date('2023-01-15'),
       warrantyExpiry: new Date('2026-01-15'),
       purchasePrice: 85000,
-      status: 'ACTIVE',
+      status: 'ASSIGNED',
       location: 'IT Department - Floor 2',
       assignedToId: employee1.id,
       vendorId: vendor1.id,
@@ -303,8 +297,8 @@ async function main() {
     create: {
       assetTag: 'NPL-LT-001',
       name: 'Dell Latitude 5520',
-      assetType: 'LAPTOP',
-      brand: 'Dell',
+      type: 'LAPTOP',
+      manufacturer: 'Dell',
       model: 'Latitude 5520',
       serialNumber: 'DELL987654321',
       processor: 'Intel Core i5-1145G7',
@@ -314,7 +308,7 @@ async function main() {
       purchaseDate: new Date('2023-03-20'),
       warrantyExpiry: new Date('2026-03-20'),
       purchasePrice: 95000,
-      status: 'ACTIVE',
+      status: 'ASSIGNED',
       location: 'HR Department - Floor 1',
       assignedToId: employee2.id,
       vendorId: vendor1.id,
@@ -324,89 +318,92 @@ async function main() {
   // Create Software
   console.log('Creating software...');
   await prisma.software.upsert({
-    where: { name_version: { name: 'Microsoft 365 Business', version: 'E3' } },
+    where: { id: 'ms365-e3' },
     update: {},
     create: {
+      id: 'ms365-e3',
       name: 'Microsoft 365 Business',
       version: 'E3',
       licenseType: 'SUBSCRIPTION',
       totalLicenses: 100,
-      licensesUsed: 45,
+      usedLicenses: 45,
       licenseKey: 'M365-E3-XXXXX-XXXXX-XXXXX',
       purchaseDate: new Date('2023-01-01'),
       expiryDate: new Date('2024-12-31'),
       purchasePrice: 500000,
-      status: 'ACTIVE',
+      isActive: true,
       vendorId: vendor2.id,
     },
   });
 
   await prisma.software.upsert({
-    where: { name_version: { name: 'Adobe Creative Cloud', version: '2024' } },
+    where: { id: 'adobe-cc-2024' },
     update: {},
     create: {
+      id: 'adobe-cc-2024',
       name: 'Adobe Creative Cloud',
       version: '2024',
       licenseType: 'SUBSCRIPTION',
       totalLicenses: 10,
-      licensesUsed: 8,
+      usedLicenses: 8,
       licenseKey: 'ADOBE-CC-XXXXX-XXXXX',
       purchaseDate: new Date('2023-06-01'),
       expiryDate: new Date('2024-05-31'),
       purchasePrice: 120000,
-      status: 'ACTIVE',
+      isActive: true,
     },
   });
 
   // Create Policies
   console.log('Creating policies...');
   await prisma.policy.upsert({
-    where: { id: 'leave-policy-2024' },
+    where: { companyId_code: { companyId: nationalPlastics.id, code: 'LEAVE-POL-2024' } },
     update: {},
     create: {
-      id: 'leave-policy-2024',
+      code: 'LEAVE-POL-2024',
       title: 'Leave Policy 2024',
       description: 'Comprehensive leave policy covering all types of leaves for employees',
       category: 'HR',
       version: '2.0',
       effectiveDate: new Date('2024-01-01'),
       content: 'This policy outlines the leave entitlements for all employees...',
-      isActive: true,
-      isPinned: true,
-      createdById: hrManager.id,
+      status: 'PUBLISHED',
+      createdBy: hrManager.id,
+      companyId: nationalPlastics.id,
     },
   });
 
   await prisma.policy.upsert({
-    where: { id: 'it-security-policy' },
+    where: { companyId_code: { companyId: nationalPlastics.id, code: 'IT-SEC-POL' } },
     update: {},
     create: {
-      id: 'it-security-policy',
+      code: 'IT-SEC-POL',
       title: 'IT Security Policy',
       description: 'Guidelines for maintaining information security across the organization',
-      category: 'IT',
+      category: 'IT_SECURITY',
       version: '3.1',
       effectiveDate: new Date('2024-01-01'),
       content: 'This policy defines the security guidelines for all IT systems...',
-      isActive: true,
-      isPinned: true,
-      createdById: itManager.id,
+      status: 'PUBLISHED',
+      createdBy: itManager.id,
+      companyId: nationalPlastics.id,
     },
   });
 
   await prisma.policy.upsert({
-    where: { id: 'expense-policy' },
+    where: { companyId_code: { companyId: nationalPlastics.id, code: 'EXP-POL' } },
     update: {},
     create: {
-      id: 'expense-policy',
+      code: 'EXP-POL',
       title: 'Expense Reimbursement Policy',
       description: 'Guidelines for business expense claims and reimbursements',
-      category: 'FINANCE',
+      category: 'OPERATIONAL',
       version: '1.5',
       effectiveDate: new Date('2024-01-01'),
       content: 'This policy outlines the procedures for expense reimbursement...',
-      isActive: true,
-      createdById: superAdmin.id,
+      status: 'PUBLISHED',
+      createdBy: superAdmin.id,
+      companyId: nationalPlastics.id,
     },
   });
 
@@ -446,11 +443,10 @@ async function main() {
       requestNumber: 'REQ-2024-0001',
       subject: 'New laptop request',
       description: 'Request for a new laptop for project work',
-      requestType: 'NEW_HARDWARE',
-      status: 'PENDING',
-      requesterId: employee1.id,
+      type: 'NEW_HARDWARE',
+      status: 'PENDING_APPROVAL',
+      requestorId: employee1.id,
       justification: 'Current laptop is 4 years old and unable to handle development workload',
-      estimatedCost: 95000,
     },
   });
 
@@ -465,7 +461,6 @@ async function main() {
       dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
       creatorId: superAdmin.id,
       assigneeId: itManager.id,
-      companyId: nationalPlastics.id,
       departmentId: itDept.id,
     },
   });
@@ -474,12 +469,11 @@ async function main() {
     data: {
       title: 'Update employee handbook',
       description: 'Review and update the employee handbook for 2024',
-      status: 'NOT_STARTED',
+      status: 'TODO',
       priority: 'MEDIUM',
       dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days
       creatorId: hrManager.id,
       assigneeId: employee2.id,
-      companyId: nationalPlastics.id,
       departmentId: hrDept.id,
     },
   });
@@ -493,10 +487,10 @@ async function main() {
       startDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
       location: 'Main Auditorium',
-      eventType: 'TOWNHALL',
+      type: 'COMPANY_EVENT',
       isAllDay: false,
       companyId: nationalPlastics.id,
-      createdById: superAdmin.id,
+      creatorId: superAdmin.id,
     },
   });
 
@@ -507,9 +501,9 @@ async function main() {
       startDate: new Date('2024-03-25'),
       endDate: new Date('2024-03-25'),
       location: 'Office Premises',
-      eventType: 'HOLIDAY',
+      type: 'HOLIDAY',
       isAllDay: true,
-      createdById: hrManager.id,
+      creatorId: hrManager.id,
     },
   });
 
@@ -519,10 +513,11 @@ async function main() {
     data: {
       name: 'Company Policies',
       description: 'All company policy documents',
-      path: '/drives/policies',
-      companyId: nationalPlastics.id,
-      ownerId: superAdmin.id,
-      isActive: true,
+      driveId: 'placeholder-drive-id',
+      folderId: 'placeholder-folder-policies',
+      webUrl: 'https://onedrive.sharepoint.com/policies',
+      isCompanyWide: true,
+      createdBy: superAdmin.id,
     },
   });
 
@@ -530,11 +525,11 @@ async function main() {
     data: {
       name: 'IT Resources',
       description: 'IT documentation and resources',
-      path: '/drives/it-resources',
-      companyId: nationalPlastics.id,
+      driveId: 'placeholder-drive-id',
+      folderId: 'placeholder-folder-it',
+      webUrl: 'https://onedrive.sharepoint.com/it-resources',
       departmentId: itDept.id,
-      ownerId: itManager.id,
-      isActive: true,
+      createdBy: itManager.id,
     },
   });
 

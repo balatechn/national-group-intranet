@@ -17,6 +17,8 @@ import {
   CardTitle,
 } from '@/components/ui';
 
+export const dynamic = 'force-dynamic';
+
 const itModules = [
   {
     title: 'IT Tickets',

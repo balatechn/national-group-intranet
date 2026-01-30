@@ -20,6 +20,8 @@ import {
 import { prisma } from '@/lib/db';
 import { formatDate, getInitials, getStatusColor } from '@/lib/utils';
 
+export const dynamic = 'force-dynamic';
+
 async function getProjects(params: {
   status?: string;
   company?: string;
@@ -47,7 +49,7 @@ async function getProjects(params: {
     include: {
       company: true,
       department: true,
-      manager: {
+      owner: {
         select: {
           firstName: true,
           lastName: true,
@@ -76,8 +78,8 @@ async function getCompanies() {
 }
 
 const projectStatusColors: Record<string, string> = {
-  PLANNING: 'bg-blue-100 text-blue-800',
-  IN_PROGRESS: 'bg-yellow-100 text-yellow-800',
+  PLANNED: 'bg-blue-100 text-blue-800',
+  ACTIVE: 'bg-yellow-100 text-yellow-800',
   ON_HOLD: 'bg-orange-100 text-orange-800',
   COMPLETED: 'bg-green-100 text-green-800',
   CANCELLED: 'bg-red-100 text-red-800',
@@ -132,9 +134,9 @@ export default async function ProjectsPage({
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-text-secondary">In Progress</p>
+                <p className="text-sm font-medium text-text-secondary">Active</p>
                 <p className="mt-1 text-2xl font-bold">
-                  {projects.filter((p) => p.status === 'IN_PROGRESS').length}
+                  {projects.filter((p) => p.status === 'ACTIVE' as any).length}
                 </p>
               </div>
               <div className="rounded-lg bg-warning-light p-3">
@@ -149,7 +151,7 @@ export default async function ProjectsPage({
               <div>
                 <p className="text-sm font-medium text-text-secondary">Completed</p>
                 <p className="mt-1 text-2xl font-bold">
-                  {projects.filter((p) => p.status === 'COMPLETED').length}
+                  {projects.filter((p) => p.status === 'COMPLETED' as any).length}
                 </p>
               </div>
               <div className="rounded-lg bg-success-light p-3">
@@ -164,7 +166,7 @@ export default async function ProjectsPage({
               <div>
                 <p className="text-sm font-medium text-text-secondary">On Hold</p>
                 <p className="mt-1 text-2xl font-bold">
-                  {projects.filter((p) => p.status === 'ON_HOLD').length}
+                  {projects.filter((p) => p.status === 'ON_HOLD' as any).length}
                 </p>
               </div>
               <div className="rounded-lg bg-danger-light p-3">
@@ -189,8 +191,8 @@ export default async function ProjectsPage({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="PLANNING">Planning</SelectItem>
-                <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                <SelectItem value="PLANNED">Planned</SelectItem>
+                <SelectItem value="ACTIVE">Active</SelectItem>
                 <SelectItem value="ON_HOLD">On Hold</SelectItem>
                 <SelectItem value="COMPLETED">Completed</SelectItem>
                 <SelectItem value="CANCELLED">Cancelled</SelectItem>
@@ -216,8 +218,7 @@ export default async function ProjectsPage({
       {/* Projects Grid */}
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         {projects.map((project) => {
-          const progress = project.progress || 0;
-          const isOverdue = project.endDate && new Date(project.endDate) < new Date() && project.status !== 'COMPLETED';
+          const isOverdue = project.endDate && new Date(project.endDate) < new Date() && project.status !== ('COMPLETED' as any);
 
           return (
             <Card key={project.id} className="card-hover">
@@ -245,28 +246,6 @@ export default async function ProjectsPage({
                 <p className="text-sm text-text-secondary line-clamp-2">
                   {project.description || 'No description provided'}
                 </p>
-
-                {/* Progress Bar */}
-                <div className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-text-muted">Progress</span>
-                    <span className="font-medium">{progress}%</span>
-                  </div>
-                  <div className="h-2 w-full rounded-full bg-gray-200">
-                    <div
-                      className={`h-2 rounded-full transition-all ${
-                        progress >= 100
-                          ? 'bg-success'
-                          : progress >= 70
-                          ? 'bg-primary'
-                          : progress >= 30
-                          ? 'bg-warning'
-                          : 'bg-gray-400'
-                      }`}
-                      style={{ width: `${Math.min(progress, 100)}%` }}
-                    />
-                  </div>
-                </div>
 
                 {/* Project Info */}
                 <div className="grid grid-cols-2 gap-4 text-sm">
@@ -303,19 +282,19 @@ export default async function ProjectsPage({
                 {/* Footer */}
                 <div className="flex items-center justify-between border-t pt-4">
                   <div className="flex items-center gap-2">
-                    {project.manager && (
+                    {project.owner && (
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={project.manager.avatar || ''} />
+                        <AvatarImage src={project.owner.avatar || ''} />
                         <AvatarFallback>
-                          {getInitials(`${project.manager.firstName} ${project.manager.lastName}`)}
+                          {getInitials(`${project.owner.firstName} ${project.owner.lastName}`)}
                         </AvatarFallback>
                       </Avatar>
                     )}
                     <div className="text-sm">
                       <p className="font-medium">
-                        {project.manager
-                          ? `${project.manager.firstName} ${project.manager.lastName}`
-                          : 'No Manager'}
+                        {project.owner
+                          ? `${project.owner.firstName} ${project.owner.lastName}`
+                          : 'No Owner'}
                       </p>
                     </div>
                   </div>

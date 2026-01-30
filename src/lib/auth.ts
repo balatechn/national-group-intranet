@@ -62,9 +62,9 @@ export const authOptions: NextAuthOptions = {
           role: user.role,
           avatar: user.avatar,
           companyId: user.companyId,
-          companyName: user.company?.name,
+          companyName: user.company?.name || null,
           departmentId: user.departmentId,
-          departmentName: user.department?.name,
+          departmentName: user.department?.name || null,
         };
       },
     }),

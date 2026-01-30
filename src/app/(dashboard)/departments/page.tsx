@@ -24,6 +24,8 @@ import {
 import { prisma } from '@/lib/db';
 import { getInitials } from '@/lib/utils';
 
+export const dynamic = 'force-dynamic';
+
 async function getDepartments(params: {
   companyId?: string;
   search?: string;
@@ -48,7 +50,7 @@ async function getDepartments(params: {
       head: true,
       _count: {
         select: {
-          members: true,
+          users: true,
         },
       },
     },
@@ -116,7 +118,7 @@ export default async function DepartmentsPage({
               <div>
                 <p className="text-sm font-medium text-text-secondary">Total Employees</p>
                 <p className="mt-1 text-2xl font-bold">
-                  {departments.reduce((sum, d) => sum + d._count.members, 0)}
+                  {departments.reduce((sum, d) => sum + d._count.users, 0)}
                 </p>
               </div>
               <div className="rounded-lg bg-success-light p-3">
@@ -146,7 +148,7 @@ export default async function DepartmentsPage({
                 <p className="mt-1 text-2xl font-bold">
                   {departments.length > 0
                     ? Math.round(
-                        departments.reduce((sum, d) => sum + d._count.members, 0) / departments.length
+                        departments.reduce((sum, d) => sum + d._count.users, 0) / departments.length
                       )
                     : 0}
                 </p>
@@ -252,7 +254,7 @@ export default async function DepartmentsPage({
               <div className="flex items-center justify-between border-t pt-4">
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-text-muted" />
-                  <span className="text-sm font-medium">{department._count.members} members</span>
+                  <span className="text-sm font-medium">{department._count.users} members</span>
                 </div>
                 <Button variant="outline" size="sm" asChild>
                   <Link href={`/departments/${department.id}/members`}>View Team</Link>

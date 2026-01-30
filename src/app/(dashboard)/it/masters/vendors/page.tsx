@@ -23,14 +23,15 @@ import {
 import { getVendors } from '@/actions/assets';
 import { formatDate, getStatusColor } from '@/lib/utils';
 
+export const dynamic = 'force-dynamic';
+
 export default async function VendorsPage({
   searchParams,
 }: {
-  searchParams: { status?: string; category?: string; page?: string };
+  searchParams: { type?: string; page?: string };
 }) {
   const { vendors, pagination } = await getVendors({
-    status: searchParams.status,
-    category: searchParams.category,
+    type: searchParams.type,
     page: searchParams.page ? parseInt(searchParams.page) : 1,
     limit: 10,
   });
@@ -72,7 +73,7 @@ export default async function VendorsPage({
               <div>
                 <p className="text-sm font-medium text-text-secondary">Active</p>
                 <p className="mt-1 text-2xl font-bold">
-                  {vendors.filter((v) => v.status === 'ACTIVE').length}
+                  {vendors.filter((v) => v.isActive).length}
                 </p>
               </div>
               <div className="rounded-lg bg-success-light p-3">
@@ -85,9 +86,9 @@ export default async function VendorsPage({
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-text-secondary">Preferred</p>
+                <p className="text-sm font-medium text-text-secondary">With Assets</p>
                 <p className="mt-1 text-2xl font-bold">
-                  {vendors.filter((v) => v.isPreferred).length}
+                  {vendors.filter((v) => v._count.systemAssets > 0).length}
                 </p>
               </div>
               <div className="rounded-lg bg-warning-light p-3">
@@ -102,7 +103,7 @@ export default async function VendorsPage({
               <div>
                 <p className="text-sm font-medium text-text-secondary">Inactive</p>
                 <p className="mt-1 text-2xl font-bold">
-                  {vendors.filter((v) => v.status === 'INACTIVE').length}
+                  {vendors.filter((v) => !v.isActive).length}
                 </p>
               </div>
               <div className="rounded-lg bg-gray-100 p-3">
@@ -121,29 +122,17 @@ export default async function VendorsPage({
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
               <Input placeholder="Search vendors..." className="pl-9" />
             </div>
-            <Select defaultValue={searchParams.status || 'all'}>
+            <Select defaultValue={searchParams.type || 'all'}>
               <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder="Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="ACTIVE">Active</SelectItem>
-                <SelectItem value="INACTIVE">Inactive</SelectItem>
-                <SelectItem value="BLACKLISTED">Blacklisted</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select defaultValue={searchParams.category || 'all'}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="HARDWARE">Hardware</SelectItem>
-                <SelectItem value="SOFTWARE">Software</SelectItem>
-                <SelectItem value="SERVICES">Services</SelectItem>
-                <SelectItem value="TELECOM">Telecom</SelectItem>
-                <SelectItem value="CLOUD">Cloud</SelectItem>
-                <SelectItem value="OTHER">Other</SelectItem>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="Hardware">Hardware</SelectItem>
+                <SelectItem value="Software">Software</SelectItem>
+                <SelectItem value="Services">Services</SelectItem>
+                <SelectItem value="Cloud">Cloud</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -180,9 +169,6 @@ export default async function VendorsPage({
                             <p className="font-medium text-text-primary hover:text-primary">
                               {vendor.name}
                             </p>
-                            {vendor.isPreferred && (
-                              <Star className="h-4 w-4 fill-warning text-warning" />
-                            )}
                           </div>
                           {vendor.website && (
                             <p className="text-xs text-text-muted">{vendor.website}</p>
@@ -192,7 +178,7 @@ export default async function VendorsPage({
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{vendor.category}</Badge>
+                    <Badge variant="outline">{vendor.type || 'N/A'}</Badge>
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1 text-sm">
@@ -214,21 +200,23 @@ export default async function VendorsPage({
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={getStatusColor(vendor.status)}>{vendor.status}</Badge>
+                    <Badge className={vendor.isActive ? 'bg-success' : 'bg-gray-400'}>
+                      {vendor.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
                   </TableCell>
                   <TableCell>
-                    {vendor.contractExpiry ? (
+                    {vendor.contractEnd ? (
                       <span
                         className={`text-sm ${
-                          new Date(vendor.contractExpiry) < new Date()
+                          new Date(vendor.contractEnd) < new Date()
                             ? 'text-danger-dark'
-                            : new Date(vendor.contractExpiry) <
+                            : new Date(vendor.contractEnd) <
                               new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
                             ? 'text-warning-dark'
                             : 'text-text-secondary'
                         }`}
                       >
-                        {formatDate(vendor.contractExpiry)}
+                        {formatDate(vendor.contractEnd)}
                       </span>
                     ) : (
                       <span className="text-text-muted">No contract</span>
