@@ -82,6 +82,32 @@
   .priority-critical {
     @apply bg-danger-light text-danger-dark;
   }
+
+  /* Gold gradient backgrounds */
+  .bg-gold-gradient {
+    background: linear-gradient(135deg, #B8860B 0%, #DAA520 50%, #FFD700 100%);
+  }
+
+  .bg-gold-subtle {
+    background: linear-gradient(135deg, #FDF8E8 0%, #FAF0D1 100%);
+  }
+
+  /* Gold text effects */
+  .text-gold-gradient {
+    background: linear-gradient(135deg, #B8860B 0%, #FFD700 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Card with gold accent */
+  .card-gold {
+    @apply border-l-4 border-l-primary;
+  }
+
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-card-hover hover:border-primary/30;
+  }
 }
 
 @layer utilities {

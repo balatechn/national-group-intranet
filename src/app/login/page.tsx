@@ -46,21 +46,21 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary via-primary-600 to-secondary p-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary via-secondary to-primary-400 p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-white shadow-lg">
-            <span className="text-2xl font-bold text-primary">NG</span>
+            <span className="text-2xl font-bold bg-gradient-to-br from-primary to-secondary bg-clip-text text-transparent">NG</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">National Group</h1>
-          <p className="text-primary-200">Enterprise Intranet Portal</p>
+          <h1 className="text-2xl font-bold text-white drop-shadow-md">National Group</h1>
+          <p className="text-primary-100">Enterprise Intranet Portal</p>
         </div>
 
         {/* Login Card */}
-        <Card className="shadow-modal">
+        <Card className="shadow-modal border-t-4 border-t-primary">
           <CardHeader className="text-center">
-            <CardTitle>Welcome back</CardTitle>
+            <CardTitle className="text-primary">Welcome back</CardTitle>
             <CardDescription>Sign in to your account to continue</CardDescription>
           </CardHeader>
           <CardContent>

@@ -17,35 +17,35 @@ const config: Config = {
     },
     extend: {
       colors: {
-        // Primary Brand Colors
+        // Primary Brand Colors - Rich Gold
         primary: {
-          DEFAULT: '#070B47',
-          50: '#E8E9F4',
-          100: '#D1D3E9',
-          200: '#A3A7D3',
-          300: '#757BBD',
-          400: '#474FA7',
-          500: '#070B47',
-          600: '#060939',
-          700: '#04072B',
-          800: '#03041D',
-          900: '#01020F',
+          DEFAULT: '#B8860B',
+          50: '#FDF8E8',
+          100: '#FAF0D1',
+          200: '#F5E1A3',
+          300: '#F0D275',
+          400: '#D4A017',
+          500: '#B8860B',
+          600: '#956D09',
+          700: '#725407',
+          800: '#4F3B05',
+          900: '#2C2103',
           foreground: '#FFFFFF',
         },
-        // Secondary Colors
+        // Secondary Colors - Warm Gold Accent
         secondary: {
-          DEFAULT: '#6A89A7',
-          50: '#F4F6F8',
-          100: '#E9EDF1',
-          200: '#D3DBE3',
-          300: '#BDC9D5',
-          400: '#94A9BF',
-          500: '#6A89A7',
-          600: '#556E86',
-          700: '#405264',
-          800: '#2A3743',
-          900: '#151B21',
-          foreground: '#FFFFFF',
+          DEFAULT: '#DAA520',
+          50: '#FEF9E7',
+          100: '#FDF3CF',
+          200: '#FBE79F',
+          300: '#F9DB6F',
+          400: '#E6BE1A',
+          500: '#DAA520',
+          600: '#AE841A',
+          700: '#836313',
+          800: '#57420D',
+          900: '#2C2106',
+          foreground: '#1F1F1F',
         },
         // Status Colors
         success: {
@@ -63,24 +63,31 @@ const config: Config = {
           light: '#FEE2E2',
           dark: '#DC2626',
         },
-        // Background & Surface Colors
-        background: '#FFFFFF',
+        // Background & Surface Colors - Half White / Off White
+        background: '#FAFAFA',
         surface: {
-          DEFAULT: '#F8FAFC',
-          100: '#F1F5F9',
-          200: '#E2E8F0',
+          DEFAULT: '#F5F5F5',
+          100: '#EFEFEF',
+          200: '#E8E8E8',
         },
         // Border Colors
         border: {
-          DEFAULT: '#E2E8F0',
-          light: '#F1F5F9',
-          dark: '#CBD5E1',
+          DEFAULT: '#E5E5E5',
+          light: '#F0F0F0',
+          dark: '#D4D4D4',
         },
         // Text Colors
         text: {
-          primary: '#1E293B',
-          secondary: '#64748B',
-          muted: '#94A3B8',
+          primary: '#1F1F1F',
+          secondary: '#525252',
+          muted: '#737373',
+        },
+        // Gold accents for special elements
+        gold: {
+          DEFAULT: '#B8860B',
+          light: '#FFD700',
+          dark: '#8B6508',
+          shine: '#FFE55C',
         },
       },
       fontFamily: {

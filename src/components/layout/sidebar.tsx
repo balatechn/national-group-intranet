@@ -160,9 +160,9 @@ export function Sidebar() {
         )}
       >
         {/* Logo */}
-        <div className="flex h-16 items-center border-b border-border px-6">
+        <div className="flex h-16 items-center border-b border-primary/20 px-6 bg-gradient-to-r from-primary-50 to-white">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white font-bold">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-secondary text-white font-bold shadow-md">
               NG
             </div>
             <span className="text-lg font-bold text-primary">National Group</span>

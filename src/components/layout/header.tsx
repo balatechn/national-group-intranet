@@ -31,7 +31,7 @@ export function Header() {
   const { data: session } = useSession();
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-white px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-primary/10 bg-gradient-to-r from-white via-white to-primary-50 px-6 shadow-sm">
       {/* Search */}
       <div className="flex items-center gap-4">
         <div className="relative hidden md:block">
@@ -39,7 +39,7 @@ export function Header() {
           <Input
             type="search"
             placeholder="Search..."
-            className="w-64 pl-9"
+            className="w-64 pl-9 border-primary/20 focus:border-primary"
           />
         </div>
       </div>

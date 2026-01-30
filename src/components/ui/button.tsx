@@ -4,18 +4,19 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
-        default: 'bg-primary text-white hover:bg-primary-600 shadow-sm',
+        default: 'bg-gradient-to-r from-primary to-primary-600 text-white hover:from-primary-600 hover:to-primary-700 shadow-md hover:shadow-lg',
         destructive: 'bg-danger text-white hover:bg-danger-dark shadow-sm',
-        outline: 'border border-border bg-white hover:bg-surface hover:text-primary',
-        secondary: 'bg-secondary text-white hover:bg-secondary-600 shadow-sm',
-        ghost: 'hover:bg-surface-100 hover:text-primary',
+        outline: 'border-2 border-primary bg-white text-primary hover:bg-primary-50',
+        secondary: 'bg-gradient-to-r from-secondary to-secondary-600 text-white hover:from-secondary-600 hover:to-secondary-700 shadow-sm',
+        ghost: 'hover:bg-primary-50 hover:text-primary',
         link: 'text-primary underline-offset-4 hover:underline',
         success: 'bg-success text-white hover:bg-success-dark shadow-sm',
         warning: 'bg-warning text-white hover:bg-warning-dark shadow-sm',
+        gold: 'bg-gradient-to-r from-primary via-secondary to-primary text-white shadow-md hover:shadow-lg',
       },
       size: {
         default: 'h-10 px-4 py-2',
