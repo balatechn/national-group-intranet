@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
@@ -163,10 +164,14 @@ export function Sidebar() {
       >
         {/* Logo */}
         <div className="flex h-16 items-center border-b border-primary/20 px-6 bg-gradient-to-r from-primary-50 to-white">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-secondary text-white font-bold shadow-md">
-              NG
-            </div>
+          <Link href="/dashboard" className="flex items-center gap-3">
+            <Image
+              src="/national-logo.png"
+              alt="National Group"
+              width={40}
+              height={40}
+              className="object-contain"
+            />
             <span className="text-lg font-bold text-primary">National Group</span>
           </Link>
         </div>
