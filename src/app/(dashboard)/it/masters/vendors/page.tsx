@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Plus, Search, Building2, Phone, Mail, Globe, MapPin, Star } from 'lucide-react';
+import { Search, Building2, Phone, Mail, Globe, MapPin, Star } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -22,6 +22,7 @@ import {
 } from '@/components/ui';
 import { getVendors } from '@/actions/assets';
 import { formatDate, getStatusColor } from '@/lib/utils';
+import { VendorActions } from '@/components/masters';
 
 // Revalidate every 2 minutes
 export const revalidate = 120;
@@ -45,12 +46,7 @@ export default async function VendorsPage({
           <h1 className="page-title">Vendors</h1>
           <p className="page-description">Manage IT vendors and service providers</p>
         </div>
-        <Button asChild>
-          <Link href="/it/masters/vendors/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Vendor
-          </Link>
-        </Button>
+        <VendorActions />
       </div>
 
       {/* Stats */}

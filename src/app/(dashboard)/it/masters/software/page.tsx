@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Plus, Search, Package, Key, AlertCircle, CheckCircle } from 'lucide-react';
+import { Search, Package, Key, AlertCircle, CheckCircle } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -22,6 +22,7 @@ import {
 } from '@/components/ui';
 import { getSoftware } from '@/actions/assets';
 import { formatDate, getStatusColor } from '@/lib/utils';
+import { SoftwareActions } from '@/components/masters';
 
 // Revalidate every 2 minutes
 export const revalidate = 120;
@@ -45,12 +46,7 @@ export default async function SoftwarePage({
           <h1 className="page-title">Software Management</h1>
           <p className="page-description">Track software licenses and installations</p>
         </div>
-        <Button asChild>
-          <Link href="/it/masters/software/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Software
-          </Link>
-        </Button>
+        <SoftwareActions />
       </div>
 
       {/* Stats */}

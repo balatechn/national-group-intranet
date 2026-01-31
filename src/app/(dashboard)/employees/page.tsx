@@ -18,7 +18,10 @@ import {
   ChevronUp,
   User,
   Briefcase,
+  Upload,
+  Download,
 } from 'lucide-react';
+import { EmployeeActions } from '@/components/masters';
 
 interface Employee {
   id: string;
@@ -322,10 +325,11 @@ export default function EmployeeMasterPage() {
               Manage employees and view organizational hierarchy
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <span className="text-sm text-text-secondary">
               {filteredEmployees.length} employee{filteredEmployees.length !== 1 ? 's' : ''}
             </span>
+            <EmployeeActions />
           </div>
         </div>
       </div>

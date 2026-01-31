@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Plus, Search, Monitor, Server, Laptop, HardDrive, Filter } from 'lucide-react';
+import { Search, Monitor, Server, Laptop, HardDrive, Filter } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -22,6 +22,7 @@ import {
 } from '@/components/ui';
 import { getSystemAssets } from '@/actions/assets';
 import { formatDate, getStatusColor } from '@/lib/utils';
+import { SystemActions } from '@/components/masters';
 
 // Revalidate every 2 minutes
 export const revalidate = 120;
@@ -55,12 +56,7 @@ export default async function SystemAssetsPage({
           <h1 className="page-title">System Assets</h1>
           <p className="page-description">Manage hardware inventory and assignments</p>
         </div>
-        <Button asChild>
-          <Link href="/it/masters/systems/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Asset
-          </Link>
-        </Button>
+        <SystemActions />
       </div>
 
       {/* Stats */}

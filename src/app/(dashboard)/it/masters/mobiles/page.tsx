@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Plus, Search, Smartphone, Tablet, AlertCircle } from 'lucide-react';
+import { Search, Smartphone, Tablet, AlertCircle } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -22,6 +22,7 @@ import {
 } from '@/components/ui';
 import { getMobileDevices } from '@/actions/assets';
 import { formatDate, getStatusColor } from '@/lib/utils';
+import { MobileActions } from '@/components/masters';
 
 // Revalidate every 2 minutes
 export const revalidate = 120;
@@ -45,12 +46,7 @@ export default async function MobileDevicesPage({
           <h1 className="page-title">Mobile Devices</h1>
           <p className="page-description">Manage mobile phones and tablets inventory</p>
         </div>
-        <Button asChild>
-          <Link href="/it/masters/mobiles/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Device
-          </Link>
-        </Button>
+        <MobileActions />
       </div>
 
       {/* Stats */}

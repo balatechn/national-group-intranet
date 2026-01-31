@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Plus, Search, Users, Building2, MoreHorizontal, Mail, Phone } from 'lucide-react';
+import { Search, Users, Building2, MoreHorizontal, Mail, Phone, Plus } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -23,6 +23,7 @@ import {
 } from '@/components/ui';
 import { prisma } from '@/lib/db';
 import { getInitials } from '@/lib/utils';
+import { DepartmentActions } from '@/components/masters';
 
 // Revalidate every 60 seconds
 export const revalidate = 60;
@@ -90,12 +91,7 @@ export default async function DepartmentsPage({
           <h1 className="page-title">Departments</h1>
           <p className="page-description">Manage organizational departments and teams</p>
         </div>
-        <Button asChild>
-          <Link href="/departments/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Department
-          </Link>
-        </Button>
+        <DepartmentActions />
       </div>
 
       {/* Stats */}
