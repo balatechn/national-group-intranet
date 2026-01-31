@@ -324,3 +324,96 @@ export function getEventReminderEmail(
     `,
   };
 }
+
+export function getTaskReminderEmail(
+  userName: string,
+  taskTitle: string,
+  taskUrl: string,
+  dueDate?: string
+): { subject: string; html: string } {
+  return {
+    subject: `Task Reminder: ${taskTitle}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #070B47; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; background-color: #f8f9fa; }
+            .alert { background-color: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 4px; margin-bottom: 20px; }
+            .button { display: inline-block; background-color: #070B47; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin-top: 20px; }
+            .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>${APP_NAME}</h1>
+            </div>
+            <div class="content">
+              <h2>Hello ${userName},</h2>
+              <div class="alert">
+                <strong>⏰ Reminder:</strong> You have a task that needs your attention.
+              </div>
+              <h3 style="color: #070B47;">${taskTitle}</h3>
+              ${dueDate ? `<p><strong>Due Date:</strong> ${dueDate}</p>` : ''}
+              <a href="${taskUrl}" class="button">View Task</a>
+            </div>
+            <div class="footer">
+              <p>This is an automated message from ${APP_NAME}.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+  };
+}
+
+export function getTaskMentionEmail(
+  mentionedUserName: string,
+  mentionerName: string,
+  taskTitle: string,
+  commentContent: string,
+  taskUrl: string
+): { subject: string; html: string } {
+  return {
+    subject: `You were mentioned in a task: ${taskTitle}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #070B47; color: white; padding: 20px; text-align: center; }
+            .content { padding: 20px; background-color: #f8f9fa; }
+            .comment-box { background-color: white; padding: 15px; border-left: 4px solid #070B47; margin: 15px 0; }
+            .button { display: inline-block; background-color: #070B47; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin-top: 20px; }
+            .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>${APP_NAME}</h1>
+            </div>
+            <div class="content">
+              <h2>Hello ${mentionedUserName},</h2>
+              <p><strong>${mentionerName}</strong> mentioned you in a comment on task:</p>
+              <h3 style="color: #070B47;">${taskTitle}</h3>
+              <div class="comment-box">
+                <p>${commentContent.replace(/@\[([^\]]+)\]\([^)]+\)/g, '<strong>@$1</strong>')}</p>
+              </div>
+              <a href="${taskUrl}" class="button">View Task</a>
+            </div>
+            <div class="footer">
+              <p>This is an automated message from ${APP_NAME}.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `,
+  };
+}

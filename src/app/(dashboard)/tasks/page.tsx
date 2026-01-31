@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Plus, Search, CheckSquare, Filter, Calendar, User } from 'lucide-react';
+import { Plus, Search, CheckSquare, Filter, Calendar, User, LayoutGrid, List, BarChart3, FileText } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -49,12 +49,32 @@ export default async function TasksPage({
           <h1 className="page-title">Tasks</h1>
           <p className="page-description">Manage and track all tasks</p>
         </div>
-        <Button asChild>
-          <Link href="/tasks/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Create Task
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/tasks/board">
+              <LayoutGrid className="mr-2 h-4 w-4" />
+              Kanban
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/tasks/templates">
+              <FileText className="mr-2 h-4 w-4" />
+              Templates
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/tasks/reports">
+              <BarChart3 className="mr-2 h-4 w-4" />
+              Reports
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/tasks/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Task
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}

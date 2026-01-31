@@ -47,6 +47,15 @@ enum TaskStatus {
   CANCELLED
 }
 
+enum RecurrenceType {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
 enum ProjectStatus {
   PLANNED
   ACTIVE
@@ -200,6 +209,11 @@ model User {
   // Relations
   createdTasks       Task[]        @relation("TaskCreator")
   assignedTasks      Task[]        @relation("TaskAssignee")
+  taskComments       TaskComment[] @relation("TaskCommentAuthor")
+  taskTemplates      TaskTemplate[] @relation("TaskTemplateCreator")
+  taskAttachments    TaskAttachment[] @relation("TaskAttachmentUploader")
+  taskTimeEntries    TaskTimeEntry[] @relation("TaskTimeEntryUser")
+  taskMentions       TaskMention[] @relation("TaskMentionUser")
   
   createdTickets     ITTicket[]    @relation("TicketCreator")
   assignedTickets    ITTicket[]    @relation("TicketAssignee")
@@ -310,6 +324,7 @@ model Department {
   systemAssets  SystemAsset[]
   softwareAssets Software[]
   sharedFolders SharedFolder[]
+  taskTemplates TaskTemplate[]
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -335,6 +350,16 @@ model Task {
   estimatedHours Float?
   actualHours   Float?
   
+  // Recurrence fields
+  isRecurring     Boolean        @default(false)
+  recurrenceType  RecurrenceType?
+  recurrenceEnd   DateTime?
+  nextOccurrence  DateTime?
+  
+  // Reminder
+  reminderDate    DateTime?
+  reminderSent    Boolean        @default(false)
+  
   creatorId     String
   creator       User         @relation("TaskCreator", fields: [creatorId], references: [id])
   
@@ -354,7 +379,17 @@ model Task {
   parent        Task?        @relation("TaskSubtasks", fields: [parentId], references: [id])
   subtasks      Task[]       @relation("TaskSubtasks")
   
+  // Template relation
+  templateId    String?
+  template      TaskTemplate? @relation(fields: [templateId], references: [id])
+  
+  // Dependencies
+  dependsOn     TaskDependency[] @relation("DependentTask")
+  blockedTasks  TaskDependency[] @relation("BlockingTask")
+  
   comments      TaskComment[]
+  attachments   TaskAttachment[]
+  timeEntries   TaskTimeEntry[]
   
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
@@ -366,6 +401,8 @@ model Task {
   @@index([status])
   @@index([priority])
   @@index([dueDate])
+  @@index([isRecurring])
+  @@index([reminderDate])
 }
 
 model TaskComment {
@@ -376,12 +413,120 @@ model TaskComment {
   task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   
   authorId  String
+  author    User     @relation("TaskCommentAuthor", fields: [authorId], references: [id])
+  
+  // Mentions
+  mentions  TaskMention[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
   @@index([taskId])
   @@index([authorId])
+}
+
+// Task Templates
+model TaskTemplate {
+  id            String       @id @default(cuid())
+  name          String
+  description   String?      @db.Text
+  title         String       // Default task title
+  taskDescription String?    @db.Text
+  priority      TaskPriority @default(MEDIUM)
+  estimatedHours Float?
+  
+  creatorId     String
+  creator       User         @relation("TaskTemplateCreator", fields: [creatorId], references: [id])
+  
+  departmentId  String?
+  department    Department?  @relation(fields: [departmentId], references: [id])
+  
+  isActive      Boolean      @default(true)
+  tasks         Task[]
+  
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  
+  @@index([creatorId])
+  @@index([departmentId])
+  @@index([isActive])
+}
+
+// Task Attachments
+model TaskAttachment {
+  id          String   @id @default(cuid())
+  fileName    String
+  fileUrl     String
+  fileSize    Int
+  fileType    String
+  
+  taskId      String
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  uploadedById String
+  uploadedBy  User     @relation("TaskAttachmentUploader", fields: [uploadedById], references: [id])
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([taskId])
+  @@index([uploadedById])
+}
+
+// Task Dependencies
+model TaskDependency {
+  id              String   @id @default(cuid())
+  
+  dependentTaskId String
+  dependentTask   Task     @relation("DependentTask", fields: [dependentTaskId], references: [id], onDelete: Cascade)
+  
+  blockingTaskId  String
+  blockingTask    Task     @relation("BlockingTask", fields: [blockingTaskId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime @default(now())
+  
+  @@unique([dependentTaskId, blockingTaskId])
+  @@index([dependentTaskId])
+  @@index([blockingTaskId])
+}
+
+// Task Time Entries
+model TaskTimeEntry {
+  id          String   @id @default(cuid())
+  description String?
+  hours       Float
+  date        DateTime @default(now())
+  
+  taskId      String
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  userId      String
+  user        User     @relation("TaskTimeEntryUser", fields: [userId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([taskId])
+  @@index([userId])
+  @@index([date])
+}
+
+// Task Mentions (for @mentions in comments)
+model TaskMention {
+  id          String   @id @default(cuid())
+  
+  commentId   String
+  comment     TaskComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  
+  userId      String
+  user        User     @relation("TaskMentionUser", fields: [userId], references: [id])
+  
+  notified    Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  
+  @@unique([commentId, userId])
+  @@index([commentId])
+  @@index([userId])
 }
 
 // ==========================================
