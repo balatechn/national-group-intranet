@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, CheckSquare, Send, Calendar, User, Briefcase, Mail, Search, Users, Repeat, Clock, FileText } from 'lucide-react';
+import { ArrowLeft, CheckSquare, Send, Calendar, User, Briefcase, Mail, Search, Users } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -26,7 +26,7 @@ import {
   AvatarImage,
 } from '@/components/ui';
 import { createTaskSchema, type CreateTaskInput } from '@/validations';
-import { createTask, createRecurringTask, getTaskTemplates } from '@/actions/tasks';
+import { createTask } from '@/actions/tasks';
 import { getInitials } from '@/lib/utils';
 
 const priorities = [
@@ -42,15 +42,6 @@ const statuses = [
   { value: 'ON_HOLD', label: 'On Hold' },
 ];
 
-const recurrenceTypes = [
-  { value: 'DAILY', label: 'Daily' },
-  { value: 'WEEKLY', label: 'Weekly' },
-  { value: 'BIWEEKLY', label: 'Bi-weekly' },
-  { value: 'MONTHLY', label: 'Monthly' },
-  { value: 'QUARTERLY', label: 'Quarterly' },
-  { value: 'YEARLY', label: 'Yearly' },
-];
-
 interface UserOption {
   id: string;
   firstName: string;
@@ -60,20 +51,8 @@ interface UserOption {
   department: { name: string } | null;
 }
 
-interface TemplateOption {
-  id: string;
-  name: string;
-  description: string | null;
-  defaultTitle: string | null;
-  defaultDescription: string | null;
-  defaultPriority: string;
-  estimatedHours: number | null;
-}
-
 export default function CreateTaskPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const templateId = searchParams.get('template');
   const { data: session } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,20 +61,15 @@ export default function CreateTaskPage() {
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
-  const [templates, setTemplates] = useState<TemplateOption[]>([]);
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [recurrenceType, setRecurrenceType] = useState('WEEKLY');
-  const [recurrenceEnd, setRecurrenceEnd] = useState('');
 
   // Fetch users for assignment
   useEffect(() => {
     async function fetchData() {
       try {
-        const [usersRes, projectsRes, deptsRes, templatesResult] = await Promise.all([
+        const [usersRes, projectsRes, deptsRes] = await Promise.all([
           fetch('/api/employees?limit=100'),
           fetch('/api/projects?limit=100'),
           fetch('/api/departments?limit=100'),
-          getTaskTemplates(),
         ]);
         
         if (usersRes.ok) {
@@ -110,9 +84,6 @@ export default function CreateTaskPage() {
           const data = await deptsRes.json();
           setDepartments(data.departments || []);
         }
-        if (templatesResult) {
-          setTemplates(templatesResult as TemplateOption[]);
-        }
       } catch (err) {
         console.error('Failed to fetch data:', err);
       } finally {
@@ -121,19 +92,6 @@ export default function CreateTaskPage() {
     }
     fetchData();
   }, []);
-
-  // Apply template if specified in URL
-  useEffect(() => {
-    if (templateId && templates.length > 0) {
-      const template = templates.find(t => t.id === templateId);
-      if (template) {
-        if (template.defaultTitle) setValue('title', template.defaultTitle);
-        if (template.defaultDescription) setValue('description', template.defaultDescription);
-        if (template.defaultPriority) setValue('priority', template.defaultPriority as any);
-        if (template.estimatedHours) setValue('estimatedHours', template.estimatedHours);
-      }
-    }
-  }, [templateId, templates]);
 
   // Filter users based on search
   const filteredUsers = users.filter(user => {
@@ -176,21 +134,7 @@ export default function CreateTaskPage() {
     setError(null);
 
     try {
-      let result;
-      
-      if (isRecurring) {
-        // Create recurring task
-        result = await createRecurringTask(
-          {
-            ...data, 
-            recurrenceType: recurrenceType as 'DAILY' | 'WEEKLY' | 'BIWEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY',
-            recurrenceEnd: recurrenceEnd ? new Date(recurrenceEnd) : undefined
-          },
-          session.user.id
-        );
-      } else {
-        result = await createTask(data, session.user.id);
-      }
+      const result = await createTask(data, session.user.id);
       
       if (result) {
         router.push('/tasks');
@@ -479,52 +423,6 @@ export default function CreateTaskPage() {
                   </div>
                 </div>
 
-                {/* Recurring Task Section */}
-                <div className="form-group border-t pt-4">
-                  <div className="flex items-center gap-3 mb-4">
-                    <input
-                      type="checkbox"
-                      id="isRecurring"
-                      checked={isRecurring}
-                      onChange={(e) => setIsRecurring(e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                    />
-                    <Label htmlFor="isRecurring" className="flex items-center gap-2 cursor-pointer mb-0">
-                      <Repeat className="h-4 w-4" />
-                      Make this a recurring task
-                    </Label>
-                  </div>
-                  
-                  {isRecurring && (
-                    <div className="grid gap-4 sm:grid-cols-2 pl-7 animate-in fade-in slide-in-from-top-2">
-                      <div className="form-group">
-                        <Label>Repeat Every</Label>
-                        <Select value={recurrenceType} onValueChange={setRecurrenceType}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select frequency" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {recurrenceTypes.map((type) => (
-                              <SelectItem key={type.value} value={type.value}>
-                                {type.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="form-group">
-                        <Label htmlFor="recurrenceEnd">End Date (Optional)</Label>
-                        <Input
-                          id="recurrenceEnd"
-                          type="date"
-                          value={recurrenceEnd}
-                          onChange={(e) => setRecurrenceEnd(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-
                 {/* Submit Button */}
                 <div className="flex justify-end gap-3 pt-4 border-t">
                   <Button type="button" variant="outline" asChild>
@@ -542,41 +440,6 @@ export default function CreateTaskPage() {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Templates */}
-          {templates.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Quick Templates
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {templates.slice(0, 5).map((template) => (
-                  <button
-                    key={template.id}
-                    type="button"
-                    className="w-full text-left p-2 rounded-md border hover:bg-surface-100 transition-colors"
-                    onClick={() => {
-                      if (template.defaultTitle) setValue('title', template.defaultTitle);
-                      if (template.defaultDescription) setValue('description', template.defaultDescription);
-                      if (template.defaultPriority) setValue('priority', template.defaultPriority as any);
-                      if (template.estimatedHours) setValue('estimatedHours', template.estimatedHours);
-                    }}
-                  >
-                    <p className="font-medium text-sm">{template.name}</p>
-                    {template.description && (
-                      <p className="text-xs text-text-muted truncate">{template.description}</p>
-                    )}
-                  </button>
-                ))}
-                <Link href="/tasks/templates" className="text-xs text-primary hover:underline block text-center pt-2">
-                  View all templates →
-                </Link>
-              </CardContent>
-            </Card>
-          )}
-          
           {/* Priority Guide */}
           <Card>
             <CardHeader>

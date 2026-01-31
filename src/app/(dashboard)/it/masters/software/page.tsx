@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Search, Package, Key, AlertCircle, CheckCircle } from 'lucide-react';
+import { Search, Package, Key, AlertCircle, CheckCircle, Plus } from 'lucide-react';
 import {
   Card,
   CardContent,

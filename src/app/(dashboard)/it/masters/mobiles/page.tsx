@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Search, Smartphone, Tablet, AlertCircle } from 'lucide-react';
+import { Search, Smartphone, Tablet, AlertCircle, Plus } from 'lucide-react';
 import {
   Card,
   CardContent,

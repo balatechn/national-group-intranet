@@ -253,6 +253,19 @@ export async function deleteTaskComment(commentId: string, taskId: string) {
   return { success: true };
 }
 
+// Alias for cleaner imports
+export const addComment = addTaskComment;
+
+export async function getComments(taskId: string) {
+  return prisma.taskComment.findMany({
+    where: { taskId },
+    include: {
+      author: { select: { id: true, firstName: true, lastName: true, avatar: true } },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+}
+
 // ==========================================
 // TASK TEMPLATES (Simplified)
 // ==========================================

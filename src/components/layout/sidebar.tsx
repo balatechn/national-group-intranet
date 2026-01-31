@@ -41,17 +41,7 @@ const navigation: NavItem[] = [
   { title: 'Departments', href: '/departments', icon: Users },
   { title: 'Employees', href: '/employees', icon: UserCircle },
   { title: 'Calendar', href: '/calendar', icon: Calendar },
-  {
-    title: 'Tasks',
-    href: '/tasks',
-    icon: CheckSquare,
-    children: [
-      { title: 'All Tasks', href: '/tasks', icon: CheckSquare },
-      { title: 'Kanban Board', href: '/tasks/board', icon: ClipboardList },
-      { title: 'Templates', href: '/tasks/templates', icon: FileText },
-      { title: 'Reports', href: '/tasks/reports', icon: BarChart3 },
-    ],
-  },
+  { title: 'Tasks', href: '/tasks', icon: CheckSquare },
   { title: 'Shared Drives', href: '/drives', icon: FolderOpen },
   { title: 'Projects', href: '/projects', icon: Briefcase },
   { title: 'Policies', href: '/policies', icon: FileText },

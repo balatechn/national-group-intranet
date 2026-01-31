@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Search, Monitor, Server, Laptop, HardDrive, Filter } from 'lucide-react';
+import { Search, Monitor, Server, Laptop, HardDrive, Filter, Plus } from 'lucide-react';
 import {
   Card,
   CardContent,

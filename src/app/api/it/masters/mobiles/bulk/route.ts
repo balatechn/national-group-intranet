@@ -52,15 +52,13 @@ export async function POST(request: NextRequest) {
         });
 
         const mobileData = {
-          name: row.name,
-          type: type as any,
+          deviceType: type,
           manufacturer: row.manufacturer || null,
           model: row.model || null,
           serialNumber: row.serialNumber || null,
           imei: row.imei || null,
-          phoneNumber: row.phoneNumber || null,
-          carrier: row.carrier || null,
-          operatingSystem: row.operatingSystem || null,
+          mobileNumber: row.phoneNumber || null,
+          operator: row.carrier || null,
           purchaseDate: row.purchaseDate ? new Date(row.purchaseDate) : null,
           warrantyExpiry: row.warrantyExpiry ? new Date(row.warrantyExpiry) : null,
           purchasePrice: row.purchasePrice ? parseFloat(row.purchasePrice) : null,

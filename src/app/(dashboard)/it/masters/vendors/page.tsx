@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Search, Building2, Phone, Mail, Globe, MapPin, Star } from 'lucide-react';
+import { Search, Building2, Phone, Mail, Globe, MapPin, Star, Plus } from 'lucide-react';
 import {
   Card,
   CardContent,
