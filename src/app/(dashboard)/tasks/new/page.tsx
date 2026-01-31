@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, CheckSquare, Send, Calendar, User, Briefcase } from 'lucide-react';
+import { ArrowLeft, CheckSquare, Send, Calendar, User, Briefcase, Mail, Search, Users } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -21,9 +21,13 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
 } from '@/components/ui';
 import { createTaskSchema, type CreateTaskInput } from '@/validations';
 import { createTask } from '@/actions/tasks';
+import { getInitials } from '@/lib/utils';
 
 const priorities = [
   { value: 'LOW', label: 'Low', description: 'No urgency, can be done when time permits', color: 'bg-gray-100 text-gray-700' },
@@ -38,11 +42,64 @@ const statuses = [
   { value: 'ON_HOLD', label: 'On Hold' },
 ];
 
+interface UserOption {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  avatar: string | null;
+  department: { name: string } | null;
+}
+
 export default function CreateTaskPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [users, setUsers] = useState<UserOption[]>([]);
+  const [userSearch, setUserSearch] = useState('');
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
+
+  // Fetch users for assignment
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [usersRes, projectsRes, deptsRes] = await Promise.all([
+          fetch('/api/employees?limit=100'),
+          fetch('/api/projects?limit=100'),
+          fetch('/api/departments?limit=100'),
+        ]);
+        
+        if (usersRes.ok) {
+          const data = await usersRes.json();
+          setUsers(data.employees || []);
+        }
+        if (projectsRes.ok) {
+          const data = await projectsRes.json();
+          setProjects(data.projects || []);
+        }
+        if (deptsRes.ok) {
+          const data = await deptsRes.json();
+          setDepartments(data.departments || []);
+        }
+      } catch (err) {
+        console.error('Failed to fetch data:', err);
+      } finally {
+        setIsLoadingUsers(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  // Filter users based on search
+  const filteredUsers = users.filter(user => {
+    const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+    const email = user.email.toLowerCase();
+    const search = userSearch.toLowerCase();
+    return fullName.includes(search) || email.includes(search);
+  });
 
   const {
     register,
@@ -60,6 +117,12 @@ export default function CreateTaskPage() {
 
   const selectedPriority = watch('priority');
   const selectedStatus = watch('status');
+  const selectedAssigneeId = watch('assigneeId');
+  const selectedProjectId = watch('projectId');
+  const selectedDepartmentId = watch('departmentId');
+
+  // Get selected user details for display
+  const selectedUser = users.find(u => u.id === selectedAssigneeId);
 
   const onSubmit = async (data: CreateTaskInput) => {
     if (!session?.user?.id) {
@@ -149,6 +212,135 @@ export default function CreateTaskPage() {
                     placeholder="Describe the task in detail, including any specific requirements or acceptance criteria"
                     {...register('description')}
                   />
+                </div>
+
+                {/* Assign To Section */}
+                <div className="form-group">
+                  <Label className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Assign To
+                  </Label>
+                  <p className="text-xs text-text-muted mb-2">
+                    Select an employee to assign this task. They will receive an email notification.
+                  </p>
+                  <Select
+                    value={selectedAssigneeId || ''}
+                    onValueChange={(value) => setValue('assigneeId', value || null)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Search and select assignee...">
+                        {selectedUser && (
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={selectedUser.avatar || ''} />
+                              <AvatarFallback className="text-xs">
+                                {getInitials(`${selectedUser.firstName} ${selectedUser.lastName}`)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span>{selectedUser.firstName} {selectedUser.lastName}</span>
+                            <span className="text-text-muted text-xs">({selectedUser.email})</span>
+                          </div>
+                        )}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <div className="px-2 py-1.5">
+                        <div className="relative">
+                          <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+                          <input
+                            type="text"
+                            placeholder="Search by name or email..."
+                            className="w-full rounded border border-border bg-white py-1.5 pl-8 pr-2 text-sm focus:border-primary focus:outline-none"
+                            value={userSearch}
+                            onChange={(e) => setUserSearch(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      </div>
+                      <SelectItem value="">
+                        <span className="text-text-muted">Unassigned</span>
+                      </SelectItem>
+                      {isLoadingUsers ? (
+                        <div className="p-2 text-center text-sm text-text-muted">Loading employees...</div>
+                      ) : filteredUsers.length === 0 ? (
+                        <div className="p-2 text-center text-sm text-text-muted">No employees found</div>
+                      ) : (
+                        filteredUsers.map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage src={user.avatar || ''} />
+                                <AvatarFallback className="text-xs">
+                                  {getInitials(`${user.firstName} ${user.lastName}`)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex flex-col">
+                                <span className="font-medium">{user.firstName} {user.lastName}</span>
+                                <span className="text-xs text-text-muted">{user.email}</span>
+                              </div>
+                            </div>
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {selectedUser && (
+                    <div className="mt-2 flex items-center gap-2 rounded-md bg-primary-50 p-2 text-sm">
+                      <Mail className="h-4 w-4 text-primary" />
+                      <span>Email notification will be sent to: <strong>{selectedUser.email}</strong></span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Project and Department Row */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {/* Project */}
+                  <div className="form-group">
+                    <Label className="flex items-center gap-2">
+                      <Briefcase className="h-4 w-4" />
+                      Project
+                    </Label>
+                    <Select
+                      value={selectedProjectId || ''}
+                      onValueChange={(value) => setValue('projectId', value || null)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select project (optional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">No project</SelectItem>
+                        {projects.map((project) => (
+                          <SelectItem key={project.id} value={project.id}>
+                            {project.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Department */}
+                  <div className="form-group">
+                    <Label className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      Department
+                    </Label>
+                    <Select
+                      value={selectedDepartmentId || ''}
+                      onValueChange={(value) => setValue('departmentId', value || null)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select department (optional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">No department</SelectItem>
+                        {departments.map((dept) => (
+                          <SelectItem key={dept.id} value={dept.id}>
+                            {dept.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 {/* Priority and Status Row */}
