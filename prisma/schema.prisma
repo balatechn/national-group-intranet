@@ -280,6 +280,11 @@ model Company {
   taxId         String?
   isActive      Boolean  @default(true)
   
+  // Parent-Child Hierarchy
+  parentId      String?
+  parent        Company?  @relation("CompanyHierarchy", fields: [parentId], references: [id])
+  subsidiaries  Company[] @relation("CompanyHierarchy")
+  
   // Relations
   departments   Department[]
   users         User[]
@@ -296,6 +301,7 @@ model Company {
   
   @@index([code])
   @@index([isActive])
+  @@index([parentId])
 }
 
 model Department {

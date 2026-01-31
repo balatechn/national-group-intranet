@@ -31,11 +31,18 @@ export async function getCompanies(options?: {
     prisma.company.findMany({
       where,
       include: {
+        parent: {
+          select: { id: true, name: true, code: true },
+        },
+        subsidiaries: {
+          select: { id: true, name: true, code: true },
+        },
         _count: {
           select: {
             departments: true,
             users: true,
             projects: true,
+            subsidiaries: true,
           },
         },
       },
@@ -57,10 +64,71 @@ export async function getCompanies(options?: {
   };
 }
 
+// Get companies in hierarchical structure (parent with children nested)
+export async function getCompanyHierarchy() {
+  // Get all parent companies (no parentId) with their subsidiaries
+  const parentCompanies = await prisma.company.findMany({
+    where: {
+      parentId: null,
+      isActive: true,
+    },
+    include: {
+      subsidiaries: {
+        where: { isActive: true },
+        include: {
+          _count: {
+            select: {
+              departments: true,
+              users: true,
+              projects: true,
+            },
+          },
+        },
+        orderBy: { name: 'asc' },
+      },
+      _count: {
+        select: {
+          departments: true,
+          users: true,
+          projects: true,
+          subsidiaries: true,
+        },
+      },
+    },
+    orderBy: { name: 'asc' },
+  });
+
+  return parentCompanies;
+}
+
+// Get all companies for dropdown (flat list)
+export async function getAllCompaniesFlat() {
+  return prisma.company.findMany({
+    where: { isActive: true },
+    select: {
+      id: true,
+      name: true,
+      code: true,
+      parentId: true,
+    },
+    orderBy: { name: 'asc' },
+  });
+}
+
 export async function getCompanyById(id: string) {
   return prisma.company.findUnique({
     where: { id },
     include: {
+      parent: {
+        select: { id: true, name: true, code: true },
+      },
+      subsidiaries: {
+        where: { isActive: true },
+        include: {
+          _count: { select: { users: true, departments: true } },
+        },
+        orderBy: { name: 'asc' },
+      },
       departments: {
         include: {
           head: { select: { id: true, firstName: true, lastName: true } },
@@ -73,33 +141,51 @@ export async function getCompanyById(id: string) {
           projects: true,
           systemAssets: true,
           softwareAssets: true,
+          subsidiaries: true,
         },
       },
     },
   });
 }
 
-export async function createCompany(data: CreateCompanyInput) {
+export async function createCompany(data: CreateCompanyInput & { parentId?: string }) {
   const validated = createCompanySchema.parse(data);
 
   const company = await prisma.company.create({
-    data: validated,
+    data: {
+      ...validated,
+      parentId: data.parentId || null,
+    },
   });
 
   revalidatePath('/companies');
   return { success: true, company };
 }
 
-export async function updateCompany(id: string, data: UpdateCompanyInput) {
+export async function updateCompany(id: string, data: UpdateCompanyInput & { parentId?: string | null }) {
   const validated = updateCompanySchema.parse(data);
 
   const company = await prisma.company.update({
     where: { id },
-    data: validated,
+    data: {
+      ...validated,
+      parentId: data.parentId !== undefined ? data.parentId : undefined,
+    },
   });
 
   revalidatePath('/companies');
   revalidatePath(`/companies/${id}`);
+  return { success: true, company };
+}
+
+// Set parent company for a subsidiary
+export async function setParentCompany(companyId: string, parentId: string | null) {
+  const company = await prisma.company.update({
+    where: { id: companyId },
+    data: { parentId },
+  });
+
+  revalidatePath('/companies');
   return { success: true, company };
 }
 
