@@ -181,6 +181,8 @@ export default function LoginPage() {
               width={64}
               height={64}
               className="object-contain"
+              priority
+              unoptimized
             />
           </div>
           <h1 className="text-2xl font-bold text-white drop-shadow-md">National Group</h1>

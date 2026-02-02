@@ -171,6 +171,8 @@ export function Sidebar() {
               width={40}
               height={40}
               className="object-contain"
+              priority
+              unoptimized
             />
             <span className="text-lg font-bold text-primary">National Group</span>
           </Link>
