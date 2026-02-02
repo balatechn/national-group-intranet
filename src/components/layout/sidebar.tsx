@@ -167,7 +167,7 @@ export function Sidebar() {
           <Link href="/dashboard" className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/national-logo.png"
+              src="/logo.png"
               alt="National Group"
               width={40}
               height={40}
