@@ -175,14 +175,13 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-xl bg-white shadow-lg p-2">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/national-logo.png"
               alt="National Group"
               width={64}
               height={64}
               className="object-contain"
-              priority
-              unoptimized
             />
           </div>
           <h1 className="text-2xl font-bold text-white drop-shadow-md">National Group</h1>

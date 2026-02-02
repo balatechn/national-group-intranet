@@ -165,14 +165,13 @@ export function Sidebar() {
         {/* Logo */}
         <div className="flex h-16 items-center border-b border-primary/20 px-6 bg-gradient-to-r from-primary-50 to-white">
           <Link href="/dashboard" className="flex items-center gap-3">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/national-logo.png"
               alt="National Group"
               width={40}
               height={40}
               className="object-contain"
-              priority
-              unoptimized
             />
             <span className="text-lg font-bold text-primary">National Group</span>
           </Link>
