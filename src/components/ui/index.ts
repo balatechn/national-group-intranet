@@ -55,3 +55,4 @@ export {
   TableCell,
   TableCaption,
 } from './table';
+export { CompanyLogo } from './company-logo';
