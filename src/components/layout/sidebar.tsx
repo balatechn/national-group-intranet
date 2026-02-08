@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { CompanyLogo } from '@/components/ui/company-logo';
 import {
   Home,
   Building2,
@@ -166,7 +166,14 @@ export function Sidebar() {
         {/* Logo */}
         <div className="flex h-16 items-center border-b border-primary/20 px-6 bg-gradient-to-r from-primary-50 to-white">
           <Link href="/dashboard" className="flex items-center gap-3">
-            <CompanyLogo width={40} height={40} className="object-contain" />
+            <Image
+              src="/national-logo.png"
+              alt="National Group"
+              width={40}
+              height={40}
+              className="object-contain"
+              priority
+            />
             <span className="text-lg font-bold text-primary">National Group</span>
           </Link>
         </div>

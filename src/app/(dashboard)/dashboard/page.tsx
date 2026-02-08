@@ -1,4 +1,8 @@
 import Link from 'next/link';
+import Image from 'next/image';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/db';
 import {
   Building2,
   Users,
@@ -24,6 +28,10 @@ import {
   Star,
   TrendingUp,
   Zap,
+  Activity,
+  Target,
+  ClipboardList,
+  Sparkles,
 } from 'lucide-react';
 import {
   Card,
@@ -37,7 +45,93 @@ import {
 // Revalidate every 60 seconds for fresh data
 export const revalidate = 60;
 
-// Quick Access Apps - SharePoint style
+// Fetch real dashboard stats
+async function getDashboardStats() {
+  const [
+    totalEmployees,
+    activeEmployees,
+    totalCompanies,
+    totalDepartments,
+    totalTasks,
+    completedTasks,
+    inProgressTasks,
+    overdueTasks,
+    openTickets,
+    totalTickets,
+    totalProjects,
+    activeProjects,
+    pendingRequests,
+    recentTasks,
+    recentTickets,
+  ] = await Promise.all([
+    prisma.user.count(),
+    prisma.user.count({ where: { status: 'ACTIVE' } }),
+    prisma.company.count(),
+    prisma.department.count(),
+    prisma.task.count(),
+    prisma.task.count({ where: { status: 'COMPLETED' } }),
+    prisma.task.count({ where: { status: 'IN_PROGRESS' } }),
+    prisma.task.count({
+      where: {
+        status: { notIn: ['COMPLETED', 'CANCELLED'] },
+        dueDate: { lt: new Date() },
+      },
+    }),
+    prisma.iTTicket.count({ where: { status: { notIn: ['RESOLVED', 'CLOSED'] } } }),
+    prisma.iTTicket.count(),
+    prisma.project.count(),
+    prisma.project.count({ where: { status: 'ACTIVE' } }),
+    prisma.iTRequest.count({ where: { status: 'PENDING_APPROVAL' } }),
+    prisma.task.findMany({
+      take: 5,
+      orderBy: { updatedAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        priority: true,
+        updatedAt: true,
+        assignee: { select: { firstName: true, lastName: true, avatar: true } },
+      },
+    }),
+    prisma.iTTicket.findMany({
+      take: 5,
+      orderBy: { updatedAt: 'desc' },
+      select: {
+        id: true,
+        ticketNumber: true,
+        subject: true,
+        status: true,
+        priority: true,
+        updatedAt: true,
+        creator: { select: { firstName: true, lastName: true } },
+      },
+    }),
+  ]);
+
+  const taskCompletionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  return {
+    totalEmployees,
+    activeEmployees,
+    totalCompanies,
+    totalDepartments,
+    totalTasks,
+    completedTasks,
+    inProgressTasks,
+    overdueTasks,
+    openTickets,
+    totalTickets,
+    totalProjects,
+    activeProjects,
+    pendingRequests,
+    taskCompletionRate,
+    recentTasks,
+    recentTickets,
+  };
+}
+
+// Quick Access Apps
 const quickAccessApps = [
   { title: 'IT Helpdesk', href: '/it', icon: Monitor, color: 'bg-blue-500', description: 'Tickets & Requests' },
   { title: 'Projects', href: '/projects', icon: Briefcase, color: 'bg-purple-500', description: 'Manage Projects' },
@@ -49,163 +143,258 @@ const quickAccessApps = [
   { title: 'Reports', href: '/it/reports', icon: BarChart3, color: 'bg-indigo-500', description: 'Analytics' },
 ];
 
-// News/Announcements
-const newsItems = [
-  {
-    id: 1,
-    title: 'System Maintenance Scheduled for February 5th',
-    excerpt: 'The intranet will undergo scheduled maintenance on Feb 5th from 10 PM to 2 AM IST. Please save your work before the maintenance window.',
-    category: 'IT Update',
-    date: 'Jan 30, 2026',
-    author: 'IT Department',
-    priority: 'high',
-  },
-  {
-    id: 2,
-    title: 'New Leave Policy Effective February 1st',
-    excerpt: 'We are pleased to announce updates to our leave policy including additional flexibility for remote work arrangements.',
-    category: 'HR Update',
-    date: 'Jan 29, 2026',
-    author: 'HR Team',
-    priority: 'normal',
-  },
-  {
-    id: 3,
-    title: 'Welcome Our New Team Members',
-    excerpt: 'Please join us in welcoming 12 new colleagues who joined National Group this month across IT, Finance, and Operations.',
-    category: 'Company News',
-    date: 'Jan 28, 2026',
-    author: 'Communications',
-    priority: 'normal',
-  },
-  {
-    id: 4,
-    title: 'Q4 2025 Results - Record Growth Achieved',
-    excerpt: 'National Group has achieved record growth in Q4 2025, exceeding targets by 15%. Thank you to all teams for your dedication.',
-    category: 'Business',
-    date: 'Jan 27, 2026',
-    author: 'Leadership Team',
-    priority: 'normal',
-  },
-];
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good Morning';
+  if (hour < 17) return 'Good Afternoon';
+  return 'Good Evening';
+}
 
-// Upcoming Events
-const upcomingEvents = [
-  {
-    id: 1,
-    title: 'Monthly Town Hall Meeting',
-    date: 'Feb 1',
-    time: '10:00 AM',
-    location: 'Main Conference Hall',
-  },
-  {
-    id: 2,
-    title: 'IT Security Awareness Training',
-    date: 'Feb 3',
-    time: '2:00 PM',
-    location: 'Training Room 2',
-  },
-  {
-    id: 3,
-    title: 'Project Alpha Review',
-    date: 'Feb 5',
-    time: '11:00 AM',
-    location: 'Meeting Room A',
-  },
-  {
-    id: 4,
-    title: 'Birthday Celebrations - February',
-    date: 'Feb 7',
-    time: '4:00 PM',
-    location: 'Cafeteria',
-  },
-];
+function getStatusColor(status: string) {
+  const colors: Record<string, string> = {
+    COMPLETED: 'bg-green-100 text-green-700',
+    IN_PROGRESS: 'bg-blue-100 text-blue-700',
+    PENDING: 'bg-yellow-100 text-yellow-700',
+    TODO: 'bg-gray-100 text-gray-700',
+    OPEN: 'bg-blue-100 text-blue-700',
+    RESOLVED: 'bg-green-100 text-green-700',
+    CLOSED: 'bg-gray-100 text-gray-700',
+    CANCELLED: 'bg-red-100 text-red-700',
+  };
+  return colors[status] || 'bg-gray-100 text-gray-700';
+}
 
-// Recent Documents
-const recentDocuments = [
-  { name: 'Q4 Financial Report.xlsx', modified: '2 hours ago', type: 'excel' },
-  { name: 'IT Policy 2026.pdf', modified: 'Yesterday', type: 'pdf' },
-  { name: 'Project Proposal.docx', modified: '2 days ago', type: 'word' },
-  { name: 'Employee Handbook.pdf', modified: '3 days ago', type: 'pdf' },
-];
+function getPriorityColor(priority: string) {
+  const colors: Record<string, string> = {
+    CRITICAL: 'bg-red-500',
+    HIGH: 'bg-orange-500',
+    MEDIUM: 'bg-yellow-500',
+    LOW: 'bg-green-500',
+  };
+  return colors[priority] || 'bg-gray-500';
+}
 
-// Frequent Sites
-const frequentSites = [
-  { name: 'IT Department', href: '/it', icon: Monitor },
-  { name: 'HR Portal', href: '/policies', icon: Users },
-  { name: 'Finance Team', href: '/departments', icon: Building2 },
-  { name: 'Project Hub', href: '/projects', icon: Briefcase },
-];
+function timeAgo(date: Date) {
+  const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
 
-// Activity Feed
-const activityFeed = [
-  { user: 'Priya Sharma', action: 'created a new IT ticket', time: '5 minutes ago', icon: Ticket },
-  { user: 'Rahul Kumar', action: 'completed task "Update Documentation"', time: '15 minutes ago', icon: CheckSquare },
-  { user: 'Amit Patel', action: 'uploaded new policy document', time: '1 hour ago', icon: FileText },
-  { user: 'Sneha Reddy', action: 'scheduled a meeting for Feb 3', time: '2 hours ago', icon: Calendar },
-];
+export default async function DashboardPage() {
+  const [session, stats] = await Promise.all([
+    getServerSession(authOptions),
+    getDashboardStats(),
+  ]);
 
-export default function DashboardPage() {
+  const firstName = session?.user?.firstName || session?.user?.name?.split(' ')[0] || 'User';
+  const role = session?.user?.role || 'EMPLOYEE';
+  const greeting = getGreeting();
+
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('en-IN', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
   return (
     <div className="space-y-8 -mt-4">
-      {/* Hero Banner - SharePoint Style */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary via-primary-600 to-secondary p-8 text-white">
-        <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-10" />
+      {/* Hero Banner */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] p-8 text-white">
+        {/* Decorative background elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-gradient-to-br from-primary/30 to-secondary/20 blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-gradient-to-tr from-blue-500/20 to-primary/10 blur-3xl" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
+          {/* Grid pattern */}
+          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
+        </div>
+
         <div className="relative z-10">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-            <div className="max-w-2xl">
-              <h1 className="text-3xl font-bold mb-2">Welcome to National Group Intranet</h1>
-              <p className="text-white/90 text-lg">
-                Your central hub for company news, resources, and collaboration. Stay connected with your team.
-              </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Button className="bg-white text-primary hover:bg-white/90">
-                  <Search className="mr-2 h-4 w-4" />
-                  Search Portal
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
+            {/* Left: Greeting & Actions */}
+            <div className="max-w-2xl space-y-4">
+              <div className="flex items-center gap-3 mb-1">
+                <Image
+                  src="/national-logo.png"
+                  alt="National Group"
+                  width={44}
+                  height={44}
+                  className="rounded-lg border border-white/20 bg-white/10 p-1"
+                />
+                <div>
+                  <p className="text-sm text-white/60 font-medium tracking-wide uppercase">{dateStr}</p>
+                </div>
+              </div>
+              <div>
+                <h1 className="text-3xl lg:text-4xl font-bold mb-2">
+                  {greeting}, <span className="bg-gradient-to-r from-[#DAA520] to-[#F4C430] bg-clip-text text-transparent">{firstName}</span> 
+                  <Sparkles className="inline-block ml-2 h-7 w-7 text-yellow-400" />
+                </h1>
+                <p className="text-white/70 text-lg">
+                  Welcome to National Group Intranet — your central hub for collaboration and productivity.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3 pt-2">
+                <Button className="bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 shadow-lg shadow-primary/25 border-0" asChild>
+                  <Link href="/tasks/new">
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Task
+                  </Link>
                 </Button>
-                <Button variant="outline" className="border-white/30 text-white hover:bg-white/10">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create New
+                <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 backdrop-blur-sm" asChild>
+                  <Link href="/it/tickets/new">
+                    <Ticket className="mr-2 h-4 w-4" />
+                    Raise Ticket
+                  </Link>
+                </Button>
+                <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 backdrop-blur-sm" asChild>
+                  <Link href="/it/requests/new">
+                    <ClipboardList className="mr-2 h-4 w-4" />
+                    IT Request
+                  </Link>
                 </Button>
               </div>
             </div>
-            <div className="hidden lg:block">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="rounded-xl bg-white/10 backdrop-blur-sm p-4 text-center">
-                  <p className="text-3xl font-bold">247</p>
-                  <p className="text-sm text-white/80">Employees</p>
+
+            {/* Right: Live Stats Grid */}
+            <div className="grid grid-cols-2 gap-3 lg:min-w-[320px]">
+              <Link href="/employees" className="group rounded-xl bg-white/[0.08] backdrop-blur-md border border-white/10 p-4 text-center transition-all hover:bg-white/[0.15] hover:border-white/20 hover:scale-[1.02]">
+                <div className="flex items-center justify-center mb-2">
+                  <div className="rounded-lg bg-blue-500/20 p-2">
+                    <Users className="h-5 w-5 text-blue-400" />
+                  </div>
                 </div>
-                <div className="rounded-xl bg-white/10 backdrop-blur-sm p-4 text-center">
-                  <p className="text-3xl font-bold">5</p>
-                  <p className="text-sm text-white/80">Companies</p>
+                <p className="text-2xl lg:text-3xl font-bold">{stats.activeEmployees}</p>
+                <p className="text-xs text-white/60 mt-1">Active Employees</p>
+              </Link>
+              <Link href="/companies" className="group rounded-xl bg-white/[0.08] backdrop-blur-md border border-white/10 p-4 text-center transition-all hover:bg-white/[0.15] hover:border-white/20 hover:scale-[1.02]">
+                <div className="flex items-center justify-center mb-2">
+                  <div className="rounded-lg bg-purple-500/20 p-2">
+                    <Building2 className="h-5 w-5 text-purple-400" />
+                  </div>
                 </div>
-                <div className="rounded-xl bg-white/10 backdrop-blur-sm p-4 text-center">
-                  <p className="text-3xl font-bold">34</p>
-                  <p className="text-sm text-white/80">Active Tasks</p>
+                <p className="text-2xl lg:text-3xl font-bold">{stats.totalCompanies}</p>
+                <p className="text-xs text-white/60 mt-1">Companies</p>
+              </Link>
+              <Link href="/tasks" className="group rounded-xl bg-white/[0.08] backdrop-blur-md border border-white/10 p-4 text-center transition-all hover:bg-white/[0.15] hover:border-white/20 hover:scale-[1.02]">
+                <div className="flex items-center justify-center mb-2">
+                  <div className="rounded-lg bg-green-500/20 p-2">
+                    <CheckSquare className="h-5 w-5 text-green-400" />
+                  </div>
                 </div>
-                <div className="rounded-xl bg-white/10 backdrop-blur-sm p-4 text-center">
-                  <p className="text-3xl font-bold">12</p>
-                  <p className="text-sm text-white/80">Open Tickets</p>
+                <p className="text-2xl lg:text-3xl font-bold">{stats.inProgressTasks}</p>
+                <p className="text-xs text-white/60 mt-1">Active Tasks</p>
+              </Link>
+              <Link href="/it/tickets" className="group rounded-xl bg-white/[0.08] backdrop-blur-md border border-white/10 p-4 text-center transition-all hover:bg-white/[0.15] hover:border-white/20 hover:scale-[1.02]">
+                <div className="flex items-center justify-center mb-2">
+                  <div className="rounded-lg bg-orange-500/20 p-2">
+                    <Ticket className="h-5 w-5 text-orange-400" />
+                  </div>
                 </div>
-              </div>
+                <p className="text-2xl lg:text-3xl font-bold">{stats.openTickets}</p>
+                <p className="text-xs text-white/60 mt-1">Open Tickets</p>
+              </Link>
             </div>
           </div>
         </div>
-        {/* Decorative elements */}
-        <div className="absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-        <div className="absolute -top-10 -left-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
       </div>
 
-      {/* Quick Access Apps - SharePoint App Launcher Style */}
+      {/* Stats Overview Cards */}
+      <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <Card className="border-l-4 border-l-blue-500 hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold text-text-primary">{stats.totalDepartments}</p>
+                <p className="text-xs text-text-muted mt-1">Departments</p>
+              </div>
+              <div className="rounded-lg bg-blue-50 p-2.5">
+                <Users className="h-5 w-5 text-blue-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-green-500 hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold text-text-primary">{stats.completedTasks}</p>
+                <p className="text-xs text-text-muted mt-1">Completed Tasks</p>
+              </div>
+              <div className="rounded-lg bg-green-50 p-2.5">
+                <Target className="h-5 w-5 text-green-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-red-500 hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold text-text-primary">{stats.overdueTasks}</p>
+                <p className="text-xs text-text-muted mt-1">Overdue Tasks</p>
+              </div>
+              <div className="rounded-lg bg-red-50 p-2.5">
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-purple-500 hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold text-text-primary">{stats.activeProjects}</p>
+                <p className="text-xs text-text-muted mt-1">Active Projects</p>
+              </div>
+              <div className="rounded-lg bg-purple-50 p-2.5">
+                <Briefcase className="h-5 w-5 text-purple-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-orange-500 hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold text-text-primary">{stats.pendingRequests}</p>
+                <p className="text-xs text-text-muted mt-1">Pending Requests</p>
+              </div>
+              <div className="rounded-lg bg-orange-50 p-2.5">
+                <ClipboardList className="h-5 w-5 text-orange-500" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-l-4 border-l-primary hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-2xl font-bold text-text-primary">{stats.taskCompletionRate}%</p>
+                <p className="text-xs text-text-muted mt-1">Completion Rate</p>
+              </div>
+              <div className="rounded-lg bg-primary-100 p-2.5">
+                <Activity className="h-5 w-5 text-primary" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
+      {/* Quick Access Apps */}
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-text-primary flex items-center gap-2">
             <Zap className="h-5 w-5 text-primary" />
             Quick Access
           </h2>
-          <Link href="#" className="text-sm text-primary hover:underline flex items-center gap-1">
-            See all <ChevronRight className="h-4 w-4" />
-          </Link>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
           {quickAccessApps.map((app) => {
@@ -231,237 +420,220 @@ export default function DashboardPage() {
 
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* News Section - SharePoint News Web Part Style */}
-        <section className="lg:col-span-2">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-text-primary flex items-center gap-2">
-              <Megaphone className="h-5 w-5 text-primary" />
-              Company News
-            </h2>
-            <Link href="/announcements" className="text-sm text-primary hover:underline flex items-center gap-1">
-              View all news <ChevronRight className="h-4 w-4" />
-            </Link>
-          </div>
-          
-          {/* Featured News Card */}
-          <div className="mb-4">
-            <Link href="#" className="group block">
-              <div className="relative overflow-hidden rounded-xl border border-border bg-gradient-to-br from-primary/5 to-secondary/5">
-                <div className="p-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Badge variant="destructive" className="text-xs">Important</Badge>
-                    <span className="text-xs text-text-muted">{newsItems[0].category}</span>
-                  </div>
-                  <h3 className="text-xl font-semibold text-text-primary group-hover:text-primary transition-colors mb-2">
-                    {newsItems[0].title}
-                  </h3>
-                  <p className="text-text-secondary line-clamp-2 mb-4">{newsItems[0].excerpt}</p>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-sm text-text-muted">
-                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Users className="h-4 w-4 text-primary" />
-                      </div>
-                      <span>{newsItems[0].author}</span>
-                      <span>•</span>
-                      <span>{newsItems[0].date}</span>
-                    </div>
-                    <ArrowRight className="h-5 w-5 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
+        {/* Left Column: Tasks & Tickets */}
+        <section className="lg:col-span-2 space-y-6">
+          {/* Recent Tasks */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <CheckSquare className="h-5 w-5 text-green-500" />
+                  Recent Tasks
+                </CardTitle>
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href="/tasks/new" className="text-primary">
+                      <Plus className="h-4 w-4 mr-1" /> New
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href="/tasks" className="text-primary">
+                      View all <ChevronRight className="h-4 w-4 ml-1" />
+                    </Link>
+                  </Button>
                 </div>
               </div>
-            </Link>
-          </div>
+            </CardHeader>
+            <CardContent>
+              {stats.recentTasks.length === 0 ? (
+                <div className="text-center py-8 text-text-muted">
+                  <CheckSquare className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">No tasks yet. Create your first task!</p>
+                  <Button size="sm" className="mt-3" asChild>
+                    <Link href="/tasks/new"><Plus className="h-4 w-4 mr-1" /> Create Task</Link>
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {stats.recentTasks.map((task) => (
+                    <Link
+                      key={task.id}
+                      href={`/tasks/${task.id}`}
+                      className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-surface-100 hover:border-primary/20 transition-all group"
+                    >
+                      <div className={`h-2 w-2 rounded-full flex-shrink-0 ${getPriorityColor(task.priority)}`} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text-primary truncate group-hover:text-primary transition-colors">
+                          {task.title}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          {task.assignee && (
+                            <span className="text-xs text-text-muted">
+                              {task.assignee.firstName} {task.assignee.lastName}
+                            </span>
+                          )}
+                          <span className="text-xs text-text-muted">• {timeAgo(task.updatedAt)}</span>
+                        </div>
+                      </div>
+                      <Badge className={`text-xs ${getStatusColor(task.status)}`}>
+                        {task.status.replace('_', ' ')}
+                      </Badge>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-          {/* News Grid */}
-          <div className="grid gap-4 sm:grid-cols-3">
-            {newsItems.slice(1).map((news) => (
-              <Link key={news.id} href="#" className="group block">
-                <Card className="h-full transition-all hover:shadow-md hover:border-primary/30">
-                  <CardContent className="p-4">
-                    <span className="text-xs font-medium text-primary">{news.category}</span>
-                    <h4 className="mt-2 font-medium text-text-primary line-clamp-2 group-hover:text-primary transition-colors">
-                      {news.title}
-                    </h4>
-                    <p className="mt-2 text-sm text-text-secondary line-clamp-2">{news.excerpt}</p>
-                    <p className="mt-3 text-xs text-text-muted">{news.date}</p>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+          {/* Recent IT Tickets */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Ticket className="h-5 w-5 text-orange-500" />
+                  Recent IT Tickets
+                </CardTitle>
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href="/it/tickets/new" className="text-primary">
+                      <Plus className="h-4 w-4 mr-1" /> New
+                    </Link>
+                  </Button>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href="/it/tickets" className="text-primary">
+                      View all <ChevronRight className="h-4 w-4 ml-1" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {stats.recentTickets.length === 0 ? (
+                <div className="text-center py-8 text-text-muted">
+                  <Ticket className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">No tickets yet. Need IT help?</p>
+                  <Button size="sm" className="mt-3" asChild>
+                    <Link href="/it/tickets/new"><Plus className="h-4 w-4 mr-1" /> Raise Ticket</Link>
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {stats.recentTickets.map((ticket) => (
+                    <div
+                      key={ticket.id}
+                      className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-surface-100 hover:border-primary/20 transition-all"
+                    >
+                      <div className={`h-2 w-2 rounded-full flex-shrink-0 ${getPriorityColor(ticket.priority)}`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono text-text-muted">{ticket.ticketNumber}</span>
+                        </div>
+                        <p className="text-sm font-medium text-text-primary truncate mt-0.5">
+                          {ticket.subject}
+                        </p>
+                        <p className="text-xs text-text-muted mt-1">
+                          by {ticket.creator.firstName} {ticket.creator.lastName} • {timeAgo(ticket.updatedAt)}
+                        </p>
+                      </div>
+                      <Badge className={`text-xs ${getStatusColor(ticket.status)}`}>
+                        {ticket.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </section>
 
-        {/* Sidebar */}
+        {/* Right Sidebar */}
         <aside className="space-y-6">
-          {/* Upcoming Events */}
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-primary" />
-                  Upcoming Events
-                </CardTitle>
-                <Link href="/calendar" className="text-xs text-primary hover:underline">
-                  View all
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {upcomingEvents.map((event) => (
-                <div
-                  key={event.id}
-                  className="flex gap-3 p-3 rounded-lg hover:bg-surface-100 transition-colors cursor-pointer"
-                >
-                  <div className="flex-shrink-0 w-12 text-center">
-                    <div className="bg-primary/10 rounded-lg py-1.5">
-                      <p className="text-xs text-primary font-medium">{event.date.split(' ')[0]}</p>
-                      <p className="text-lg font-bold text-primary">{event.date.split(' ')[1]}</p>
-                    </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-text-primary truncate">{event.title}</p>
-                    <p className="text-xs text-text-muted">{event.time}</p>
-                    <p className="text-xs text-text-muted truncate">{event.location}</p>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          {/* Recent Documents */}
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" />
-                  Recent Documents
-                </CardTitle>
-                <Link href="/drives" className="text-xs text-primary hover:underline">
-                  View all
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {recentDocuments.map((doc, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-100 transition-colors cursor-pointer"
-                >
-                  <div className={`p-2 rounded-lg ${
-                    doc.type === 'excel' ? 'bg-green-100 text-green-600' :
-                    doc.type === 'pdf' ? 'bg-red-100 text-red-600' :
-                    'bg-blue-100 text-blue-600'
-                  }`}>
-                    <FileText className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-text-primary truncate">{doc.name}</p>
-                    <p className="text-xs text-text-muted">{doc.modified}</p>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          {/* Frequent Sites */}
+          {/* Task Progress */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Star className="h-5 w-5 text-primary" />
-                Frequent Sites
+                <Activity className="h-5 w-5 text-primary" />
+                Task Progress
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-2">
-                {frequentSites.map((site) => {
-                  const Icon = site.icon;
-                  return (
-                    <Link
-                      key={site.href}
-                      href={site.href}
-                      className="flex items-center gap-2 p-3 rounded-lg border border-border hover:bg-surface-100 hover:border-primary/30 transition-all"
-                    >
-                      <Icon className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium text-text-primary truncate">{site.name}</span>
-                    </Link>
-                  );
-                })}
+            <CardContent className="space-y-4">
+              <div className="text-center">
+                <div className="relative inline-flex items-center justify-center">
+                  <svg className="h-24 w-24 -rotate-90" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="#f3f4f6" strokeWidth="8" />
+                    <circle
+                      cx="50" cy="50" r="40" fill="none"
+                      stroke="#B8860B"
+                      strokeWidth="8"
+                      strokeLinecap="round"
+                      strokeDasharray={`${stats.taskCompletionRate * 2.51} 251`}
+                    />
+                  </svg>
+                  <span className="absolute text-xl font-bold text-text-primary">{stats.taskCompletionRate}%</span>
+                </div>
+                <p className="text-sm text-text-muted mt-2">Overall Completion</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="text-center p-3 rounded-lg bg-green-50">
+                  <p className="text-lg font-bold text-green-600">{stats.completedTasks}</p>
+                  <p className="text-xs text-green-600/70">Completed</p>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-blue-50">
+                  <p className="text-lg font-bold text-blue-600">{stats.inProgressTasks}</p>
+                  <p className="text-xs text-blue-600/70">In Progress</p>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-red-50">
+                  <p className="text-lg font-bold text-red-600">{stats.overdueTasks}</p>
+                  <p className="text-xs text-red-600/70">Overdue</p>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-gray-50">
+                  <p className="text-lg font-bold text-gray-600">{stats.totalTasks}</p>
+                  <p className="text-xs text-gray-600/70">Total</p>
+                </div>
               </div>
             </CardContent>
           </Card>
-        </aside>
-      </div>
 
-      {/* Activity & Alerts Section */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Activity Feed */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                Recent Activity
-              </CardTitle>
-              <Button variant="ghost" size="sm">View all</Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {activityFeed.map((activity, index) => {
-                const Icon = activity.icon;
-                return (
-                  <div key={index} className="flex items-start gap-3">
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Icon className="h-4 w-4 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-text-primary">
-                        <span className="font-medium">{activity.user}</span>{' '}
-                        {activity.action}
-                      </p>
-                      <p className="text-xs text-text-muted">{activity.time}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* IT Alerts & Quick Actions */}
-        <div className="space-y-6">
           {/* IT Alerts */}
-          <Card className="border-l-4 border-l-warning">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <AlertTriangle className="h-5 w-5 text-warning" />
-                IT Alerts
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-warning-light">
-                <Clock className="h-5 w-5 text-warning-dark flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-warning-dark">3 Software Licenses Expiring</p>
-                  <p className="text-xs text-warning-dark/70">Review and renew before deadline</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-danger-light">
-                <Ticket className="h-5 w-5 text-danger-dark flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-danger-dark">2 Critical Tickets Pending</p>
-                  <p className="text-xs text-danger-dark/70">Immediate attention required</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-primary-100">
-                <Bell className="h-5 w-5 text-primary flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-primary">5 Requests Awaiting Approval</p>
-                  <p className="text-xs text-primary/70">Review pending IT requests</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {(stats.overdueTasks > 0 || stats.openTickets > 0 || stats.pendingRequests > 0) && (
+            <Card className="border-l-4 border-l-warning">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <AlertTriangle className="h-5 w-5 text-warning" />
+                  Attention Required
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {stats.overdueTasks > 0 && (
+                  <Link href="/tasks" className="flex items-center gap-3 p-3 rounded-lg bg-red-50 hover:bg-red-100 transition-colors">
+                    <Clock className="h-5 w-5 text-red-500 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-red-700">{stats.overdueTasks} Overdue Task{stats.overdueTasks !== 1 ? 's' : ''}</p>
+                      <p className="text-xs text-red-500">Needs immediate attention</p>
+                    </div>
+                  </Link>
+                )}
+                {stats.openTickets > 0 && (
+                  <Link href="/it/tickets" className="flex items-center gap-3 p-3 rounded-lg bg-orange-50 hover:bg-orange-100 transition-colors">
+                    <Ticket className="h-5 w-5 text-orange-500 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-orange-700">{stats.openTickets} Open Ticket{stats.openTickets !== 1 ? 's' : ''}</p>
+                      <p className="text-xs text-orange-500">Awaiting resolution</p>
+                    </div>
+                  </Link>
+                )}
+                {stats.pendingRequests > 0 && (
+                  <Link href="/it/requests" className="flex items-center gap-3 p-3 rounded-lg bg-primary-100 hover:bg-primary-200 transition-colors">
+                    <Bell className="h-5 w-5 text-primary flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-primary">{stats.pendingRequests} Pending Request{stats.pendingRequests !== 1 ? 's' : ''}</p>
+                      <p className="text-xs text-primary/70">Review pending IT requests</p>
+                    </div>
+                  </Link>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Quick Actions */}
           <Card>
@@ -486,21 +658,71 @@ export default function DashboardPage() {
                   </Link>
                 </Button>
                 <Button variant="outline" className="justify-start h-auto py-3" asChild>
-                  <Link href="/tasks">
+                  <Link href="/tasks/new">
                     <CheckSquare className="h-4 w-4 mr-2 text-primary" />
-                    <span className="text-sm">My Tasks</span>
+                    <span className="text-sm">New Task</span>
                   </Link>
                 </Button>
                 <Button variant="outline" className="justify-start h-auto py-3" asChild>
-                  <Link href="/calendar">
-                    <Calendar className="h-4 w-4 mr-2 text-primary" />
-                    <span className="text-sm">Calendar</span>
+                  <Link href="/projects/new">
+                    <Briefcase className="h-4 w-4 mr-2 text-primary" />
+                    <span className="text-sm">New Project</span>
                   </Link>
                 </Button>
               </div>
             </CardContent>
           </Card>
-        </div>
+
+          {/* Organization Overview */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Globe className="h-5 w-5 text-primary" />
+                Organization
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <Link href="/companies" className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-100 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-purple-50 p-2">
+                      <Building2 className="h-4 w-4 text-purple-500" />
+                    </div>
+                    <span className="text-sm font-medium">Companies</span>
+                  </div>
+                  <span className="text-sm font-bold text-text-primary">{stats.totalCompanies}</span>
+                </Link>
+                <Link href="/departments" className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-100 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-blue-50 p-2">
+                      <Users className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <span className="text-sm font-medium">Departments</span>
+                  </div>
+                  <span className="text-sm font-bold text-text-primary">{stats.totalDepartments}</span>
+                </Link>
+                <Link href="/employees" className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-100 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-teal-50 p-2">
+                      <Users className="h-4 w-4 text-teal-500" />
+                    </div>
+                    <span className="text-sm font-medium">Employees</span>
+                  </div>
+                  <span className="text-sm font-bold text-text-primary">{stats.totalEmployees}</span>
+                </Link>
+                <Link href="/projects" className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-100 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-indigo-50 p-2">
+                      <Briefcase className="h-4 w-4 text-indigo-500" />
+                    </div>
+                    <span className="text-sm font-medium">Projects</span>
+                  </div>
+                  <span className="text-sm font-bold text-text-primary">{stats.totalProjects}</span>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </aside>
       </div>
 
       {/* Footer Links */}
