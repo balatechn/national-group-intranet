@@ -29,98 +29,118 @@ export const revalidate = 60;
 
 // Fetch real dashboard stats
 async function getDashboardStats() {
-  const today = new Date();
+  try {
+    const today = new Date();
 
-  const [
-    totalEmployees,
-    activeEmployees,
-    totalCompanies,
-    totalDepartments,
-    totalTasks,
-    completedTasks,
-    inProgressTasks,
-    overdueTasks,
-    totalProjects,
-    activeProjects,
-    recentTasks,
-    upcomingEvents,
-    recentProjects,
-  ] = await Promise.all([
-    prisma.user.count(),
-    prisma.user.count({ where: { status: 'ACTIVE' } }),
-    prisma.company.count(),
-    prisma.department.count(),
-    prisma.task.count(),
-    prisma.task.count({ where: { status: 'COMPLETED' } }),
-    prisma.task.count({ where: { status: 'IN_PROGRESS' } }),
-    prisma.task.count({
-      where: {
-        status: { notIn: ['COMPLETED', 'CANCELLED'] },
-        dueDate: { lt: new Date() },
-      },
-    }),
-    prisma.project.count(),
-    prisma.project.count({ where: { status: 'ACTIVE' } }),
-    prisma.task.findMany({
-      take: 5,
-      orderBy: { updatedAt: 'desc' },
-      select: {
-        id: true,
-        title: true,
-        status: true,
-        priority: true,
-        dueDate: true,
-        updatedAt: true,
-        assignee: { select: { firstName: true, lastName: true, avatar: true } },
-      },
-    }),
-    prisma.event.findMany({
-      where: { startDate: { gte: today }, isPublic: true },
-      take: 5,
-      orderBy: { startDate: 'asc' },
-      select: {
-        id: true,
-        title: true,
-        startDate: true,
-        endDate: true,
-        type: true,
-        location: true,
-        isAllDay: true,
-      },
-    }),
-    prisma.project.findMany({
-      where: { status: 'ACTIVE' },
-      take: 5,
-      orderBy: { updatedAt: 'desc' },
-      select: {
-        id: true,
-        name: true,
-        status: true,
-        updatedAt: true,
-        owner: { select: { firstName: true, lastName: true } },
-        _count: { select: { members: true } },
-      },
-    }),
-  ]);
+    const [
+      totalEmployees,
+      activeEmployees,
+      totalCompanies,
+      totalDepartments,
+      totalTasks,
+      completedTasks,
+      inProgressTasks,
+      overdueTasks,
+      totalProjects,
+      activeProjects,
+      recentTasks,
+      upcomingEvents,
+      recentProjects,
+    ] = await Promise.all([
+      prisma.user.count().catch(() => 0),
+      prisma.user.count({ where: { status: 'ACTIVE' } }).catch(() => 0),
+      prisma.company.count().catch(() => 0),
+      prisma.department.count().catch(() => 0),
+      prisma.task.count().catch(() => 0),
+      prisma.task.count({ where: { status: 'COMPLETED' } }).catch(() => 0),
+      prisma.task.count({ where: { status: 'IN_PROGRESS' } }).catch(() => 0),
+      prisma.task.count({
+        where: {
+          status: { notIn: ['COMPLETED', 'CANCELLED'] },
+          dueDate: { lt: new Date() },
+        },
+      }).catch(() => 0),
+      prisma.project.count().catch(() => 0),
+      prisma.project.count({ where: { status: 'ACTIVE' } }).catch(() => 0),
+      prisma.task.findMany({
+        take: 5,
+        orderBy: { updatedAt: 'desc' },
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          priority: true,
+          dueDate: true,
+          updatedAt: true,
+          assignee: { select: { firstName: true, lastName: true, avatar: true } },
+        },
+      }).catch(() => []),
+      prisma.event.findMany({
+        where: { startDate: { gte: today }, isPublic: true },
+        take: 5,
+        orderBy: { startDate: 'asc' },
+        select: {
+          id: true,
+          title: true,
+          startDate: true,
+          endDate: true,
+          type: true,
+          location: true,
+          isAllDay: true,
+        },
+      }).catch(() => []),
+      prisma.project.findMany({
+        where: { status: 'ACTIVE' },
+        take: 5,
+        orderBy: { updatedAt: 'desc' },
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          updatedAt: true,
+          owner: { select: { firstName: true, lastName: true } },
+          _count: { select: { members: true } },
+        },
+      }).catch(() => []),
+    ]);
 
-  const taskCompletionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    const taskCompletionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-  return {
-    totalEmployees,
-    activeEmployees,
-    totalCompanies,
-    totalDepartments,
-    totalTasks,
-    completedTasks,
-    inProgressTasks,
-    overdueTasks,
-    totalProjects,
-    activeProjects,
-    taskCompletionRate,
-    recentTasks,
-    upcomingEvents,
-    recentProjects,
-  };
+    return {
+      totalEmployees,
+      activeEmployees,
+      totalCompanies,
+      totalDepartments,
+      totalTasks,
+      completedTasks,
+      inProgressTasks,
+      overdueTasks,
+      totalProjects,
+      activeProjects,
+      taskCompletionRate,
+      recentTasks,
+      upcomingEvents,
+      recentProjects,
+    };
+  } catch (error) {
+    console.error('Dashboard stats error:', error);
+    return {
+      totalEmployees: 0,
+      activeEmployees: 0,
+      totalCompanies: 0,
+      totalDepartments: 0,
+      totalTasks: 0,
+      completedTasks: 0,
+      inProgressTasks: 0,
+      overdueTasks: 0,
+      totalProjects: 0,
+      activeProjects: 0,
+      taskCompletionRate: 0,
+      recentTasks: [] as any[],
+      upcomingEvents: [] as any[],
+      recentProjects: [] as any[],
+    };
+  }
 }
 
 // Quick Access Apps
