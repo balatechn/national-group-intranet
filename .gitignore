@@ -48,3 +48,4 @@ prisma/*.db
 prisma/*.db-journal
 .env*.local
 .env.vercel
+~$*
