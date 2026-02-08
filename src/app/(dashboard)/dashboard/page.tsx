@@ -303,6 +303,31 @@ export default async function DashboardPage() {
           </div>
         </div>
 
+        {/* ── Quick Access Grid ── */}
+        <div className="rounded-2xl bg-white/60 backdrop-blur-xl border border-gray-200/80 shadow-sm p-6">
+          <h2 className="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
+            <Zap className="h-4 w-4 text-[#B8860B]" />
+            Quick Access
+          </h2>
+          <div className="grid grid-cols-4 sm:grid-cols-8 gap-4">
+            {quickAccessApps.map((app) => {
+              const Icon = app.icon;
+              return (
+                <Link
+                  key={app.href}
+                  href={app.href}
+                  className="group flex flex-col items-center gap-2.5"
+                >
+                  <div className={`rounded-2xl bg-gradient-to-br ${app.gradient} p-3 text-white transition-all group-hover:scale-110 group-hover:shadow-lg`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <span className="text-xs text-gray-400 group-hover:text-gray-700 transition-colors font-medium">{app.title}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
         {/* ── Stat Cards Row ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
@@ -329,31 +354,6 @@ export default async function DashboardPage() {
               </Link>
             );
           })}
-        </div>
-
-        {/* ── Quick Access Grid ── */}
-        <div className="rounded-2xl bg-white/60 backdrop-blur-xl border border-gray-200/80 shadow-sm p-6">
-          <h2 className="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
-            <Zap className="h-4 w-4 text-[#B8860B]" />
-            Quick Access
-          </h2>
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-4">
-            {quickAccessApps.map((app) => {
-              const Icon = app.icon;
-              return (
-                <Link
-                  key={app.href}
-                  href={app.href}
-                  className="group flex flex-col items-center gap-2.5"
-                >
-                  <div className={`rounded-2xl bg-gradient-to-br ${app.gradient} p-3 text-white transition-all group-hover:scale-110 group-hover:shadow-lg`}>
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <span className="text-xs text-gray-400 group-hover:text-gray-700 transition-colors font-medium">{app.title}</span>
-                </Link>
-              );
-            })}
-          </div>
         </div>
 
         {/* ── Main Content Grid ── */}
