@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 import {
   Home,
@@ -33,7 +34,12 @@ interface NavItem {
   href: string;
   icon: React.ElementType;
   children?: NavItem[];
+  /** Restrict this item to specific roles */
+  roles?: string[];
 }
+
+/** Roles allowed to see "IT & Systems" menu */
+const IT_ROLES = ['SUPER_ADMIN', 'ADMIN', 'IT_ADMIN'];
 
 const navigation: NavItem[] = [
   { title: 'Home', href: '/dashboard', icon: Home },
@@ -49,6 +55,7 @@ const navigation: NavItem[] = [
     title: 'IT & Systems',
     href: '/it',
     icon: Monitor,
+    roles: IT_ROLES,
     children: [
       { title: 'IT Requests', href: '/it/requests', icon: ClipboardList },
       { title: 'IT Tickets', href: '/it/tickets', icon: Ticket },
@@ -137,6 +144,14 @@ function NavItemComponent({
 
 export function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { data: session } = useSession();
+  const userRole = (session?.user as any)?.role || 'EMPLOYEE';
+
+  // Filter navigation items based on user role
+  const filteredNavigation = useMemo(
+    () => navigation.filter((item) => !item.roles || item.roles.includes(userRole)),
+    [userRole]
+  );
 
   return (
     <>
@@ -181,7 +196,7 @@ export function Sidebar() {
         {/* Navigation */}
         <nav className="h-[calc(100vh-4rem)] overflow-y-auto p-4">
           <div className="space-y-1">
-            {navigation.map((item) => (
+            {filteredNavigation.map((item) => (
               <NavItemComponent key={item.href} item={item} />
             ))}
           </div>

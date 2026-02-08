@@ -8,30 +8,25 @@ import {
   Users,
   CheckSquare,
   Calendar,
-  Ticket,
-  Monitor,
   FileText,
   FolderOpen,
   Clock,
   AlertTriangle,
-  Bell,
   ArrowRight,
   Plus,
   ChevronRight,
-  Megaphone,
   Briefcase,
   Settings,
   BookOpen,
   BarChart3,
   Globe,
-  Search,
   Star,
   TrendingUp,
   Zap,
   Activity,
   Target,
-  ClipboardList,
   Sparkles,
+  UserCircle,
 } from 'lucide-react';
 import {
   Card,
@@ -47,6 +42,8 @@ export const revalidate = 60;
 
 // Fetch real dashboard stats
 async function getDashboardStats() {
+  const today = new Date();
+
   const [
     totalEmployees,
     activeEmployees,
@@ -56,13 +53,11 @@ async function getDashboardStats() {
     completedTasks,
     inProgressTasks,
     overdueTasks,
-    openTickets,
-    totalTickets,
     totalProjects,
     activeProjects,
-    pendingRequests,
     recentTasks,
-    recentTickets,
+    upcomingEvents,
+    recentProjects,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.user.count({ where: { status: 'ACTIVE' } }),
@@ -77,11 +72,8 @@ async function getDashboardStats() {
         dueDate: { lt: new Date() },
       },
     }),
-    prisma.iTTicket.count({ where: { status: { notIn: ['RESOLVED', 'CLOSED'] } } }),
-    prisma.iTTicket.count(),
     prisma.project.count(),
     prisma.project.count({ where: { status: 'ACTIVE' } }),
-    prisma.iTRequest.count({ where: { status: 'PENDING_APPROVAL' } }),
     prisma.task.findMany({
       take: 5,
       orderBy: { updatedAt: 'desc' },
@@ -90,21 +82,41 @@ async function getDashboardStats() {
         title: true,
         status: true,
         priority: true,
+        dueDate: true,
         updatedAt: true,
         assignee: { select: { firstName: true, lastName: true, avatar: true } },
       },
     }),
-    prisma.iTTicket.findMany({
+    // Upcoming events
+    prisma.event.findMany({
+      where: {
+        startDate: { gte: today },
+        isPublic: true,
+      },
+      take: 5,
+      orderBy: { startDate: 'asc' },
+      select: {
+        id: true,
+        title: true,
+        startDate: true,
+        endDate: true,
+        type: true,
+        location: true,
+        isAllDay: true,
+      },
+    }),
+    // Recent / active projects
+    prisma.project.findMany({
+      where: { status: 'ACTIVE' },
       take: 5,
       orderBy: { updatedAt: 'desc' },
       select: {
         id: true,
-        ticketNumber: true,
-        subject: true,
+        name: true,
         status: true,
-        priority: true,
         updatedAt: true,
-        creator: { select: { firstName: true, lastName: true } },
+        owner: { select: { firstName: true, lastName: true } },
+        _count: { select: { members: true } },
       },
     }),
   ]);
@@ -120,27 +132,25 @@ async function getDashboardStats() {
     completedTasks,
     inProgressTasks,
     overdueTasks,
-    openTickets,
-    totalTickets,
     totalProjects,
     activeProjects,
-    pendingRequests,
     taskCompletionRate,
     recentTasks,
-    recentTickets,
+    upcomingEvents,
+    recentProjects,
   };
 }
 
-// Quick Access Apps
+// Quick Access Apps — employee-focused
 const quickAccessApps = [
-  { title: 'IT Helpdesk', href: '/it', icon: Monitor, color: 'bg-blue-500', description: 'Tickets & Requests' },
-  { title: 'Projects', href: '/projects', icon: Briefcase, color: 'bg-purple-500', description: 'Manage Projects' },
+  { title: 'Companies', href: '/companies', icon: Building2, color: 'bg-purple-500', description: 'Our Companies' },
+  { title: 'Departments', href: '/departments', icon: Users, color: 'bg-blue-500', description: 'All Teams' },
+  { title: 'Employees', href: '/employees', icon: UserCircle, color: 'bg-teal-500', description: 'People Directory' },
+  { title: 'Projects', href: '/projects', icon: Briefcase, color: 'bg-indigo-500', description: 'All Projects' },
   { title: 'Tasks', href: '/tasks', icon: CheckSquare, color: 'bg-green-500', description: 'My Tasks' },
-  { title: 'Calendar', href: '/calendar', icon: Calendar, color: 'bg-orange-500', description: 'Events & Meetings' },
-  { title: 'Documents', href: '/drives', icon: FolderOpen, color: 'bg-yellow-500', description: 'Company Drives' },
-  { title: 'Policies', href: '/policies', icon: BookOpen, color: 'bg-red-500', description: 'HR & IT Policies' },
-  { title: 'Directory', href: '/departments', icon: Users, color: 'bg-teal-500', description: 'Find People' },
-  { title: 'Reports', href: '/it/reports', icon: BarChart3, color: 'bg-indigo-500', description: 'Analytics' },
+  { title: 'Calendar', href: '/calendar', icon: Calendar, color: 'bg-orange-500', description: 'Events' },
+  { title: 'Drives', href: '/drives', icon: FolderOpen, color: 'bg-yellow-600', description: 'Documents' },
+  { title: 'Policies', href: '/policies', icon: BookOpen, color: 'bg-red-500', description: 'HR & Policies' },
 ];
 
 function getGreeting() {
@@ -156,9 +166,6 @@ function getStatusColor(status: string) {
     IN_PROGRESS: 'bg-blue-100 text-blue-700',
     PENDING: 'bg-yellow-100 text-yellow-700',
     TODO: 'bg-gray-100 text-gray-700',
-    OPEN: 'bg-blue-100 text-blue-700',
-    RESOLVED: 'bg-green-100 text-green-700',
-    CLOSED: 'bg-gray-100 text-gray-700',
     CANCELLED: 'bg-red-100 text-red-700',
   };
   return colors[status] || 'bg-gray-100 text-gray-700';
@@ -192,10 +199,9 @@ export default async function DashboardPage() {
   ]);
 
   const firstName = session?.user?.firstName || session?.user?.name?.split(' ')[0] || 'User';
-  const role = session?.user?.role || 'EMPLOYEE';
   const greeting = getGreeting();
-
   const today = new Date();
+
   const dateStr = today.toLocaleDateString('en-IN', {
     weekday: 'long',
     year: 'numeric',
@@ -212,13 +218,12 @@ export default async function DashboardPage() {
           <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-gradient-to-br from-primary/30 to-secondary/20 blur-3xl" />
           <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-gradient-to-tr from-blue-500/20 to-primary/10 blur-3xl" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
-          {/* Grid pattern */}
           <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
         </div>
 
         <div className="relative z-10">
-          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
-            {/* Left: Greeting & Actions */}
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+            {/* Left: Greeting */}
             <div className="max-w-2xl space-y-4">
               <div className="flex items-center gap-3 mb-1">
                 <Image
@@ -228,42 +233,20 @@ export default async function DashboardPage() {
                   height={44}
                   className="rounded-lg border border-white/20 bg-white/10 p-1"
                 />
-                <div>
-                  <p className="text-sm text-white/60 font-medium tracking-wide uppercase">{dateStr}</p>
-                </div>
+                <p className="text-sm text-white/60 font-medium tracking-wide uppercase">{dateStr}</p>
               </div>
               <div>
                 <h1 className="text-3xl lg:text-4xl font-bold mb-2">
-                  {greeting}, <span className="bg-gradient-to-r from-[#DAA520] to-[#F4C430] bg-clip-text text-transparent">{firstName}</span> 
+                  {greeting}, <span className="bg-gradient-to-r from-[#DAA520] to-[#F4C430] bg-clip-text text-transparent">{firstName}</span>
                   <Sparkles className="inline-block ml-2 h-7 w-7 text-yellow-400" />
                 </h1>
                 <p className="text-white/70 text-lg">
                   Welcome to National Group Intranet — your central hub for collaboration and productivity.
                 </p>
               </div>
-              <div className="flex flex-wrap gap-3 pt-2">
-                <Button className="bg-gradient-to-r from-primary to-secondary text-white hover:opacity-90 shadow-lg shadow-primary/25 border-0" asChild>
-                  <Link href="/tasks/new">
-                    <Plus className="mr-2 h-4 w-4" />
-                    New Task
-                  </Link>
-                </Button>
-                <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 backdrop-blur-sm" asChild>
-                  <Link href="/it/tickets/new">
-                    <Ticket className="mr-2 h-4 w-4" />
-                    Raise Ticket
-                  </Link>
-                </Button>
-                <Button variant="outline" className="border-white/20 text-white hover:bg-white/10 backdrop-blur-sm" asChild>
-                  <Link href="/it/requests/new">
-                    <ClipboardList className="mr-2 h-4 w-4" />
-                    IT Request
-                  </Link>
-                </Button>
-              </div>
             </div>
 
-            {/* Right: Live Stats Grid */}
+            {/* Right: Organization Stats */}
             <div className="grid grid-cols-2 gap-3 lg:min-w-[320px]">
               <Link href="/employees" className="group rounded-xl bg-white/[0.08] backdrop-blur-md border border-white/10 p-4 text-center transition-all hover:bg-white/[0.15] hover:border-white/20 hover:scale-[1.02]">
                 <div className="flex items-center justify-center mb-2">
@@ -272,7 +255,7 @@ export default async function DashboardPage() {
                   </div>
                 </div>
                 <p className="text-2xl lg:text-3xl font-bold">{stats.activeEmployees}</p>
-                <p className="text-xs text-white/60 mt-1">Active Employees</p>
+                <p className="text-xs text-white/60 mt-1">Employees</p>
               </Link>
               <Link href="/companies" className="group rounded-xl bg-white/[0.08] backdrop-blur-md border border-white/10 p-4 text-center transition-all hover:bg-white/[0.15] hover:border-white/20 hover:scale-[1.02]">
                 <div className="flex items-center justify-center mb-2">
@@ -283,110 +266,28 @@ export default async function DashboardPage() {
                 <p className="text-2xl lg:text-3xl font-bold">{stats.totalCompanies}</p>
                 <p className="text-xs text-white/60 mt-1">Companies</p>
               </Link>
-              <Link href="/tasks" className="group rounded-xl bg-white/[0.08] backdrop-blur-md border border-white/10 p-4 text-center transition-all hover:bg-white/[0.15] hover:border-white/20 hover:scale-[1.02]">
+              <Link href="/departments" className="group rounded-xl bg-white/[0.08] backdrop-blur-md border border-white/10 p-4 text-center transition-all hover:bg-white/[0.15] hover:border-white/20 hover:scale-[1.02]">
                 <div className="flex items-center justify-center mb-2">
-                  <div className="rounded-lg bg-green-500/20 p-2">
-                    <CheckSquare className="h-5 w-5 text-green-400" />
+                  <div className="rounded-lg bg-teal-500/20 p-2">
+                    <Users className="h-5 w-5 text-teal-400" />
                   </div>
                 </div>
-                <p className="text-2xl lg:text-3xl font-bold">{stats.inProgressTasks}</p>
-                <p className="text-xs text-white/60 mt-1">Active Tasks</p>
+                <p className="text-2xl lg:text-3xl font-bold">{stats.totalDepartments}</p>
+                <p className="text-xs text-white/60 mt-1">Departments</p>
               </Link>
-              <Link href="/it/tickets" className="group rounded-xl bg-white/[0.08] backdrop-blur-md border border-white/10 p-4 text-center transition-all hover:bg-white/[0.15] hover:border-white/20 hover:scale-[1.02]">
+              <Link href="/projects" className="group rounded-xl bg-white/[0.08] backdrop-blur-md border border-white/10 p-4 text-center transition-all hover:bg-white/[0.15] hover:border-white/20 hover:scale-[1.02]">
                 <div className="flex items-center justify-center mb-2">
-                  <div className="rounded-lg bg-orange-500/20 p-2">
-                    <Ticket className="h-5 w-5 text-orange-400" />
+                  <div className="rounded-lg bg-indigo-500/20 p-2">
+                    <Briefcase className="h-5 w-5 text-indigo-400" />
                   </div>
                 </div>
-                <p className="text-2xl lg:text-3xl font-bold">{stats.openTickets}</p>
-                <p className="text-xs text-white/60 mt-1">Open Tickets</p>
+                <p className="text-2xl lg:text-3xl font-bold">{stats.totalProjects}</p>
+                <p className="text-xs text-white/60 mt-1">Projects</p>
               </Link>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Stats Overview Cards */}
-      <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-        <Card className="border-l-4 border-l-blue-500 hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold text-text-primary">{stats.totalDepartments}</p>
-                <p className="text-xs text-text-muted mt-1">Departments</p>
-              </div>
-              <div className="rounded-lg bg-blue-50 p-2.5">
-                <Users className="h-5 w-5 text-blue-500" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-green-500 hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold text-text-primary">{stats.completedTasks}</p>
-                <p className="text-xs text-text-muted mt-1">Completed Tasks</p>
-              </div>
-              <div className="rounded-lg bg-green-50 p-2.5">
-                <Target className="h-5 w-5 text-green-500" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-red-500 hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold text-text-primary">{stats.overdueTasks}</p>
-                <p className="text-xs text-text-muted mt-1">Overdue Tasks</p>
-              </div>
-              <div className="rounded-lg bg-red-50 p-2.5">
-                <AlertTriangle className="h-5 w-5 text-red-500" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-purple-500 hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold text-text-primary">{stats.activeProjects}</p>
-                <p className="text-xs text-text-muted mt-1">Active Projects</p>
-              </div>
-              <div className="rounded-lg bg-purple-50 p-2.5">
-                <Briefcase className="h-5 w-5 text-purple-500" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-orange-500 hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold text-text-primary">{stats.pendingRequests}</p>
-                <p className="text-xs text-text-muted mt-1">Pending Requests</p>
-              </div>
-              <div className="rounded-lg bg-orange-50 p-2.5">
-                <ClipboardList className="h-5 w-5 text-orange-500" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-primary hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold text-text-primary">{stats.taskCompletionRate}%</p>
-                <p className="text-xs text-text-muted mt-1">Completion Rate</p>
-              </div>
-              <div className="rounded-lg bg-primary-100 p-2.5">
-                <Activity className="h-5 w-5 text-primary" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
 
       {/* Quick Access Apps */}
       <section>
@@ -420,38 +321,28 @@ export default async function DashboardPage() {
 
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column: Tasks & Tickets */}
+        {/* Left Column */}
         <section className="lg:col-span-2 space-y-6">
-          {/* Recent Tasks */}
+          {/* My Tasks */}
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <CheckSquare className="h-5 w-5 text-green-500" />
-                  Recent Tasks
+                  My Tasks
                 </CardTitle>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href="/tasks/new" className="text-primary">
-                      <Plus className="h-4 w-4 mr-1" /> New
-                    </Link>
-                  </Button>
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href="/tasks" className="text-primary">
-                      View all <ChevronRight className="h-4 w-4 ml-1" />
-                    </Link>
-                  </Button>
-                </div>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/tasks" className="text-primary">
+                    View all <ChevronRight className="h-4 w-4 ml-1" />
+                  </Link>
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
               {stats.recentTasks.length === 0 ? (
                 <div className="text-center py-8 text-text-muted">
                   <CheckSquare className="h-10 w-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">No tasks yet. Create your first task!</p>
-                  <Button size="sm" className="mt-3" asChild>
-                    <Link href="/tasks/new"><Plus className="h-4 w-4 mr-1" /> Create Task</Link>
-                  </Button>
+                  <p className="text-sm">No tasks assigned yet.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -472,7 +363,11 @@ export default async function DashboardPage() {
                               {task.assignee.firstName} {task.assignee.lastName}
                             </span>
                           )}
-                          <span className="text-xs text-text-muted">• {timeAgo(task.updatedAt)}</span>
+                          {task.dueDate && (
+                            <span className="text-xs text-text-muted">
+                              • Due {new Date(task.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <Badge className={`text-xs ${getStatusColor(task.status)}`}>
@@ -485,58 +380,55 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Recent IT Tickets */}
+          {/* Upcoming Events */}
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Ticket className="h-5 w-5 text-orange-500" />
-                  Recent IT Tickets
+                  <Calendar className="h-5 w-5 text-orange-500" />
+                  Upcoming Events
                 </CardTitle>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href="/it/tickets/new" className="text-primary">
-                      <Plus className="h-4 w-4 mr-1" /> New
-                    </Link>
-                  </Button>
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href="/it/tickets" className="text-primary">
-                      View all <ChevronRight className="h-4 w-4 ml-1" />
-                    </Link>
-                  </Button>
-                </div>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/calendar" className="text-primary">
+                    View all <ChevronRight className="h-4 w-4 ml-1" />
+                  </Link>
+                </Button>
               </div>
             </CardHeader>
             <CardContent>
-              {stats.recentTickets.length === 0 ? (
-                <div className="text-center py-8 text-text-muted">
-                  <Ticket className="h-10 w-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">No tickets yet. Need IT help?</p>
-                  <Button size="sm" className="mt-3" asChild>
-                    <Link href="/it/tickets/new"><Plus className="h-4 w-4 mr-1" /> Raise Ticket</Link>
-                  </Button>
+              {stats.upcomingEvents.length === 0 ? (
+                <div className="text-center py-6 text-text-muted">
+                  <Calendar className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">No upcoming events.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {stats.recentTickets.map((ticket) => (
+                  {stats.upcomingEvents.map((event) => (
                     <div
-                      key={ticket.id}
+                      key={event.id}
                       className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-surface-100 hover:border-primary/20 transition-all"
                     >
-                      <div className={`h-2 w-2 rounded-full flex-shrink-0 ${getPriorityColor(ticket.priority)}`} />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono text-text-muted">{ticket.ticketNumber}</span>
-                        </div>
-                        <p className="text-sm font-medium text-text-primary truncate mt-0.5">
-                          {ticket.subject}
+                      <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-orange-100 to-amber-100 flex flex-col items-center justify-center text-orange-600 flex-shrink-0">
+                        <p className="text-xs font-medium leading-none">
+                          {new Date(event.startDate).toLocaleDateString('en-IN', { month: 'short' })}
                         </p>
-                        <p className="text-xs text-text-muted mt-1">
-                          by {ticket.creator.firstName} {ticket.creator.lastName} • {timeAgo(ticket.updatedAt)}
+                        <p className="text-lg font-bold leading-tight">
+                          {new Date(event.startDate).getDate()}
                         </p>
                       </div>
-                      <Badge className={`text-xs ${getStatusColor(ticket.status)}`}>
-                        {ticket.status}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text-primary truncate">
+                          {event.title}
+                        </p>
+                        <p className="text-xs text-text-muted truncate">
+                          {event.isAllDay
+                            ? 'All Day'
+                            : new Date(event.startDate).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                          {event.location ? ` • ${event.location}` : ''}
+                        </p>
+                      </div>
+                      <Badge className="text-xs bg-orange-100 text-orange-700">
+                        {event.type.replace('_', ' ')}
                       </Badge>
                     </div>
                   ))}
@@ -553,7 +445,7 @@ export default async function DashboardPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Activity className="h-5 w-5 text-primary" />
-                Task Progress
+                Productivity
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -571,7 +463,7 @@ export default async function DashboardPage() {
                   </svg>
                   <span className="absolute text-xl font-bold text-text-primary">{stats.taskCompletionRate}%</span>
                 </div>
-                <p className="text-sm text-text-muted mt-2">Overall Completion</p>
+                <p className="text-sm text-text-muted mt-2">Task Completion</p>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="text-center p-3 rounded-lg bg-green-50">
@@ -594,82 +486,44 @@ export default async function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* IT Alerts */}
-          {(stats.overdueTasks > 0 || stats.openTickets > 0 || stats.pendingRequests > 0) && (
-            <Card className="border-l-4 border-l-warning">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <AlertTriangle className="h-5 w-5 text-warning" />
-                  Attention Required
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {stats.overdueTasks > 0 && (
-                  <Link href="/tasks" className="flex items-center gap-3 p-3 rounded-lg bg-red-50 hover:bg-red-100 transition-colors">
-                    <Clock className="h-5 w-5 text-red-500 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-red-700">{stats.overdueTasks} Overdue Task{stats.overdueTasks !== 1 ? 's' : ''}</p>
-                      <p className="text-xs text-red-500">Needs immediate attention</p>
-                    </div>
-                  </Link>
-                )}
-                {stats.openTickets > 0 && (
-                  <Link href="/it/tickets" className="flex items-center gap-3 p-3 rounded-lg bg-orange-50 hover:bg-orange-100 transition-colors">
-                    <Ticket className="h-5 w-5 text-orange-500 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-orange-700">{stats.openTickets} Open Ticket{stats.openTickets !== 1 ? 's' : ''}</p>
-                      <p className="text-xs text-orange-500">Awaiting resolution</p>
-                    </div>
-                  </Link>
-                )}
-                {stats.pendingRequests > 0 && (
-                  <Link href="/it/requests" className="flex items-center gap-3 p-3 rounded-lg bg-primary-100 hover:bg-primary-200 transition-colors">
-                    <Bell className="h-5 w-5 text-primary flex-shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-primary">{stats.pendingRequests} Pending Request{stats.pendingRequests !== 1 ? 's' : ''}</p>
-                      <p className="text-xs text-primary/70">Review pending IT requests</p>
-                    </div>
-                  </Link>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Quick Actions */}
+          {/* Active Projects */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Zap className="h-5 w-5 text-primary" />
-                Quick Actions
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Briefcase className="h-5 w-5 text-indigo-500" />
+                Active Projects
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-3">
-                <Button variant="outline" className="justify-start h-auto py-3" asChild>
-                  <Link href="/it/tickets/new">
-                    <Ticket className="h-4 w-4 mr-2 text-primary" />
-                    <span className="text-sm">New Ticket</span>
-                  </Link>
-                </Button>
-                <Button variant="outline" className="justify-start h-auto py-3" asChild>
-                  <Link href="/it/requests/new">
-                    <Plus className="h-4 w-4 mr-2 text-primary" />
-                    <span className="text-sm">IT Request</span>
-                  </Link>
-                </Button>
-                <Button variant="outline" className="justify-start h-auto py-3" asChild>
-                  <Link href="/tasks/new">
-                    <CheckSquare className="h-4 w-4 mr-2 text-primary" />
-                    <span className="text-sm">New Task</span>
-                  </Link>
-                </Button>
-                <Button variant="outline" className="justify-start h-auto py-3" asChild>
-                  <Link href="/projects/new">
-                    <Briefcase className="h-4 w-4 mr-2 text-primary" />
-                    <span className="text-sm">New Project</span>
-                  </Link>
-                </Button>
-              </div>
+              {stats.recentProjects.length === 0 ? (
+                <div className="text-center py-6 text-text-muted">
+                  <Briefcase className="h-10 w-10 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">No active projects.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {stats.recentProjects.map((project) => (
+                    <Link
+                      key={project.id}
+                      href={`/projects`}
+                      className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-surface-100 hover:border-primary/20 transition-all group"
+                    >
+                      <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center text-sm font-bold text-indigo-600 flex-shrink-0">
+                        {project.name.charAt(0)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-text-primary truncate group-hover:text-primary transition-colors">
+                          {project.name}
+                        </p>
+                        <p className="text-xs text-text-muted">
+                          {project.owner.firstName} {project.owner.lastName} • {project._count.members} member{project._count.members !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                      <Badge className="text-xs bg-green-100 text-green-700">Active</Badge>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -704,7 +558,7 @@ export default async function DashboardPage() {
                 <Link href="/employees" className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-100 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className="rounded-lg bg-teal-50 p-2">
-                      <Users className="h-4 w-4 text-teal-500" />
+                      <UserCircle className="h-4 w-4 text-teal-500" />
                     </div>
                     <span className="text-sm font-medium">Employees</span>
                   </div>
@@ -731,7 +585,7 @@ export default async function DashboardPage() {
           <Globe className="h-5 w-5 text-primary" />
           <span className="text-sm font-medium">About Us</span>
         </Link>
-        <Link href="/departments" className="flex items-center gap-2 p-4 rounded-lg hover:bg-surface-100 transition-colors">
+        <Link href="/companies" className="flex items-center gap-2 p-4 rounded-lg hover:bg-surface-100 transition-colors">
           <Building2 className="h-5 w-5 text-primary" />
           <span className="text-sm font-medium">Our Companies</span>
         </Link>
@@ -739,9 +593,9 @@ export default async function DashboardPage() {
           <BookOpen className="h-5 w-5 text-primary" />
           <span className="text-sm font-medium">Policies</span>
         </Link>
-        <Link href="/it" className="flex items-center gap-2 p-4 rounded-lg hover:bg-surface-100 transition-colors">
+        <Link href="/settings" className="flex items-center gap-2 p-4 rounded-lg hover:bg-surface-100 transition-colors">
           <Settings className="h-5 w-5 text-primary" />
-          <span className="text-sm font-medium">IT Support</span>
+          <span className="text-sm font-medium">Settings</span>
         </Link>
       </div>
     </div>
