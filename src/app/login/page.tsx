@@ -21,6 +21,33 @@ function MicrosoftLogo({ className }: { className?: string }) {
   );
 }
 
+const DEMO_ACCOUNTS = [
+  {
+    role: 'Admin',
+    email: 'demo.admin@nationalgroupindia.com',
+    password: 'Demo@123',
+    color: 'bg-purple-100 text-purple-700 border-purple-200',
+    icon: '🛡️',
+    description: 'Full system access',
+  },
+  {
+    role: 'Manager',
+    email: 'demo.manager@nationalgroupindia.com',
+    password: 'Demo@123',
+    color: 'bg-blue-100 text-blue-700 border-blue-200',
+    icon: '👔',
+    description: 'Team & department access',
+  },
+  {
+    role: 'Employee',
+    email: 'demo.employee@nationalgroupindia.com',
+    password: 'Demo@123',
+    color: 'bg-green-100 text-green-700 border-green-200',
+    icon: '👤',
+    description: 'Standard employee access',
+  },
+];
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -31,10 +58,16 @@ function LoginForm() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
   });
+
+  const fillDemoCredentials = (email: string, password: string) => {
+    setValue('email', email);
+    setValue('password', password);
+  };
 
   const onSubmit = async (data: LoginInput) => {
     setIsLoading(true);
@@ -163,6 +196,35 @@ function LoginForm() {
             Sign in with Email
           </Button>
         </form>
+
+        {/* Demo Accounts */}
+        <div className="border-t pt-4">
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 text-center">
+            Demo Accounts — Click to autofill
+          </p>
+          <div className="space-y-2">
+            {DEMO_ACCOUNTS.map((account) => (
+              <button
+                key={account.role}
+                type="button"
+                onClick={() => fillDemoCredentials(account.email, account.password)}
+                className="w-full flex items-center gap-3 rounded-lg border border-gray-200 p-2.5 text-left transition-all hover:bg-gray-50 hover:shadow-sm hover:border-primary/30 active:scale-[0.98]"
+              >
+                <span className="text-lg">{account.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-sm text-gray-900">{account.role}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${account.color}`}>
+                      {account.description}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 truncate">{account.email}</p>
+                </div>
+                <span className="text-[10px] text-gray-400 font-mono bg-gray-100 px-1.5 py-0.5 rounded">{account.password}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

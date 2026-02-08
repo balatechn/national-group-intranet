@@ -967,6 +967,72 @@ async function main() {
   // ==========================================
   // SUCCESS OUTPUT
   // ==========================================
+  // ==========================================
+  // CREATE DEMO ACCOUNTS
+  // ==========================================
+  console.log('Creating demo accounts...');
+  const demoPasswordHash = await hash('Demo@123', 12);
+
+  await prisma.user.upsert({
+    where: { email: 'demo.admin@nationalgroupindia.com' },
+    update: { password: demoPasswordHash },
+    create: {
+      employeeId: 'DEMO-ADM-001',
+      email: 'demo.admin@nationalgroupindia.com',
+      password: demoPasswordHash,
+      firstName: 'Demo',
+      lastName: 'Admin',
+      displayName: 'Demo Admin',
+      role: 'ADMIN',
+      phone: '+91 90000 00001',
+      companyId: nationalGroupIndia.id,
+      departmentId: corpItDept.id,
+      jobTitle: 'IT Administrator',
+      managerId: ceo.id,
+      status: 'ACTIVE',
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: 'demo.manager@nationalgroupindia.com' },
+    update: { password: demoPasswordHash },
+    create: {
+      employeeId: 'DEMO-MGR-001',
+      email: 'demo.manager@nationalgroupindia.com',
+      password: demoPasswordHash,
+      firstName: 'Demo',
+      lastName: 'Manager',
+      displayName: 'Demo Manager',
+      role: 'MANAGER',
+      phone: '+91 90000 00002',
+      companyId: nationalGroupIndia.id,
+      departmentId: corpAdminDept.id,
+      jobTitle: 'Department Manager',
+      managerId: ceo.id,
+      status: 'ACTIVE',
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: 'demo.employee@nationalgroupindia.com' },
+    update: { password: demoPasswordHash },
+    create: {
+      employeeId: 'DEMO-EMP-001',
+      email: 'demo.employee@nationalgroupindia.com',
+      password: demoPasswordHash,
+      firstName: 'Demo',
+      lastName: 'Employee',
+      displayName: 'Demo Employee',
+      role: 'EMPLOYEE',
+      phone: '+91 90000 00003',
+      companyId: nationalGroupIndia.id,
+      departmentId: corpItDept.id,
+      jobTitle: 'Software Developer',
+      managerId: itManager.id,
+      status: 'ACTIVE',
+    },
+  });
+
   console.log('✅ Database seeded successfully!');
   console.log('');
   console.log('🏢 Companies Created:');
@@ -983,6 +1049,11 @@ async function main() {
   console.log('   CIO: it.head@nationalgroupindia.com / Password@123');
   console.log('   CHRO: hr.head@nationalgroupindia.com / Password@123');
   console.log('   CFO: finance.head@nationalgroupindia.com / Password@123');
+  console.log('');
+  console.log('🎭 Demo Accounts:');
+  console.log('   Admin:    demo.admin@nationalgroupindia.com / Demo@123');
+  console.log('   Manager:  demo.manager@nationalgroupindia.com / Demo@123');
+  console.log('   Employee: demo.employee@nationalgroupindia.com / Demo@123');
 }
 
 main()
