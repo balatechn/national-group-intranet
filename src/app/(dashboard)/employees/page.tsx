@@ -20,7 +20,27 @@ import {
   Briefcase,
   Upload,
   Download,
+  Pencil,
+  Loader2,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  Button,
+  Input,
+  Label,
+  Select as UISelect,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui';
 import { EmployeeActions } from '@/components/masters';
 
 interface Employee {
@@ -306,6 +326,99 @@ export default function EmployeeMasterPage() {
     return role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
 
+  // Edit Employee state
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [editForm, setEditForm] = useState({
+    employeeId: '',
+    email: '',
+    firstName: '',
+    lastName: '',
+    phone: '',
+    jobTitle: '',
+    role: 'EMPLOYEE',
+    status: 'ACTIVE',
+    companyId: '',
+    departmentId: '',
+    managerId: '',
+  });
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+
+  const openEditDialog = (employee: Employee, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setEditingEmployee(employee);
+    setEditForm({
+      employeeId: employee.employeeId,
+      email: employee.email,
+      firstName: employee.firstName,
+      lastName: employee.lastName,
+      phone: employee.phone || '',
+      jobTitle: employee.jobTitle || '',
+      role: employee.role,
+      status: employee.status,
+      companyId: employee.company?.id || '',
+      departmentId: employee.department?.id || '',
+      managerId: employee.manager?.id || '',
+    });
+    setEditError('');
+  };
+
+  const handleEditChange = (field: string, value: string) => {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+    if (editError) setEditError('');
+  };
+
+  const handleEditSubmit = async () => {
+    if (!editingEmployee) return;
+    if (!editForm.employeeId.trim()) return setEditError('Employee ID is required');
+    if (!editForm.email.trim()) return setEditError('Email is required');
+    if (!editForm.firstName.trim()) return setEditError('First name is required');
+    if (!editForm.lastName.trim()) return setEditError('Last name is required');
+
+    setEditSaving(true);
+    setEditError('');
+
+    try {
+      const payload: Record<string, any> = {
+        employeeId: editForm.employeeId.trim(),
+        email: editForm.email.trim().toLowerCase(),
+        firstName: editForm.firstName.trim(),
+        lastName: editForm.lastName.trim(),
+        role: editForm.role,
+        status: editForm.status,
+      };
+
+      payload.phone = editForm.phone.trim() || null;
+      payload.jobTitle = editForm.jobTitle.trim() || null;
+      payload.companyId = editForm.companyId || null;
+      payload.departmentId = editForm.departmentId || null;
+      payload.managerId = editForm.managerId || null;
+
+      const res = await fetch(`/api/employees/${editingEmployee.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        setEditError(result.error || 'Failed to update employee');
+        return;
+      }
+
+      setEditingEmployee(null);
+      fetchData(); // Refresh employee list
+    } catch (err) {
+      setEditError('Something went wrong. Please try again.');
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -443,19 +556,28 @@ export default function EmployeeMasterPage() {
       {!loading && viewMode === 'grid' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredEmployees.map((employee) => (
-            <Link
+            <div
               key={employee.id}
-              href={`/employees/${employee.id}`}
-              className="bg-white rounded-xl border border-surface-200 p-6 hover:shadow-lg hover:border-primary/30 transition-all group"
+              className="bg-white rounded-xl border border-surface-200 p-6 hover:shadow-lg hover:border-primary/30 transition-all group relative"
             >
+              {/* Edit Button */}
+              <button
+                onClick={(e) => openEditDialog(employee, e)}
+                className="absolute top-4 right-4 p-2 rounded-lg bg-surface-50 text-text-secondary hover:bg-primary/10 hover:text-primary transition-colors opacity-0 group-hover:opacity-100 z-10"
+                title="Edit Employee"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
               <div className="flex items-start gap-4">
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl flex-shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
                   {employee.firstName[0]}{employee.lastName[0]}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-text-primary group-hover:text-primary truncate transition-colors">
-                    {employee.displayName || `${employee.firstName} ${employee.lastName}`}
-                  </h3>
+                  <Link href={`/employees/${employee.id}`}>
+                    <h3 className="font-semibold text-text-primary hover:text-primary truncate transition-colors">
+                      {employee.displayName || `${employee.firstName} ${employee.lastName}`}
+                    </h3>
+                  </Link>
                   <p className="text-sm text-text-secondary truncate">
                     {employee.jobTitle || 'No Title'}
                   </p>
@@ -505,7 +627,7 @@ export default function EmployeeMasterPage() {
                   </span>
                 )}
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       )}
@@ -534,6 +656,9 @@ export default function EmployeeMasterPage() {
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-text-secondary uppercase tracking-wider">
                     Contact
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -614,6 +739,15 @@ export default function EmployeeMasterPage() {
                         )}
                       </div>
                     </td>
+                    <td className="px-4 py-4 text-center">
+                      <button
+                        onClick={() => openEditDialog(employee)}
+                        className="p-2 rounded-lg text-text-secondary hover:bg-primary/10 hover:text-primary transition-colors"
+                        title="Edit Employee"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -682,6 +816,225 @@ export default function EmployeeMasterPage() {
           </p>
         </div>
       )}
+
+      {/* Edit Employee Dialog */}
+      <Dialog open={!!editingEmployee} onOpenChange={(open) => {
+        if (!open) {
+          setEditingEmployee(null);
+          setEditError('');
+        }
+      }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-5 h-5 text-primary" />
+              Edit Employee
+            </DialogTitle>
+            <DialogDescription>
+              Update employee details. Required fields are marked with *.
+            </DialogDescription>
+          </DialogHeader>
+
+          {editError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              {editError}
+            </div>
+          )}
+
+          <div className="grid gap-4">
+            {/* Row 1: Employee ID & Email */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-employeeId">Employee ID *</Label>
+                <Input
+                  id="edit-employeeId"
+                  value={editForm.employeeId}
+                  onChange={(e) => handleEditChange('employeeId', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-email">Email *</Label>
+                <Input
+                  id="edit-email"
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) => handleEditChange('email', e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Row 2: First Name & Last Name */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-firstName">First Name *</Label>
+                <Input
+                  id="edit-firstName"
+                  value={editForm.firstName}
+                  onChange={(e) => handleEditChange('firstName', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-lastName">Last Name *</Label>
+                <Input
+                  id="edit-lastName"
+                  value={editForm.lastName}
+                  onChange={(e) => handleEditChange('lastName', e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Row 3: Phone & Job Title */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-phone">Phone</Label>
+                <Input
+                  id="edit-phone"
+                  value={editForm.phone}
+                  onChange={(e) => handleEditChange('phone', e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-jobTitle">Job Title</Label>
+                <Input
+                  id="edit-jobTitle"
+                  value={editForm.jobTitle}
+                  onChange={(e) => handleEditChange('jobTitle', e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Row 4: Role & Status */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Role</Label>
+                <UISelect
+                  value={editForm.role}
+                  onValueChange={(value) => handleEditChange('role', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EMPLOYEE">Employee</SelectItem>
+                    <SelectItem value="MANAGER">Manager</SelectItem>
+                    <SelectItem value="HR_ADMIN">HR Admin</SelectItem>
+                    <SelectItem value="IT_ADMIN">IT Admin</SelectItem>
+                    <SelectItem value="ADMIN">Admin</SelectItem>
+                    <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>
+                  </SelectContent>
+                </UISelect>
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <UISelect
+                  value={editForm.status}
+                  onValueChange={(value) => handleEditChange('status', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ACTIVE">Active</SelectItem>
+                    <SelectItem value="INACTIVE">Inactive</SelectItem>
+                    <SelectItem value="SUSPENDED">Suspended</SelectItem>
+                  </SelectContent>
+                </UISelect>
+              </div>
+            </div>
+
+            {/* Row 5: Company & Department */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Company</Label>
+                <UISelect
+                  value={editForm.companyId || 'none'}
+                  onValueChange={(value) => handleEditChange('companyId', value === 'none' ? '' : value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select company" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Company</SelectItem>
+                    {companies.map((company) => (
+                      <SelectItem key={company.id} value={company.id}>
+                        {company.shortName || company.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </UISelect>
+              </div>
+              <div className="space-y-2">
+                <Label>Department</Label>
+                <UISelect
+                  value={editForm.departmentId || 'none'}
+                  onValueChange={(value) => handleEditChange('departmentId', value === 'none' ? '' : value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Department</SelectItem>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </UISelect>
+              </div>
+            </div>
+
+            {/* Row 6: Reporting Manager */}
+            <div className="space-y-2">
+              <Label>Reporting Manager</Label>
+              <UISelect
+                value={editForm.managerId || 'none'}
+                onValueChange={(value) => handleEditChange('managerId', value === 'none' ? '' : value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select manager" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No Manager</SelectItem>
+                  {employees
+                    .filter((e) => e.id !== editingEmployee?.id)
+                    .map((emp) => (
+                      <SelectItem key={emp.id} value={emp.id}>
+                        {emp.firstName} {emp.lastName}{emp.jobTitle ? ` — ${emp.jobTitle}` : ''}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </UISelect>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setEditingEmployee(null);
+                setEditError('');
+              }}
+              disabled={editSaving}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleEditSubmit} disabled={editSaving}>
+              {editSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
