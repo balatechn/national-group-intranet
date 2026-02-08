@@ -6,8 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginInput } from '@/validations';
-import { Button, Input, Label, Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui';
-import { CompanyLogo } from '@/components/ui/company-logo';
+import Image from 'next/image';
 
 // Microsoft Logo SVG Component
 function MicrosoftLogo({ className }: { className?: string }) {
@@ -21,30 +20,46 @@ function MicrosoftLogo({ className }: { className?: string }) {
   );
 }
 
+// Spinner component
+function Spinner({ className = 'h-5 w-5' }: { className?: string }) {
+  return (
+    <svg className={`animate-spin ${className}`} viewBox="0 0 24 24">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+    </svg>
+  );
+}
+
 const DEMO_ACCOUNTS = [
   {
     role: 'Admin',
     email: 'demo.admin@nationalgroupindia.com',
     password: 'Demo@123',
-    color: 'bg-purple-100 text-purple-700 border-purple-200',
+    gradient: 'from-purple-500/20 to-purple-600/10',
+    border: 'border-purple-400/30',
+    badge: 'bg-purple-500/20 text-purple-200',
     icon: '🛡️',
-    description: 'Full system access',
+    description: 'Full access',
   },
   {
     role: 'Manager',
     email: 'demo.manager@nationalgroupindia.com',
     password: 'Demo@123',
-    color: 'bg-blue-100 text-blue-700 border-blue-200',
+    gradient: 'from-blue-500/20 to-blue-600/10',
+    border: 'border-blue-400/30',
+    badge: 'bg-blue-500/20 text-blue-200',
     icon: '👔',
-    description: 'Team & department access',
+    description: 'Team access',
   },
   {
     role: 'Employee',
     email: 'demo.employee@nationalgroupindia.com',
     password: 'Demo@123',
-    color: 'bg-green-100 text-green-700 border-green-200',
+    gradient: 'from-emerald-500/20 to-emerald-600/10',
+    border: 'border-emerald-400/30',
+    badge: 'bg-emerald-500/20 text-emerald-200',
     icon: '👤',
-    description: 'Standard employee access',
+    description: 'Standard access',
   },
 ];
 
@@ -86,7 +101,7 @@ function LoginForm() {
         router.push('/dashboard');
         router.refresh();
       }
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
@@ -99,170 +114,287 @@ function LoginForm() {
     
     try {
       await signIn('azure-ad', { callbackUrl: '/dashboard' });
-    } catch (err) {
+    } catch {
       setError('Failed to sign in with Microsoft. Please try again.');
       setIsMicrosoftLoading(false);
     }
   };
 
   return (
-    <Card className="shadow-modal border-t-4 border-t-primary">
-      <CardHeader className="text-center">
-        <CardTitle className="text-primary">Welcome back</CardTitle>
-        <CardDescription>Sign in to your account to continue</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {error && (
-          <div className="rounded-md bg-danger-light p-3 text-sm text-danger-dark">
-            {error === 'OAuthAccountNotLinked' 
-              ? 'This email is already registered with a different sign-in method.'
+    <div className="space-y-5">
+      {/* Error Alert */}
+      {error && (
+        <div className="rounded-xl bg-red-500/10 backdrop-blur-sm border border-red-400/20 p-3.5 text-sm text-red-200 flex items-center gap-2">
+          <svg className="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+          <span>
+            {error === 'OAuthAccountNotLinked'
+              ? 'This email is already linked to another sign-in method.'
               : error === 'AccessDenied'
               ? 'Access denied. Your account may not be active.'
               : error}
-          </div>
-        )}
-
-        {/* Microsoft SSO Button */}
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full h-12 text-base font-medium border-2 hover:bg-gray-50"
-          onClick={handleMicrosoftSignIn}
-          disabled={isMicrosoftLoading}
-        >
-          {isMicrosoftLoading ? (
-            <svg className="mr-3 h-5 w-5 animate-spin" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
-          ) : (
-            <MicrosoftLogo className="mr-3 h-5 w-5" />
-          )}
-          Sign in with Microsoft 365
-        </Button>
-
-        {/* Divider */}
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-border" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-text-muted">Or continue with email</span>
-          </div>
+          </span>
         </div>
+      )}
 
-        {/* Email/Password Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="form-group">
-            <Label htmlFor="email" required>
-              Email Address
-            </Label>
-            <Input
+      {/* Microsoft SSO */}
+      <button
+        type="button"
+        onClick={handleMicrosoftSignIn}
+        disabled={isMicrosoftLoading}
+        className="group w-full flex items-center justify-center gap-3 h-12 rounded-xl
+          bg-white/10 backdrop-blur-sm border border-white/20
+          text-white font-medium text-sm
+          hover:bg-white/20 hover:border-white/30 hover:shadow-lg hover:shadow-white/5
+          active:scale-[0.98] transition-all duration-200
+          disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isMicrosoftLoading ? (
+          <Spinner />
+        ) : (
+          <MicrosoftLogo className="h-5 w-5" />
+        )}
+        Sign in with Microsoft 365
+      </button>
+
+      {/* Divider */}
+      <div className="relative flex items-center gap-3">
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+        <span className="text-[11px] uppercase tracking-widest text-white/40 font-medium">or</span>
+        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+      </div>
+
+      {/* Email/Password Form */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-1.5">
+          <label htmlFor="email" className="text-xs font-medium text-white/70 uppercase tracking-wider">
+            Email Address
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <svg className="h-4 w-4 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <input
               id="email"
               type="email"
-              placeholder="you@nationalgroup.com"
-              error={errors.email?.message}
+              placeholder="you@nationalgroupindia.com"
+              className="w-full h-11 pl-10 pr-4 rounded-xl
+                bg-white/5 backdrop-blur-sm border border-white/10
+                text-white placeholder-white/25 text-sm
+                focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400/30
+                transition-all duration-200"
               {...register('email')}
             />
           </div>
+          {errors.email && <p className="text-xs text-red-300 mt-1">{errors.email.message}</p>}
+        </div>
 
-          <div className="form-group">
-            <Label htmlFor="password" required>
-              Password
-            </Label>
-            <Input
+        <div className="space-y-1.5">
+          <label htmlFor="password" className="text-xs font-medium text-white/70 uppercase tracking-wider">
+            Password
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+              <svg className="h-4 w-4 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <input
               id="password"
               type="password"
               placeholder="Enter your password"
-              error={errors.password?.message}
+              className="w-full h-11 pl-10 pr-4 rounded-xl
+                bg-white/5 backdrop-blur-sm border border-white/10
+                text-white placeholder-white/25 text-sm
+                focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400/30
+                transition-all duration-200"
               {...register('password')}
             />
           </div>
-
-          <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
-              />
-              Remember me
-            </label>
-            <a href="#" className="text-sm text-primary hover:underline">
-              Forgot password?
-            </a>
-          </div>
-
-          <Button type="submit" className="w-full" isLoading={isLoading}>
-            Sign in with Email
-          </Button>
-        </form>
-
-        {/* Demo Accounts */}
-        <div className="border-t pt-4">
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 text-center">
-            Demo Accounts — Click to autofill
-          </p>
-          <div className="space-y-2">
-            {DEMO_ACCOUNTS.map((account) => (
-              <button
-                key={account.role}
-                type="button"
-                onClick={() => fillDemoCredentials(account.email, account.password)}
-                className="w-full flex items-center gap-3 rounded-lg border border-gray-200 p-2.5 text-left transition-all hover:bg-gray-50 hover:shadow-sm hover:border-primary/30 active:scale-[0.98]"
-              >
-                <span className="text-lg">{account.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm text-gray-900">{account.role}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${account.color}`}>
-                      {account.description}
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 truncate">{account.email}</p>
-                </div>
-                <span className="text-[10px] text-gray-400 font-mono bg-gray-100 px-1.5 py-0.5 rounded">{account.password}</span>
-              </button>
-            ))}
-          </div>
+          {errors.password && <p className="text-xs text-red-300 mt-1">{errors.password.message}</p>}
         </div>
-      </CardContent>
-    </Card>
+
+        <div className="flex items-center justify-between text-sm">
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <input
+              type="checkbox"
+              className="h-3.5 w-3.5 rounded border-white/20 bg-white/5 text-amber-500
+                focus:ring-amber-400/30 focus:ring-offset-0 checked:bg-amber-500"
+            />
+            <span className="text-white/50 group-hover:text-white/70 transition-colors text-xs">Remember me</span>
+          </label>
+          <a href="#" className="text-amber-400/70 hover:text-amber-300 transition-colors text-xs">
+            Forgot password?
+          </a>
+        </div>
+
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="w-full h-11 rounded-xl font-semibold text-sm
+            bg-gradient-to-r from-amber-500 to-amber-600
+            text-white shadow-lg shadow-amber-500/25
+            hover:from-amber-400 hover:to-amber-500 hover:shadow-amber-500/40
+            active:scale-[0.98] transition-all duration-200
+            disabled:opacity-50 disabled:cursor-not-allowed
+            flex items-center justify-center gap-2"
+        >
+          {isLoading ? (
+            <>
+              <Spinner className="h-4 w-4" />
+              Signing in...
+            </>
+          ) : (
+            'Sign In'
+          )}
+        </button>
+      </form>
+
+      {/* Demo Accounts */}
+      <div className="pt-1">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="flex-1 h-px bg-white/10" />
+          <span className="text-[10px] uppercase tracking-[0.15em] text-white/30 font-medium">
+            Quick Demo Access
+          </span>
+          <div className="flex-1 h-px bg-white/10" />
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {DEMO_ACCOUNTS.map((account) => (
+            <button
+              key={account.role}
+              type="button"
+              onClick={() => fillDemoCredentials(account.email, account.password)}
+              className={`group relative rounded-xl border ${account.border}
+                bg-gradient-to-b ${account.gradient}
+                backdrop-blur-sm p-3 text-center
+                hover:scale-[1.03] hover:shadow-lg hover:shadow-black/20
+                active:scale-[0.97] transition-all duration-200`}
+            >
+              <span className="text-xl block mb-1.5">{account.icon}</span>
+              <span className="text-white font-semibold text-xs block">{account.role}</span>
+              <span className={`text-[9px] mt-1 inline-block px-2 py-0.5 rounded-full ${account.badge}`}>
+                {account.description}
+              </span>
+              <div className="mt-1.5 text-[9px] text-white/30 font-mono">{account.password}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary via-secondary to-primary-400 p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-xl bg-white shadow-lg p-2">
-            <CompanyLogo width={64} height={64} className="object-contain" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden">
+      {/* ===== BACKGROUND LAYERS ===== */}
+      {/* Base dark gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950" />
+
+      {/* Warm gold ambient glow */}
+      <div className="absolute inset-0">
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-amber-500/8 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-amber-600/6 rounded-full blur-[100px]" />
+        <div className="absolute top-1/2 left-0 w-[400px] h-[400px] bg-amber-700/5 rounded-full blur-[80px]" />
+      </div>
+
+      {/* Subtle grid pattern */}
+      <div
+        className="absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px),
+                            linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)`,
+          backgroundSize: '60px 60px',
+        }}
+      />
+
+      {/* Floating decorative orbs */}
+      <div className="absolute top-20 right-20 w-3 h-3 bg-amber-400/20 rounded-full animate-pulse" />
+      <div className="absolute bottom-32 left-16 w-2 h-2 bg-amber-300/15 rounded-full animate-pulse [animation-delay:1s]" />
+      <div className="absolute top-1/3 right-1/4 w-1.5 h-1.5 bg-white/10 rounded-full animate-pulse [animation-delay:2s]" />
+
+      {/* ===== MAIN CONTENT ===== */}
+      <div className="relative z-10 w-full max-w-[420px] mx-auto px-4 py-8">
+        {/* Logo & Branding */}
+        <div className="text-center mb-8">
+          {/* Logo with glass ring */}
+          <div className="relative inline-block mb-5">
+            <div className="absolute -inset-2 bg-gradient-to-b from-amber-400/20 to-transparent rounded-2xl blur-lg" />
+            <div className="relative h-20 w-20 mx-auto rounded-2xl
+              bg-white/10 backdrop-blur-md border border-white/20
+              shadow-2xl shadow-black/20
+              flex items-center justify-center overflow-hidden p-2">
+              <Image
+                src="/national-logo.png"
+                alt="National Group India"
+                width={64}
+                height={64}
+                className="object-contain drop-shadow-lg"
+                priority
+              />
+            </div>
           </div>
-          <h1 className="text-2xl font-bold text-white drop-shadow-md">National Group</h1>
-          <p className="text-primary-100">Enterprise Intranet Portal</p>
+
+          {/* Company name with gold gradient */}
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-amber-200 via-amber-100 to-amber-300 bg-clip-text text-transparent tracking-tight">
+            National Group
+          </h1>
+          <p className="text-white/40 text-xs mt-1 tracking-wider uppercase">
+            Enterprise Intranet Portal
+          </p>
+
+          {/* Website link */}
+          <a
+            href="https://nationalgroupindia.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 mt-2 text-[11px] text-amber-400/50 hover:text-amber-300/80 transition-colors"
+          >
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+            </svg>
+            nationalgroupindia.com
+          </a>
         </div>
 
-        {/* Login Card */}
-        <Suspense fallback={
-          <Card className="shadow-modal border-t-4 border-t-primary">
-            <CardContent className="p-8">
-              <div className="flex justify-center">
-                <svg className="h-8 w-8 animate-spin text-primary" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                </svg>
+        {/* ===== GLASS CARD ===== */}
+        <div className="relative">
+          {/* Card glow effect */}
+          <div className="absolute -inset-px bg-gradient-to-b from-amber-400/20 via-transparent to-white/5 rounded-2xl" />
+
+          {/* Glass card */}
+          <div className="relative rounded-2xl
+            bg-white/[0.06] backdrop-blur-xl
+            border border-white/[0.08]
+            shadow-2xl shadow-black/40
+            p-6 sm:p-7">
+
+            {/* Inner top highlight */}
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-400/30 to-transparent rounded-t-2xl" />
+
+            <Suspense fallback={
+              <div className="flex justify-center py-12">
+                <Spinner className="h-8 w-8 text-amber-400/60" />
               </div>
-            </CardContent>
-          </Card>
-        }>
-          <LoginForm />
-        </Suspense>
+            }>
+              <LoginForm />
+            </Suspense>
+          </div>
+        </div>
 
         {/* Footer */}
-        <p className="mt-6 text-center text-sm text-primary-200">
-          © 2026 National Group India. All rights reserved.
-        </p>
+        <div className="mt-6 text-center">
+          <p className="text-[11px] text-white/20">
+            © 2026 National Group India. All rights reserved.
+          </p>
+          <p className="text-[10px] text-white/10 mt-1">
+            Pioneering Infrastructure. Transforming Communities. Since 1949.
+          </p>
+        </div>
       </div>
     </div>
   );
