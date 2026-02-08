@@ -24,6 +24,8 @@ import {
   Loader2,
   Eye,
   EyeOff,
+  KeyRound,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   Dialog,
@@ -343,6 +345,12 @@ export default function EmployeeMasterPage() {
   });
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState('');
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [resettingPassword, setResettingPassword] = useState(false);
+  const [resetSuccess, setResetSuccess] = useState('');
 
   const openEditDialog = (employee: Employee, e?: React.MouseEvent) => {
     if (e) {
@@ -364,6 +372,50 @@ export default function EmployeeMasterPage() {
       managerId: employee.manager?.id || '',
     });
     setEditError('');
+    setShowResetPassword(false);
+    setNewPassword('');
+    setConfirmPassword('');
+    setResetSuccess('');
+  };
+
+  const handleResetPassword = async () => {
+    if (!editingEmployee) return;
+    if (!newPassword || newPassword.length < 8) {
+      setEditError('New password must be at least 8 characters');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setEditError('Passwords do not match');
+      return;
+    }
+
+    setResettingPassword(true);
+    setEditError('');
+
+    try {
+      const res = await fetch(`/api/employees/${editingEmployee.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword }),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        setEditError(result.error || 'Failed to reset password');
+        return;
+      }
+
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowResetPassword(false);
+      setResetSuccess(`Password for ${editingEmployee.firstName} ${editingEmployee.lastName} has been reset successfully.`);
+      setTimeout(() => setResetSuccess(''), 5000);
+    } catch (err) {
+      setEditError('Something went wrong. Please try again.');
+    } finally {
+      setResettingPassword(false);
+    }
   };
 
   const handleEditChange = (field: string, value: string) => {
@@ -822,6 +874,10 @@ export default function EmployeeMasterPage() {
         if (!open) {
           setEditingEmployee(null);
           setEditError('');
+          setShowResetPassword(false);
+          setNewPassword('');
+          setConfirmPassword('');
+          setResetSuccess('');
         }
       }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -1006,6 +1062,96 @@ export default function EmployeeMasterPage() {
                 </SelectContent>
               </UISelect>
             </div>
+
+            {/* Reset Password Section */}
+            <div className="border-t border-surface-200 pt-4 mt-2">
+              {resetSuccess && (
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2 mb-3">
+                  <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                  {resetSuccess}
+                </div>
+              )}
+              {!showResetPassword ? (
+                <button
+                  type="button"
+                  onClick={() => setShowResetPassword(true)}
+                  className="flex items-center gap-2 text-sm font-medium text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 px-4 py-2.5 rounded-lg transition-colors w-full justify-center border border-amber-200"
+                >
+                  <KeyRound className="w-4 h-4" />
+                  Reset Password
+                </button>
+              ) : (
+                <div className="space-y-3 bg-amber-50/50 border border-amber-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-amber-800">
+                    <KeyRound className="w-4 h-4" />
+                    Reset Password for {editingEmployee?.firstName} {editingEmployee?.lastName}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">New Password *</Label>
+                    <div className="relative">
+                      <Input
+                        id="new-password"
+                        type={showNewPassword ? 'text' : 'password'}
+                        placeholder="Minimum 8 characters"
+                        value={newPassword}
+                        onChange={(e) => { setNewPassword(e.target.value); if (editError) setEditError(''); }}
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password">Confirm Password *</Label>
+                    <Input
+                      id="confirm-password"
+                      type={showNewPassword ? 'text' : 'password'}
+                      placeholder="Re-enter new password"
+                      value={confirmPassword}
+                      onChange={(e) => { setConfirmPassword(e.target.value); if (editError) setEditError(''); }}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 pt-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setShowResetPassword(false);
+                        setNewPassword('');
+                        setConfirmPassword('');
+                        setEditError('');
+                      }}
+                      disabled={resettingPassword}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleResetPassword}
+                      disabled={resettingPassword || !newPassword || !confirmPassword}
+                      className="bg-amber-600 hover:bg-amber-700"
+                    >
+                      {resettingPassword ? (
+                        <>
+                          <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                          Resetting...
+                        </>
+                      ) : (
+                        <>
+                          <KeyRound className="mr-2 h-3 w-3" />
+                          Reset Password
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <DialogFooter>
@@ -1014,6 +1160,10 @@ export default function EmployeeMasterPage() {
               onClick={() => {
                 setEditingEmployee(null);
                 setEditError('');
+                setShowResetPassword(false);
+                setNewPassword('');
+                setConfirmPassword('');
+                setResetSuccess('');
               }}
               disabled={editSaving}
             >

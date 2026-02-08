@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { updateUserSchema } from '@/validations';
+import { hash } from 'bcryptjs';
 
 export async function GET(
   request: Request,
@@ -72,6 +73,23 @@ export async function PATCH(
     }
 
     const body = await request.json();
+
+    // Handle password reset separately
+    if (body.newPassword) {
+      if (body.newPassword.length < 8) {
+        return NextResponse.json(
+          { error: 'Password must be at least 8 characters' },
+          { status: 400 }
+        );
+      }
+      const hashedPassword = await hash(body.newPassword, 12);
+      await prisma.user.update({
+        where: { id: params.id },
+        data: { password: hashedPassword },
+      });
+      return NextResponse.json({ success: true, message: 'Password reset successfully' });
+    }
+
     const validated = updateUserSchema.parse(body);
 
     // Check for duplicate email if changing
