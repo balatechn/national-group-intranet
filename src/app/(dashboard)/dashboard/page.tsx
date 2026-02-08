@@ -8,34 +8,21 @@ import {
   Users,
   CheckSquare,
   Calendar,
-  FileText,
   FolderOpen,
-  Clock,
-  AlertTriangle,
-  ArrowRight,
-  Plus,
   ChevronRight,
   Briefcase,
   Settings,
   BookOpen,
-  BarChart3,
   Globe,
-  Star,
-  TrendingUp,
   Zap,
   Activity,
-  Target,
   Sparkles,
   UserCircle,
+  TrendingUp,
+  ArrowUpRight,
+  Clock,
+  MapPin,
 } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Button,
-  Badge,
-} from '@/components/ui';
 
 // Revalidate every 60 seconds for fresh data
 export const revalidate = 60;
@@ -87,12 +74,8 @@ async function getDashboardStats() {
         assignee: { select: { firstName: true, lastName: true, avatar: true } },
       },
     }),
-    // Upcoming events
     prisma.event.findMany({
-      where: {
-        startDate: { gte: today },
-        isPublic: true,
-      },
+      where: { startDate: { gte: today }, isPublic: true },
       take: 5,
       orderBy: { startDate: 'asc' },
       select: {
@@ -105,7 +88,6 @@ async function getDashboardStats() {
         isAllDay: true,
       },
     }),
-    // Recent / active projects
     prisma.project.findMany({
       where: { status: 'ACTIVE' },
       take: 5,
@@ -141,16 +123,16 @@ async function getDashboardStats() {
   };
 }
 
-// Quick Access Apps — employee-focused
+// Quick Access Apps
 const quickAccessApps = [
-  { title: 'Companies', href: '/companies', icon: Building2, color: 'bg-purple-500', description: 'Our Companies' },
-  { title: 'Departments', href: '/departments', icon: Users, color: 'bg-blue-500', description: 'All Teams' },
-  { title: 'Employees', href: '/employees', icon: UserCircle, color: 'bg-teal-500', description: 'People Directory' },
-  { title: 'Projects', href: '/projects', icon: Briefcase, color: 'bg-indigo-500', description: 'All Projects' },
-  { title: 'Tasks', href: '/tasks', icon: CheckSquare, color: 'bg-green-500', description: 'My Tasks' },
-  { title: 'Calendar', href: '/calendar', icon: Calendar, color: 'bg-orange-500', description: 'Events' },
-  { title: 'Drives', href: '/drives', icon: FolderOpen, color: 'bg-yellow-600', description: 'Documents' },
-  { title: 'Policies', href: '/policies', icon: BookOpen, color: 'bg-red-500', description: 'HR & Policies' },
+  { title: 'Companies', href: '/companies', icon: Building2, gradient: 'from-purple-500 to-violet-600' },
+  { title: 'Departments', href: '/departments', icon: Users, gradient: 'from-blue-500 to-cyan-600' },
+  { title: 'Employees', href: '/employees', icon: UserCircle, gradient: 'from-teal-500 to-emerald-600' },
+  { title: 'Projects', href: '/projects', icon: Briefcase, gradient: 'from-indigo-500 to-blue-600' },
+  { title: 'Tasks', href: '/tasks', icon: CheckSquare, gradient: 'from-green-500 to-emerald-600' },
+  { title: 'Calendar', href: '/calendar', icon: Calendar, gradient: 'from-orange-500 to-amber-600' },
+  { title: 'Drives', href: '/drives', icon: FolderOpen, gradient: 'from-yellow-500 to-orange-600' },
+  { title: 'Policies', href: '/policies', icon: BookOpen, gradient: 'from-rose-500 to-pink-600' },
 ];
 
 function getGreeting() {
@@ -160,36 +142,25 @@ function getGreeting() {
   return 'Good Evening';
 }
 
-function getStatusColor(status: string) {
-  const colors: Record<string, string> = {
-    COMPLETED: 'bg-green-100 text-green-700',
-    IN_PROGRESS: 'bg-blue-100 text-blue-700',
-    PENDING: 'bg-yellow-100 text-yellow-700',
-    TODO: 'bg-gray-100 text-gray-700',
-    CANCELLED: 'bg-red-100 text-red-700',
+function getStatusBadge(status: string) {
+  const map: Record<string, { bg: string; text: string }> = {
+    COMPLETED: { bg: 'bg-emerald-500/20', text: 'text-emerald-400' },
+    IN_PROGRESS: { bg: 'bg-blue-500/20', text: 'text-blue-400' },
+    PENDING: { bg: 'bg-amber-500/20', text: 'text-amber-400' },
+    TODO: { bg: 'bg-slate-500/20', text: 'text-slate-400' },
+    CANCELLED: { bg: 'bg-red-500/20', text: 'text-red-400' },
   };
-  return colors[status] || 'bg-gray-100 text-gray-700';
+  return map[status] || { bg: 'bg-slate-500/20', text: 'text-slate-400' };
 }
 
-function getPriorityColor(priority: string) {
-  const colors: Record<string, string> = {
-    CRITICAL: 'bg-red-500',
-    HIGH: 'bg-orange-500',
-    MEDIUM: 'bg-yellow-500',
-    LOW: 'bg-green-500',
+function getPriorityDot(priority: string) {
+  const map: Record<string, string> = {
+    CRITICAL: 'bg-red-500 shadow-red-500/50',
+    HIGH: 'bg-orange-500 shadow-orange-500/50',
+    MEDIUM: 'bg-amber-500 shadow-amber-500/50',
+    LOW: 'bg-emerald-500 shadow-emerald-500/50',
   };
-  return colors[priority] || 'bg-gray-500';
-}
-
-function timeAgo(date: Date) {
-  const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
-  if (seconds < 60) return 'just now';
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  return map[priority] || 'bg-slate-500';
 }
 
 export default async function DashboardPage() {
@@ -209,394 +180,480 @@ export default async function DashboardPage() {
     day: 'numeric',
   });
 
-  return (
-    <div className="space-y-8 -mt-4">
-      {/* Hero Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] p-8 text-white">
-        {/* Decorative background elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-gradient-to-br from-primary/30 to-secondary/20 blur-3xl" />
-          <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-gradient-to-tr from-blue-500/20 to-primary/10 blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
-          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
-        </div>
+  const userInitials = (session?.user?.firstName?.[0] || '') + (session?.user?.lastName?.[0] || session?.user?.name?.[0] || 'U');
 
-        <div className="relative z-10">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
-            {/* Left: Greeting */}
-            <div className="max-w-2xl space-y-4">
-              <div className="flex items-center gap-3 mb-1">
+  return (
+    <div className="dark-dashboard min-h-screen -m-6 p-6 lg:p-8 bg-[#0f0f1a]">
+      {/* Ambient glow effects */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+        <div className="absolute top-0 right-1/4 w-[500px] h-[500px] rounded-full bg-[#DAA520]/[0.04] blur-[120px]" />
+        <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] rounded-full bg-blue-600/[0.03] blur-[100px]" />
+      </div>
+
+      <div className="space-y-6 relative z-10">
+        {/* ── Top Section: Hero + Profile ── */}
+        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+          {/* Hero / Greeting */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a1a2e]/90 to-[#0d0d1a]/90 backdrop-blur-xl border border-white/[0.06] p-8">
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="absolute -top-32 -right-32 h-64 w-64 rounded-full bg-gradient-to-br from-[#DAA520]/20 to-orange-600/10 blur-3xl" />
+              <div className="absolute bottom-0 left-0 h-48 w-48 rounded-full bg-blue-600/10 blur-3xl" />
+              <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'radial-gradient(circle, rgba(218,165,32,0.3) 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+            </div>
+            <div className="relative z-10 space-y-5">
+              <div className="flex items-center gap-3">
                 <Image
                   src="/national-logo.png"
                   alt="National Group"
-                  width={44}
-                  height={44}
-                  className="rounded-lg border border-white/20 bg-white/10 p-1"
+                  width={40}
+                  height={40}
+                  className="rounded-xl border border-white/10 bg-white/5 p-1"
                 />
-                <p className="text-sm text-white/60 font-medium tracking-wide uppercase">{dateStr}</p>
+                <span className="text-xs text-white/40 font-medium tracking-widest uppercase">{dateStr}</span>
               </div>
+
               <div>
-                <h1 className="text-3xl lg:text-4xl font-bold mb-2">
-                  {greeting}, <span className="bg-gradient-to-r from-[#DAA520] to-[#F4C430] bg-clip-text text-transparent">{firstName}</span>
-                  <Sparkles className="inline-block ml-2 h-7 w-7 text-yellow-400" />
+                <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">
+                  {greeting}, <span className="bg-gradient-to-r from-[#DAA520] via-[#F4C430] to-[#FFD700] bg-clip-text text-transparent">{firstName}</span>
+                  <Sparkles className="inline-block ml-2 h-6 w-6 text-amber-400/80" />
                 </h1>
-                <p className="text-white/70 text-lg">
+                <p className="text-white/50 text-base max-w-lg">
                   Welcome to National Group Intranet — your central hub for collaboration and productivity.
                 </p>
               </div>
+
+              {/* Stat Chips */}
+              <div className="flex flex-wrap gap-3 pt-1">
+                <Link href="/employees" className="inline-flex items-center gap-2 rounded-full bg-white/[0.06] backdrop-blur-md border border-white/[0.08] px-4 py-2 text-sm transition-all hover:bg-white/[0.12] hover:border-white/[0.15]">
+                  <div className="h-2 w-2 rounded-full bg-blue-400 shadow-sm shadow-blue-400/50" />
+                  <span className="text-white/70">Employees</span>
+                  <span className="font-bold text-white">{stats.activeEmployees}</span>
+                </Link>
+                <Link href="/companies" className="inline-flex items-center gap-2 rounded-full bg-white/[0.06] backdrop-blur-md border border-white/[0.08] px-4 py-2 text-sm transition-all hover:bg-white/[0.12] hover:border-white/[0.15]">
+                  <div className="h-2 w-2 rounded-full bg-purple-400 shadow-sm shadow-purple-400/50" />
+                  <span className="text-white/70">Companies</span>
+                  <span className="font-bold text-white">{stats.totalCompanies}</span>
+                </Link>
+                <Link href="/departments" className="inline-flex items-center gap-2 rounded-full bg-white/[0.06] backdrop-blur-md border border-white/[0.08] px-4 py-2 text-sm transition-all hover:bg-white/[0.12] hover:border-white/[0.15]">
+                  <div className="h-2 w-2 rounded-full bg-teal-400 shadow-sm shadow-teal-400/50" />
+                  <span className="text-white/70">Departments</span>
+                  <span className="font-bold text-white">{stats.totalDepartments}</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Profile Card */}
+          <div className="rounded-2xl bg-gradient-to-b from-[#1a1a2e]/90 to-[#12121f]/90 backdrop-blur-xl border border-white/[0.06] p-6 flex flex-col items-center text-center">
+            <div className="relative mb-4">
+              <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-[#DAA520] to-[#FFD700] opacity-30 blur-sm" />
+              {(session?.user as any)?.avatar ? (
+                <Image
+                  src={(session!.user as any).avatar}
+                  alt={firstName}
+                  width={72}
+                  height={72}
+                  className="relative rounded-full border-2 border-[#DAA520]/40 object-cover"
+                />
+              ) : (
+                <div className="relative h-[72px] w-[72px] rounded-full bg-gradient-to-br from-[#DAA520] to-[#B8860B] flex items-center justify-center text-2xl font-bold text-white border-2 border-[#DAA520]/40">
+                  {userInitials}
+                </div>
+              )}
+              <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-emerald-500 border-2 border-[#12121f]" />
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-0.5">{session?.user?.name || firstName}</h3>
+            <p className="text-xs text-white/40 mb-5">{(session?.user as any)?.role?.replace('_', ' ') || 'EMPLOYEE'}</p>
+
+            {/* Quick Action Icons */}
+            <div className="grid grid-cols-4 gap-3 w-full mb-5">
+              {[
+                { icon: CheckSquare, label: 'Tasks', href: '/tasks', gradient: 'from-green-500 to-emerald-600' },
+                { icon: Briefcase, label: 'Projects', href: '/projects', gradient: 'from-indigo-500 to-blue-600' },
+                { icon: Calendar, label: 'Calendar', href: '/calendar', gradient: 'from-orange-500 to-amber-600' },
+                { icon: FolderOpen, label: 'Drives', href: '/drives', gradient: 'from-yellow-500 to-orange-600' },
+              ].map((action) => {
+                const Icon = action.icon;
+                return (
+                  <Link
+                    key={action.href}
+                    href={action.href}
+                    className="flex flex-col items-center gap-1.5 group"
+                  >
+                    <div className={`rounded-xl bg-gradient-to-br ${action.gradient} p-2.5 transition-transform group-hover:scale-110 shadow-lg`}>
+                      <Icon className="h-4 w-4 text-white" />
+                    </div>
+                    <span className="text-[10px] text-white/50 group-hover:text-white/80 transition-colors">{action.label}</span>
+                  </Link>
+                );
+              })}
             </div>
 
-            {/* Right: Organization Stats */}
-            <div className="grid grid-cols-2 gap-3 lg:min-w-[320px]">
-              <Link href="/employees" className="group rounded-xl bg-white/[0.08] backdrop-blur-md border border-white/10 p-4 text-center transition-all hover:bg-white/[0.15] hover:border-white/20 hover:scale-[1.02]">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="rounded-lg bg-blue-500/20 p-2">
-                    <Users className="h-5 w-5 text-blue-400" />
-                  </div>
-                </div>
-                <p className="text-2xl lg:text-3xl font-bold">{stats.activeEmployees}</p>
-                <p className="text-xs text-white/60 mt-1">Employees</p>
-              </Link>
-              <Link href="/companies" className="group rounded-xl bg-white/[0.08] backdrop-blur-md border border-white/10 p-4 text-center transition-all hover:bg-white/[0.15] hover:border-white/20 hover:scale-[1.02]">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="rounded-lg bg-purple-500/20 p-2">
-                    <Building2 className="h-5 w-5 text-purple-400" />
-                  </div>
-                </div>
-                <p className="text-2xl lg:text-3xl font-bold">{stats.totalCompanies}</p>
-                <p className="text-xs text-white/60 mt-1">Companies</p>
-              </Link>
-              <Link href="/departments" className="group rounded-xl bg-white/[0.08] backdrop-blur-md border border-white/10 p-4 text-center transition-all hover:bg-white/[0.15] hover:border-white/20 hover:scale-[1.02]">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="rounded-lg bg-teal-500/20 p-2">
-                    <Users className="h-5 w-5 text-teal-400" />
-                  </div>
-                </div>
-                <p className="text-2xl lg:text-3xl font-bold">{stats.totalDepartments}</p>
-                <p className="text-xs text-white/60 mt-1">Departments</p>
-              </Link>
-              <Link href="/projects" className="group rounded-xl bg-white/[0.08] backdrop-blur-md border border-white/10 p-4 text-center transition-all hover:bg-white/[0.15] hover:border-white/20 hover:scale-[1.02]">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="rounded-lg bg-indigo-500/20 p-2">
-                    <Briefcase className="h-5 w-5 text-indigo-400" />
-                  </div>
-                </div>
-                <p className="text-2xl lg:text-3xl font-bold">{stats.totalProjects}</p>
-                <p className="text-xs text-white/60 mt-1">Projects</p>
-              </Link>
+            {/* Mini Stats Card */}
+            <div className="w-full rounded-xl bg-gradient-to-br from-[#DAA520]/20 to-orange-600/10 border border-[#DAA520]/20 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-[#DAA520]/70 font-medium">My Productivity</span>
+                <TrendingUp className="h-3.5 w-3.5 text-[#DAA520]" />
+              </div>
+              <div className="flex items-end gap-1">
+                <span className="text-2xl font-bold text-white">{stats.taskCompletionRate}%</span>
+                <span className="text-xs text-emerald-400 mb-1 ml-1">tasks done</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Quick Access Apps */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-text-primary flex items-center gap-2">
-            <Zap className="h-5 w-5 text-primary" />
-            Quick Access
-          </h2>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
-          {quickAccessApps.map((app) => {
-            const Icon = app.icon;
+        {/* ── Stat Cards Row ── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: 'Active Employees', value: stats.activeEmployees, icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', href: '/employees' },
+            { label: 'Active Projects', value: stats.activeProjects, icon: Briefcase, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', href: '/projects' },
+            { label: 'Tasks In Progress', value: stats.inProgressTasks, icon: Activity, color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20', href: '/tasks' },
+            { label: 'Completion Rate', value: `${stats.taskCompletionRate}%`, icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', href: '/tasks' },
+          ].map((stat) => {
+            const Icon = stat.icon;
             return (
               <Link
-                key={app.href}
-                href={app.href}
-                className="group flex flex-col items-center gap-3 rounded-xl border border-border bg-white p-4 transition-all hover:shadow-lg hover:border-primary/30 hover:-translate-y-1"
+                key={stat.label}
+                href={stat.href}
+                className={`group rounded-2xl bg-[#1a1a2e]/80 backdrop-blur-xl border border-white/[0.06] ${stat.border} p-5 transition-all hover:bg-[#1a1a2e] hover:border-white/[0.12] hover:scale-[1.02]`}
               >
-                <div className={`${app.color} rounded-xl p-3 text-white transition-transform group-hover:scale-110`}>
-                  <Icon className="h-6 w-6" />
+                <div className="flex items-center justify-between mb-3">
+                  <div className={`rounded-xl ${stat.bg} p-2.5`}>
+                    <Icon className={`h-5 w-5 ${stat.color}`} />
+                  </div>
+                  <ArrowUpRight className="h-4 w-4 text-white/20 group-hover:text-white/50 transition-colors" />
                 </div>
-                <div className="text-center">
-                  <p className="text-sm font-medium text-text-primary">{app.title}</p>
-                  <p className="text-xs text-text-muted hidden sm:block">{app.description}</p>
-                </div>
+                <p className="text-2xl lg:text-3xl font-bold text-white">{stat.value}</p>
+                <p className="text-xs text-white/40 mt-1">{stat.label}</p>
               </Link>
             );
           })}
         </div>
-      </section>
 
-      {/* Main Content Grid */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column */}
-        <section className="lg:col-span-2 space-y-6">
-          {/* My Tasks */}
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <CheckSquare className="h-5 w-5 text-green-500" />
+        {/* ── Quick Access Grid ── */}
+        <div className="rounded-2xl bg-[#1a1a2e]/60 backdrop-blur-xl border border-white/[0.06] p-6">
+          <h2 className="text-base font-semibold text-white/80 mb-4 flex items-center gap-2">
+            <Zap className="h-4 w-4 text-[#DAA520]" />
+            Quick Access
+          </h2>
+          <div className="grid grid-cols-4 sm:grid-cols-8 gap-4">
+            {quickAccessApps.map((app) => {
+              const Icon = app.icon;
+              return (
+                <Link
+                  key={app.href}
+                  href={app.href}
+                  className="group flex flex-col items-center gap-2.5"
+                >
+                  <div className={`rounded-2xl bg-gradient-to-br ${app.gradient} p-3 text-white transition-all group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-white/5`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <span className="text-xs text-white/50 group-hover:text-white/80 transition-colors font-medium">{app.title}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Main Content Grid ── */}
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Left Column */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* My Tasks */}
+            <div className="rounded-2xl bg-[#1a1a2e]/80 backdrop-blur-xl border border-white/[0.06] overflow-hidden">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
+                <h3 className="text-base font-semibold text-white flex items-center gap-2">
+                  <CheckSquare className="h-4 w-4 text-emerald-400" />
                   My Tasks
-                </CardTitle>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/tasks" className="text-primary">
-                    View all <ChevronRight className="h-4 w-4 ml-1" />
-                  </Link>
-                </Button>
+                </h3>
+                <Link href="/tasks" className="text-xs text-[#DAA520]/70 hover:text-[#DAA520] transition-colors flex items-center gap-1">
+                  View all <ChevronRight className="h-3 w-3" />
+                </Link>
               </div>
-            </CardHeader>
-            <CardContent>
-              {stats.recentTasks.length === 0 ? (
-                <div className="text-center py-8 text-text-muted">
-                  <CheckSquare className="h-10 w-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">No tasks assigned yet.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {stats.recentTasks.map((task) => (
-                    <Link
-                      key={task.id}
-                      href={`/tasks/${task.id}`}
-                      className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-surface-100 hover:border-primary/20 transition-all group"
-                    >
-                      <div className={`h-2 w-2 rounded-full flex-shrink-0 ${getPriorityColor(task.priority)}`} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-text-primary truncate group-hover:text-primary transition-colors">
-                          {task.title}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          {task.assignee && (
-                            <span className="text-xs text-text-muted">
-                              {task.assignee.firstName} {task.assignee.lastName}
-                            </span>
-                          )}
-                          {task.dueDate && (
-                            <span className="text-xs text-text-muted">
-                              • Due {new Date(task.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <Badge className={`text-xs ${getStatusColor(task.status)}`}>
-                        {task.status.replace('_', ' ')}
-                      </Badge>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              <div className="p-4">
+                {stats.recentTasks.length === 0 ? (
+                  <div className="text-center py-10">
+                    <CheckSquare className="h-10 w-10 mx-auto mb-3 text-white/10" />
+                    <p className="text-sm text-white/30">No tasks assigned yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {stats.recentTasks.map((task) => {
+                      const statusStyle = getStatusBadge(task.status);
+                      return (
+                        <Link
+                          key={task.id}
+                          href={`/tasks/${task.id}`}
+                          className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/[0.04] transition-all group"
+                        >
+                          <div className={`h-2.5 w-2.5 rounded-full flex-shrink-0 shadow-sm ${getPriorityDot(task.priority)}`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-white/90 truncate group-hover:text-white transition-colors">
+                              {task.title}
+                            </p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              {task.assignee && (
+                                <span className="text-xs text-white/30">
+                                  {task.assignee.firstName} {task.assignee.lastName}
+                                </span>
+                              )}
+                              {task.dueDate && (
+                                <span className="text-xs text-white/30">
+                                  • {new Date(task.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full ${statusStyle.bg} ${statusStyle.text}`}>
+                            {task.status.replace('_', ' ')}
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
 
-          {/* Upcoming Events */}
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-orange-500" />
+            {/* Upcoming Events */}
+            <div className="rounded-2xl bg-[#1a1a2e]/80 backdrop-blur-xl border border-white/[0.06] overflow-hidden">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
+                <h3 className="text-base font-semibold text-white flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-orange-400" />
                   Upcoming Events
-                </CardTitle>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/calendar" className="text-primary">
-                    View all <ChevronRight className="h-4 w-4 ml-1" />
-                  </Link>
-                </Button>
+                </h3>
+                <Link href="/calendar" className="text-xs text-[#DAA520]/70 hover:text-[#DAA520] transition-colors flex items-center gap-1">
+                  View all <ChevronRight className="h-3 w-3" />
+                </Link>
               </div>
-            </CardHeader>
-            <CardContent>
-              {stats.upcomingEvents.length === 0 ? (
-                <div className="text-center py-6 text-text-muted">
-                  <Calendar className="h-10 w-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">No upcoming events.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {stats.upcomingEvents.map((event) => (
-                    <div
-                      key={event.id}
-                      className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-surface-100 hover:border-primary/20 transition-all"
-                    >
-                      <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-orange-100 to-amber-100 flex flex-col items-center justify-center text-orange-600 flex-shrink-0">
-                        <p className="text-xs font-medium leading-none">
-                          {new Date(event.startDate).toLocaleDateString('en-IN', { month: 'short' })}
-                        </p>
-                        <p className="text-lg font-bold leading-tight">
-                          {new Date(event.startDate).getDate()}
-                        </p>
+              <div className="p-4">
+                {stats.upcomingEvents.length === 0 ? (
+                  <div className="text-center py-10">
+                    <Calendar className="h-10 w-10 mx-auto mb-3 text-white/10" />
+                    <p className="text-sm text-white/30">No upcoming events.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {stats.upcomingEvents.map((event) => (
+                      <div
+                        key={event.id}
+                        className="flex items-center gap-4 p-3 rounded-xl hover:bg-white/[0.04] transition-all"
+                      >
+                        <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-orange-500/20 to-amber-500/10 border border-orange-500/20 flex flex-col items-center justify-center flex-shrink-0">
+                          <span className="text-[10px] font-medium text-orange-400/70 leading-none">
+                            {new Date(event.startDate).toLocaleDateString('en-IN', { month: 'short' }).toUpperCase()}
+                          </span>
+                          <span className="text-lg font-bold text-orange-400 leading-tight">
+                            {new Date(event.startDate).getDate()}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-white/90 truncate">{event.title}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <Clock className="h-3 w-3 text-white/25" />
+                            <span className="text-xs text-white/35">
+                              {event.isAllDay ? 'All Day' : new Date(event.startDate).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            {event.location && (
+                              <>
+                                <MapPin className="h-3 w-3 text-white/25" />
+                                <span className="text-xs text-white/35 truncate">{event.location}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-medium px-2.5 py-1 rounded-full bg-orange-500/15 text-orange-400">
+                          {event.type.replace('_', ' ')}
+                        </span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-text-primary truncate">
-                          {event.title}
-                        </p>
-                        <p className="text-xs text-text-muted truncate">
-                          {event.isAllDay
-                            ? 'All Day'
-                            : new Date(event.startDate).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                          {event.location ? ` • ${event.location}` : ''}
-                        </p>
-                      </div>
-                      <Badge className="text-xs bg-orange-100 text-orange-700">
-                        {event.type.replace('_', ' ')}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* Right Sidebar */}
-        <aside className="space-y-6">
-          {/* Task Progress */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Activity className="h-5 w-5 text-primary" />
-                Productivity
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-center">
-                <div className="relative inline-flex items-center justify-center">
-                  <svg className="h-24 w-24 -rotate-90" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="40" fill="none" stroke="#f3f4f6" strokeWidth="8" />
-                    <circle
-                      cx="50" cy="50" r="40" fill="none"
-                      stroke="#B8860B"
-                      strokeWidth="8"
-                      strokeLinecap="round"
-                      strokeDasharray={`${stats.taskCompletionRate * 2.51} 251`}
-                    />
-                  </svg>
-                  <span className="absolute text-xl font-bold text-text-primary">{stats.taskCompletionRate}%</span>
-                </div>
-                <p className="text-sm text-text-muted mt-2">Task Completion</p>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="text-center p-3 rounded-lg bg-green-50">
-                  <p className="text-lg font-bold text-green-600">{stats.completedTasks}</p>
-                  <p className="text-xs text-green-600/70">Completed</p>
+            </div>
+          </div>
+
+          {/* Right Sidebar */}
+          <div className="space-y-6">
+            {/* Productivity Ring */}
+            <div className="rounded-2xl bg-[#1a1a2e]/80 backdrop-blur-xl border border-white/[0.06] p-6">
+              <h3 className="text-base font-semibold text-white mb-5 flex items-center gap-2">
+                <Activity className="h-4 w-4 text-[#DAA520]" />
+                My Goals
+              </h3>
+              <div className="flex items-center justify-center gap-6 mb-5">
+                {/* Task Completion Ring */}
+                <div className="text-center">
+                  <div className="relative inline-flex items-center justify-center">
+                    <svg className="h-20 w-20 -rotate-90" viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="7" />
+                      <circle
+                        cx="50" cy="50" r="40" fill="none"
+                        stroke="url(#goldGrad)"
+                        strokeWidth="7"
+                        strokeLinecap="round"
+                        strokeDasharray={`${stats.taskCompletionRate * 2.51} 251`}
+                      />
+                      <defs>
+                        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#DAA520" />
+                          <stop offset="100%" stopColor="#FFD700" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                    <span className="absolute text-lg font-bold text-white">{stats.taskCompletionRate}%</span>
+                  </div>
+                  <p className="text-[10px] text-white/40 mt-2">Tasks Done</p>
                 </div>
-                <div className="text-center p-3 rounded-lg bg-blue-50">
-                  <p className="text-lg font-bold text-blue-600">{stats.inProgressTasks}</p>
-                  <p className="text-xs text-blue-600/70">In Progress</p>
-                </div>
-                <div className="text-center p-3 rounded-lg bg-red-50">
-                  <p className="text-lg font-bold text-red-600">{stats.overdueTasks}</p>
-                  <p className="text-xs text-red-600/70">Overdue</p>
-                </div>
-                <div className="text-center p-3 rounded-lg bg-gray-50">
-                  <p className="text-lg font-bold text-gray-600">{stats.totalTasks}</p>
-                  <p className="text-xs text-gray-600/70">Total</p>
+
+                {/* Project Progress Ring */}
+                <div className="text-center">
+                  <div className="relative inline-flex items-center justify-center">
+                    <svg className="h-20 w-20 -rotate-90" viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="7" />
+                      <circle
+                        cx="50" cy="50" r="40" fill="none"
+                        stroke="url(#blueGrad)"
+                        strokeWidth="7"
+                        strokeLinecap="round"
+                        strokeDasharray={`${stats.totalProjects > 0 ? Math.round((stats.activeProjects / stats.totalProjects) * 100) * 2.51 : 0} 251`}
+                      />
+                      <defs>
+                        <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#3B82F6" />
+                          <stop offset="100%" stopColor="#60A5FA" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                    <span className="absolute text-lg font-bold text-white">
+                      {stats.totalProjects > 0 ? Math.round((stats.activeProjects / stats.totalProjects) * 100) : 0}%
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-white/40 mt-2">Projects Active</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Active Projects */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Briefcase className="h-5 w-5 text-indigo-500" />
-                Active Projects
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {stats.recentProjects.length === 0 ? (
-                <div className="text-center py-6 text-text-muted">
-                  <Briefcase className="h-10 w-10 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">No active projects.</p>
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/10 p-3 text-center">
+                  <p className="text-lg font-bold text-emerald-400">{stats.completedTasks}</p>
+                  <p className="text-[10px] text-emerald-400/60">Completed</p>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {stats.recentProjects.map((project) => (
-                    <Link
-                      key={project.id}
-                      href={`/projects`}
-                      className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-surface-100 hover:border-primary/20 transition-all group"
-                    >
-                      <div className="h-9 w-9 rounded-lg bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center text-sm font-bold text-indigo-600 flex-shrink-0">
-                        {project.name.charAt(0)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-text-primary truncate group-hover:text-primary transition-colors">
-                          {project.name}
-                        </p>
-                        <p className="text-xs text-text-muted">
-                          {project.owner.firstName} {project.owner.lastName} • {project._count.members} member{project._count.members !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-                      <Badge className="text-xs bg-green-100 text-green-700">Active</Badge>
-                    </Link>
-                  ))}
+                <div className="rounded-xl bg-blue-500/10 border border-blue-500/10 p-3 text-center">
+                  <p className="text-lg font-bold text-blue-400">{stats.inProgressTasks}</p>
+                  <p className="text-[10px] text-blue-400/60">In Progress</p>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                <div className="rounded-xl bg-red-500/10 border border-red-500/10 p-3 text-center">
+                  <p className="text-lg font-bold text-red-400">{stats.overdueTasks}</p>
+                  <p className="text-[10px] text-red-400/60">Overdue</p>
+                </div>
+                <div className="rounded-xl bg-white/[0.04] border border-white/[0.06] p-3 text-center">
+                  <p className="text-lg font-bold text-white/80">{stats.totalTasks}</p>
+                  <p className="text-[10px] text-white/30">Total Tasks</p>
+                </div>
+              </div>
+            </div>
 
-          {/* Organization Overview */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Globe className="h-5 w-5 text-primary" />
+            {/* Active Projects */}
+            <div className="rounded-2xl bg-[#1a1a2e]/80 backdrop-blur-xl border border-white/[0.06] overflow-hidden">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06]">
+                <h3 className="text-base font-semibold text-white flex items-center gap-2">
+                  <Briefcase className="h-4 w-4 text-indigo-400" />
+                  Active Projects
+                </h3>
+                <Link href="/projects" className="text-xs text-[#DAA520]/70 hover:text-[#DAA520] transition-colors flex items-center gap-1">
+                  See all <ChevronRight className="h-3 w-3" />
+                </Link>
+              </div>
+              <div className="p-4">
+                {stats.recentProjects.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Briefcase className="h-10 w-10 mx-auto mb-3 text-white/10" />
+                    <p className="text-sm text-white/30">No active projects.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {stats.recentProjects.map((project) => (
+                      <Link
+                        key={project.id}
+                        href="/projects"
+                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/[0.04] transition-all group"
+                      >
+                        <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500/20 to-purple-500/10 border border-indigo-500/20 flex items-center justify-center text-sm font-bold text-indigo-400 flex-shrink-0">
+                          {project.name.charAt(0)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-white/90 truncate group-hover:text-white transition-colors">
+                            {project.name}
+                          </p>
+                          <p className="text-xs text-white/30">
+                            {project.owner.firstName} {project.owner.lastName} • {project._count.members} members
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Organization */}
+            <div className="rounded-2xl bg-[#1a1a2e]/80 backdrop-blur-xl border border-white/[0.06] p-5">
+              <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+                <Globe className="h-4 w-4 text-[#DAA520]" />
                 Organization
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <Link href="/companies" className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-100 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-purple-50 p-2">
-                      <Building2 className="h-4 w-4 text-purple-500" />
-                    </div>
-                    <span className="text-sm font-medium">Companies</span>
-                  </div>
-                  <span className="text-sm font-bold text-text-primary">{stats.totalCompanies}</span>
-                </Link>
-                <Link href="/departments" className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-100 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-blue-50 p-2">
-                      <Users className="h-4 w-4 text-blue-500" />
-                    </div>
-                    <span className="text-sm font-medium">Departments</span>
-                  </div>
-                  <span className="text-sm font-bold text-text-primary">{stats.totalDepartments}</span>
-                </Link>
-                <Link href="/employees" className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-100 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-teal-50 p-2">
-                      <UserCircle className="h-4 w-4 text-teal-500" />
-                    </div>
-                    <span className="text-sm font-medium">Employees</span>
-                  </div>
-                  <span className="text-sm font-bold text-text-primary">{stats.totalEmployees}</span>
-                </Link>
-                <Link href="/projects" className="flex items-center justify-between p-3 rounded-lg hover:bg-surface-100 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-indigo-50 p-2">
-                      <Briefcase className="h-4 w-4 text-indigo-500" />
-                    </div>
-                    <span className="text-sm font-medium">Projects</span>
-                  </div>
-                  <span className="text-sm font-bold text-text-primary">{stats.totalProjects}</span>
-                </Link>
+              </h3>
+              <div className="space-y-2">
+                {[
+                  { label: 'Companies', value: stats.totalCompanies, icon: Building2, color: 'text-purple-400', bg: 'bg-purple-500/10', href: '/companies' },
+                  { label: 'Departments', value: stats.totalDepartments, icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10', href: '/departments' },
+                  { label: 'Employees', value: stats.totalEmployees, icon: UserCircle, color: 'text-teal-400', bg: 'bg-teal-500/10', href: '/employees' },
+                  { label: 'Projects', value: stats.totalProjects, icon: Briefcase, color: 'text-indigo-400', bg: 'bg-indigo-500/10', href: '/projects' },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.label}
+                      href={item.href}
+                      className="flex items-center justify-between p-3 rounded-xl hover:bg-white/[0.04] transition-colors group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`rounded-lg ${item.bg} p-2`}>
+                          <Icon className={`h-4 w-4 ${item.color}`} />
+                        </div>
+                        <span className="text-sm text-white/60 group-hover:text-white/80 transition-colors">{item.label}</span>
+                      </div>
+                      <span className="text-sm font-bold text-white/90">{item.value}</span>
+                    </Link>
+                  );
+                })}
               </div>
-            </CardContent>
-          </Card>
-        </aside>
-      </div>
+            </div>
+          </div>
+        </div>
 
-      {/* Footer Links */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-border">
-        <Link href="/about" className="flex items-center gap-2 p-4 rounded-lg hover:bg-surface-100 transition-colors">
-          <Globe className="h-5 w-5 text-primary" />
-          <span className="text-sm font-medium">About Us</span>
-        </Link>
-        <Link href="/companies" className="flex items-center gap-2 p-4 rounded-lg hover:bg-surface-100 transition-colors">
-          <Building2 className="h-5 w-5 text-primary" />
-          <span className="text-sm font-medium">Our Companies</span>
-        </Link>
-        <Link href="/policies" className="flex items-center gap-2 p-4 rounded-lg hover:bg-surface-100 transition-colors">
-          <BookOpen className="h-5 w-5 text-primary" />
-          <span className="text-sm font-medium">Policies</span>
-        </Link>
-        <Link href="/settings" className="flex items-center gap-2 p-4 rounded-lg hover:bg-surface-100 transition-colors">
-          <Settings className="h-5 w-5 text-primary" />
-          <span className="text-sm font-medium">Settings</span>
-        </Link>
+        {/* ── Footer Links ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-white/[0.04]">
+          {[
+            { label: 'About Us', href: '/about', icon: Globe },
+            { label: 'Our Companies', href: '/companies', icon: Building2 },
+            { label: 'Policies', href: '/policies', icon: BookOpen },
+            { label: 'Settings', href: '/settings', icon: Settings },
+          ].map((link) => {
+            const Icon = link.icon;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="flex items-center gap-2 p-4 rounded-xl hover:bg-white/[0.04] transition-colors"
+              >
+                <Icon className="h-4 w-4 text-[#DAA520]/60" />
+                <span className="text-sm text-white/40 hover:text-white/60">{link.label}</span>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

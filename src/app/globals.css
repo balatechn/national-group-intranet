@@ -165,3 +165,27 @@
     }
   }
 }
+
+/* ── Dark Dashboard Theme (scoped) ── */
+.dark-dashboard {
+  background: #0f0f1a;
+  color: #ffffff;
+}
+
+.dark-dashboard ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.dark-dashboard ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dark-dashboard ::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.dark-dashboard ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
