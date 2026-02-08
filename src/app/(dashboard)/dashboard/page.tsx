@@ -634,9 +634,8 @@ export default async function DashboardPage() {
         </div>
 
         {/* ── Footer Links ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-gray-200/60">
+        <div className="grid grid-cols-3 gap-3 pt-4 border-t border-gray-200/60">
           {[
-            { label: 'About Us', href: '/about', icon: Globe },
             { label: 'Our Companies', href: '/companies', icon: Building2 },
             { label: 'Policies', href: '/policies', icon: BookOpen },
             { label: 'Settings', href: '/settings', icon: Settings },

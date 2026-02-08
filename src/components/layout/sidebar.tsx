@@ -20,7 +20,6 @@ import {
   ClipboardList,
   HardDrive,
   BarChart3,
-  Info,
   ChevronDown,
   ChevronRight,
   Settings,
@@ -73,7 +72,6 @@ const navigation: NavItem[] = [
       { title: 'Reports', href: '/it/reports', icon: BarChart3 },
     ],
   },
-  { title: 'About', href: '/about', icon: Info },
   { title: 'Settings', href: '/settings', icon: Settings },
 ];
 
