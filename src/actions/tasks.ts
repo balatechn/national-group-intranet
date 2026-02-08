@@ -120,22 +120,26 @@ export async function createTask(data: CreateTaskInput, creatorId: string) {
     },
   });
 
-  // Send email notification to assignee
+  // Send email notification to assignee (don't let email failure block task creation)
   if (task.assignee) {
-    const assigneeName = `${task.assignee.firstName} ${task.assignee.lastName}`;
-    const taskUrl = `${process.env.APP_URL}/tasks/${task.id}`;
-    const emailContent = getTaskAssignedEmail(
-      assigneeName,
-      task.title,
-      taskUrl,
-      task.dueDate?.toLocaleDateString()
-    );
+    try {
+      const assigneeName = `${task.assignee.firstName} ${task.assignee.lastName}`;
+      const taskUrl = `${process.env.APP_URL}/tasks/${task.id}`;
+      const emailContent = getTaskAssignedEmail(
+        assigneeName,
+        task.title,
+        taskUrl,
+        task.dueDate?.toLocaleDateString()
+      );
 
-    await sendEmail({
-      to: task.assignee.email,
-      subject: emailContent.subject,
-      html: emailContent.html,
-    });
+      await sendEmail({
+        to: task.assignee.email,
+        subject: emailContent.subject,
+        html: emailContent.html,
+      });
+    } catch (emailError) {
+      console.error('Failed to send task assignment email:', emailError);
+    }
   }
 
   revalidatePath('/tasks');

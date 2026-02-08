@@ -224,8 +224,8 @@ export default function CreateTaskPage() {
                     Select an employee to assign this task. They will receive an email notification.
                   </p>
                   <Select
-                    value={selectedAssigneeId || ''}
-                    onValueChange={(value) => setValue('assigneeId', value || null)}
+                    value={selectedAssigneeId || 'none'}
+                    onValueChange={(value) => setValue('assigneeId', value === 'none' ? undefined : value)}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Search and select assignee...">
@@ -257,7 +257,7 @@ export default function CreateTaskPage() {
                           />
                         </div>
                       </div>
-                      <SelectItem value="">
+                      <SelectItem value="none">
                         <span className="text-text-muted">Unassigned</span>
                       </SelectItem>
                       {isLoadingUsers ? (
@@ -301,14 +301,14 @@ export default function CreateTaskPage() {
                       Project
                     </Label>
                     <Select
-                      value={selectedProjectId || ''}
-                      onValueChange={(value) => setValue('projectId', value || null)}
+                      value={selectedProjectId || 'none'}
+                      onValueChange={(value) => setValue('projectId', value === 'none' ? undefined : value)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select project (optional)" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No project</SelectItem>
+                        <SelectItem value="none">No project</SelectItem>
                         {projects.map((project) => (
                           <SelectItem key={project.id} value={project.id}>
                             {project.name}
@@ -325,14 +325,14 @@ export default function CreateTaskPage() {
                       Department
                     </Label>
                     <Select
-                      value={selectedDepartmentId || ''}
-                      onValueChange={(value) => setValue('departmentId', value || null)}
+                      value={selectedDepartmentId || 'none'}
+                      onValueChange={(value) => setValue('departmentId', value === 'none' ? undefined : value)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select department (optional)" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">No department</SelectItem>
+                        <SelectItem value="none">No department</SelectItem>
                         {departments.map((dept) => (
                           <SelectItem key={dept.id} value={dept.id}>
                             {dept.name}
