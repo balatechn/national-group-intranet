@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useSession, signOut } from 'next-auth/react';
+import { useSession, signOut } from '@/lib/session-context';
 import Link from 'next/link';
 import {
   Bell,

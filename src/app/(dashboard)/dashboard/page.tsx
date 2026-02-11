@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getSessionUser } from '@/lib/workos-auth';
 import prisma from '@/lib/db';
 import {
   Building2,
@@ -184,12 +183,12 @@ function getPriorityDot(priority: string) {
 }
 
 export default async function DashboardPage() {
-  const [session, stats] = await Promise.all([
-    getServerSession(authOptions),
+  const [user, stats] = await Promise.all([
+    getSessionUser(),
     getDashboardStats(),
   ]);
 
-  const firstName = session?.user?.firstName || session?.user?.name?.split(' ')[0] || 'User';
+  const firstName = user?.firstName || user?.name?.split(' ')[0] || 'User';
   const greeting = getGreeting();
   const today = new Date();
 
@@ -200,7 +199,7 @@ export default async function DashboardPage() {
     day: 'numeric',
   });
 
-  const userInitials = (session?.user?.firstName?.[0] || '') + (session?.user?.lastName?.[0] || session?.user?.name?.[0] || 'U');
+  const userInitials = (user?.firstName?.[0] || '') + (user?.lastName?.[0] || user?.name?.[0] || 'U');
 
   return (
     <div className="min-h-screen -m-6 p-6 lg:p-8 bg-gradient-to-br from-slate-50 via-white to-amber-50/30">
@@ -267,9 +266,9 @@ export default async function DashboardPage() {
           <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm p-6 flex flex-col items-center text-center">
             <div className="relative mb-4">
               <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-[#DAA520] to-[#FFD700] opacity-20 blur-sm" />
-              {(session?.user as any)?.avatar ? (
+              {user?.avatar ? (
                 <Image
-                  src={(session!.user as any).avatar}
+                  src={user.avatar}
                   alt={firstName}
                   width={72}
                   height={72}
@@ -282,8 +281,8 @@ export default async function DashboardPage() {
               )}
               <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-emerald-500 border-2 border-white shadow-sm" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-0.5">{session?.user?.name || firstName}</h3>
-            <p className="text-xs text-gray-400 mb-5">{(session?.user as any)?.role?.replace('_', ' ') || 'EMPLOYEE'}</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-0.5">{user?.name || firstName}</h3>
+            <p className="text-xs text-gray-400 mb-5">{user?.role?.replace('_', ' ') || 'EMPLOYEE'}</p>
 
             {/* Quick Action Icons */}
             <div className="grid grid-cols-4 gap-3 w-full mb-5">

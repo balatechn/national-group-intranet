@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getSessionUser } from '@/lib/workos-auth';
 import { updateUserSchema } from '@/validations';
 import { hash } from 'bcryptjs';
 
@@ -54,13 +53,13 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const adminRoles = ['SUPER_ADMIN', 'ADMIN', 'HR_ADMIN'];
-    if (!adminRoles.includes(session.user.role)) {
+    if (!adminRoles.includes(sessionUser.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -137,7 +136,7 @@ export async function PATCH(
       updateData.managerId = null;
     }
 
-    const user = await prisma.user.update({
+    const updatedEmployee = await prisma.user.update({
       where: { id: params.id },
       data: updateData,
       select: {
@@ -159,7 +158,7 @@ export async function PATCH(
       },
     });
 
-    return NextResponse.json({ success: true, employee: user });
+    return NextResponse.json({ success: true, employee: updatedEmployee });
   } catch (error: any) {
     console.error('Error updating employee:', error);
     if (error?.name === 'ZodError') {

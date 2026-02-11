@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getSessionUser } from '@/lib/workos-auth';
 import { prisma } from '@/lib/db';
 
 // GET - Fetch settings
@@ -27,14 +26,14 @@ export async function GET() {
 // POST - Update settings
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const sessionUser = await getSessionUser();
 
-    if (!session?.user) {
+    if (!sessionUser) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
     // Check admin role
-    const userRole = session.user.role;
+    const userRole = sessionUser.role;
     if (userRole !== 'SUPER_ADMIN' && userRole !== 'ADMIN') {
       return NextResponse.json({ message: 'Forbidden - Admin access required' }, { status: 403 });
     }

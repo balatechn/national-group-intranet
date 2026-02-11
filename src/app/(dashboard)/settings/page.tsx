@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession } from '@/lib/session-context';
 import {
   Settings,
   Upload,

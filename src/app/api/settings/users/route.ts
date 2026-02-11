@@ -1,19 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getSessionUser } from '@/lib/workos-auth';
 import { prisma } from '@/lib/db';
 
 // PATCH - Update user role, company, or status
 export async function PATCH(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const sessionUser = await getSessionUser();
 
-    if (!session?.user) {
+    if (!sessionUser) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
     // Only SUPER_ADMIN and ADMIN can manage users
-    const userRole = session.user.role;
+    const userRole = sessionUser.role;
     if (userRole !== 'SUPER_ADMIN' && userRole !== 'ADMIN') {
       return NextResponse.json({ message: 'Forbidden - Admin access required' }, { status: 403 });
     }
@@ -81,7 +80,7 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ message: 'Invalid status' }, { status: 400 });
       }
       // Prevent self-deactivation
-      if (userId === session.user.id && status !== 'ACTIVE') {
+      if (userId === sessionUser.id && status !== 'ACTIVE') {
         return NextResponse.json({ message: 'You cannot deactivate your own account' }, { status: 400 });
       }
       updateData.status = status;

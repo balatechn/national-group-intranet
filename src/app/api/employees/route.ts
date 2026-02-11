@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getSessionUser } from '@/lib/workos-auth';
 import { hash } from 'bcryptjs';
 import { createUserSchema } from '@/validations';
 
@@ -76,13 +75,13 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const adminRoles = ['SUPER_ADMIN', 'ADMIN', 'HR_ADMIN'];
-    if (!adminRoles.includes(session.user.role)) {
+    if (!adminRoles.includes(sessionUser.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -114,7 +113,7 @@ export async function POST(request: Request) {
     // Hash password
     const hashedPassword = await hash(validated.password, 12);
 
-    const user = await prisma.user.create({
+    const newEmployee = await prisma.user.create({
       data: {
         ...validated,
         password: hashedPassword,
@@ -134,7 +133,7 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, employee: user }, { status: 201 });
+    return NextResponse.json({ success: true, employee: newEmployee }, { status: 201 });
   } catch (error: any) {
     console.error('Error creating employee:', error);
     if (error?.name === 'ZodError') {
