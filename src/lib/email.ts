@@ -230,6 +230,8 @@ export async function notifyUser(userId: string, subject: string, htmlBody: stri
 // ==========================================
 
 function getBaseEmailTemplate(title: string, content: string): string {
+  const LOGO_URL = `${APP_URL}/national-logo.png`;
+  
   return `
     <!DOCTYPE html>
     <html lang="en">
@@ -237,37 +239,51 @@ function getBaseEmailTemplate(title: string, content: string): string {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f7; }
-        .email-wrapper { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
-        .header { background: linear-gradient(135deg, #070B47 0%, #1a237e 100%); color: white; padding: 30px; text-align: center; }
-        .header h1 { margin: 0; font-size: 22px; letter-spacing: 0.5px; }
-        .header .subtitle { font-size: 12px; opacity: 0.8; margin-top: 5px; }
-        .content { padding: 30px; }
-        .content h2 { color: #070B47; margin-top: 0; }
-        .btn { display: inline-block; background-color: #C8A951; color: #070B47; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 20px; }
-        .btn:hover { background-color: #b8993e; }
-        .info-box { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 16px; margin: 16px 0; }
-        .alert-box { background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 16px; margin: 16px 0; }
-        .success-box { background-color: #d4edda; border: 1px solid #28a745; border-radius: 8px; padding: 16px; margin: 16px 0; }
-        .danger-box { background-color: #f8d7da; border: 1px solid #dc3545; border-radius: 8px; padding: 16px; margin: 16px 0; }
-        .footer { background-color: #f8f9fa; padding: 20px 30px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #e9ecef; }
-        .footer a { color: #070B47; text-decoration: none; }
-        .divider { border: none; border-top: 1px solid #e9ecef; margin: 20px 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #FDF8E8; }
+        .email-wrapper { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
+        .header { background: linear-gradient(135deg, #070B47 0%, #0d1266 50%, #070B47 100%); padding: 32px 30px; text-align: center; }
+        .header-logo { margin-bottom: 12px; }
+        .header-logo img { height: 52px; width: auto; }
+        .header h1 { margin: 0; font-size: 20px; letter-spacing: 0.5px; color: #C8A951; font-weight: 600; }
+        .header .subtitle { font-size: 11px; color: rgba(200,169,81,0.7); margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
+        .gold-bar { height: 4px; background: linear-gradient(90deg, #B8860B 0%, #DAA520 35%, #FFD700 50%, #DAA520 65%, #B8860B 100%); }
+        .content { padding: 32px 30px; }
+        .content h2 { color: #070B47; margin-top: 0; font-size: 20px; }
+        .content p { color: #444; font-size: 14px; line-height: 1.7; }
+        .btn { display: inline-block; background: linear-gradient(135deg, #B8860B 0%, #DAA520 100%); color: #ffffff !important; padding: 12px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; margin-top: 20px; font-size: 14px; }
+        .info-box { background-color: #FDF8E8; border: 1px solid #F0D275; border-left: 4px solid #B8860B; border-radius: 8px; padding: 16px; margin: 16px 0; }
+        .info-box p { margin: 4px 0; color: #333; }
+        .alert-box { background-color: #FFF8E1; border: 1px solid #FFE082; border-left: 4px solid #FFA000; border-radius: 8px; padding: 16px; margin: 16px 0; }
+        .success-box { background-color: #E8F5E9; border: 1px solid #A5D6A7; border-left: 4px solid #43A047; border-radius: 8px; padding: 16px; margin: 16px 0; }
+        .danger-box { background-color: #FFEBEE; border: 1px solid #EF9A9A; border-left: 4px solid #E53935; border-radius: 8px; padding: 16px; margin: 16px 0; }
+        .footer { background: linear-gradient(180deg, #f8f6f0 0%, #f0ece0 100%); padding: 24px 30px; text-align: center; border-top: 1px solid #e8e0cc; }
+        .footer p { font-size: 12px; color: #888; margin: 4px 0; }
+        .footer a { color: #B8860B; text-decoration: none; font-weight: 500; }
+        .footer-logo { margin-bottom: 8px; }
+        .footer-logo img { height: 24px; width: auto; opacity: 0.5; }
+        .divider { border: none; border-top: 1px solid #f0e8d8; margin: 20px 0; }
       </style>
     </head>
     <body>
-      <div class="email-wrapper">
-        <div class="header">
-          <h1>${APP_NAME}</h1>
-          <div class="subtitle">Enterprise Intranet Portal</div>
-        </div>
-        <div class="content">
-          ${content}
-        </div>
-        <div class="footer">
-          <p>This is an automated message from ${APP_NAME}.</p>
-          <p>Please do not reply to this email.</p>
-          <a href="${APP_URL}">${APP_URL}</a>
+      <div style="padding: 24px 16px; background-color: #FDF8E8;">
+        <div class="email-wrapper">
+          <div class="header">
+            <div class="header-logo">
+              <img src="${LOGO_URL}" alt="National Group" height="52" style="height: 52px; width: auto;" />
+            </div>
+            <h1>${APP_NAME}</h1>
+            <div class="subtitle">Enterprise Intranet Portal</div>
+          </div>
+          <div class="gold-bar"></div>
+          <div class="content">
+            ${content}
+          </div>
+          <div class="footer">
+            <p>This is an automated message from <strong>${APP_NAME}</strong>.</p>
+            <p>Please do not reply to this email.</p>
+            <p style="margin-top: 12px;"><a href="${APP_URL}">${APP_URL}</a></p>
+            <p style="margin-top: 8px; font-size: 10px; color: #aaa;">&copy; ${new Date().getFullYear()} National Group. All rights reserved.</p>
+          </div>
         </div>
       </div>
     </body>
