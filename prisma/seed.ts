@@ -323,6 +323,26 @@ async function main() {
   console.log('Creating users...');
   const passwordHash = await hash('Password@123', 12);
 
+  // SUPER ADMIN / OWNER - Bala
+  const owner = await prisma.user.upsert({
+    where: { email: 'bala@nationalgroupindia.com' },
+    update: { role: 'SUPER_ADMIN', status: 'ACTIVE' },
+    create: {
+      employeeId: 'NGI-OWN-001',
+      email: 'bala@nationalgroupindia.com',
+      password: passwordHash,
+      firstName: 'Bala',
+      lastName: 'Tech',
+      displayName: 'Bala',
+      role: 'SUPER_ADMIN',
+      phone: '+91 98450 00000',
+      companyId: nationalGroupIndia.id,
+      departmentId: corpAdminDept.id,
+      jobTitle: 'Owner / Super Admin',
+      status: 'ACTIVE',
+    },
+  });
+
   // CEO - Top of hierarchy
   const ceo = await prisma.user.upsert({
     where: { email: 'ceo@nationalgroupindia.com' },
@@ -1044,6 +1064,7 @@ async function main() {
   console.log('   6. National Resource Pvt Ltd - NRE');
   console.log('');
   console.log('📧 Default login credentials:');
+  console.log('   Owner: bala@nationalgroupindia.com / Password@123');
   console.log('   CEO: ceo@nationalgroupindia.com / Password@123');
   console.log('   Admin: admin@nationalgroupindia.com / Password@123');
   console.log('   CIO: it.head@nationalgroupindia.com / Password@123');
