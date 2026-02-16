@@ -9,10 +9,10 @@ const JWT_SECRET = new TextEncoder().encode(
 const COOKIE_NAME = 'workos_session';
 
 // Routes that don't require authentication
-const publicRoutes = ['/login', '/api/auth', '/api/setup-admin'];
+const publicRoutes = ['/login', '/api/auth', '/api/setup-admin', '/api/debug-session'];
 
 // Routes that are always accessible
-const alwaysAccessible = ['/_next', '/favicon.ico', '/images', '/api/auth', '/api/setup-admin'];
+const alwaysAccessible = ['/_next', '/favicon.ico', '/images', '/api/auth', '/api/setup-admin', '/api/debug-session'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
