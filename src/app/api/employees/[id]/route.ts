@@ -92,11 +92,18 @@ export async function PATCH(
       try {
         const empName = `${existing.firstName} ${existing.lastName}`;
         const emailContent = getPasswordResetByAdminEmail(empName);
-        await sendEmail({
+        const emailResult = await sendEmail({
           to: existing.email,
           subject: emailContent.subject,
           html: emailContent.html,
         });
+        if (emailResult.skipped) {
+          console.warn('[Password Reset] Email skipped - SMTP not enabled. Enable it in Settings > Email.');
+        } else if (!emailResult.success) {
+          console.error('[Password Reset] Email failed:', emailResult.error);
+        } else {
+          console.log('[Password Reset] Notification email sent to', existing.email);
+        }
       } catch (emailError) {
         console.error('Failed to send password reset email:', emailError);
       }
