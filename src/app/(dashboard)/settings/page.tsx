@@ -9,6 +9,7 @@ import {
   Image as ImageIcon,
   Loader2,
   Shield,
+  Mail,
 } from 'lucide-react';
 import {
   Card,
@@ -24,6 +25,7 @@ import {
   TabsContent,
 } from '@/components/ui';
 import UserManagement from './UserManagement';
+import EmailSettings from './EmailSettings';
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -133,6 +135,12 @@ export default function SettingsPage() {
             <TabsTrigger value="user-management" className="gap-2">
               <Shield className="h-4 w-4" />
               User Management
+            </TabsTrigger>
+          )}
+          {isAdmin && (
+            <TabsTrigger value="email" className="gap-2">
+              <Mail className="h-4 w-4" />
+              Email / SMTP
             </TabsTrigger>
           )}
         </TabsList>
@@ -245,6 +253,13 @@ export default function SettingsPage() {
         {isAdmin && (
           <TabsContent value="user-management">
             <UserManagement />
+          </TabsContent>
+        )}
+
+        {/* Email Settings Tab */}
+        {isAdmin && (
+          <TabsContent value="email">
+            <EmailSettings />
           </TabsContent>
         )}
       </Tabs>
