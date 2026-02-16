@@ -1,11 +1,21 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { hash } from 'bcryptjs';
 
 // ONE-TIME setup route - creates the super admin user
+// Access: /api/setup-admin?key=national2026setup
 // DELETE THIS FILE after first use for security
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Simple security key to prevent random access
+    const key = request.nextUrl.searchParams.get('key');
+    if (key !== 'national2026setup') {
+      return NextResponse.json(
+        { error: 'Invalid setup key. Use ?key=national2026setup' },
+        { status: 403 }
+      );
+    }
+
     const passwordHash = await hash('Password@123', 12);
 
     // Get the first company for assignment
@@ -26,6 +36,7 @@ export async function GET() {
       update: {
         role: 'SUPER_ADMIN',
         status: 'ACTIVE',
+        password: passwordHash,
       },
       create: {
         employeeId: 'NGI-OWN-001',
@@ -45,18 +56,22 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      message: 'Super admin user created/updated',
+      message: 'Super admin user created/updated successfully',
       user: {
         id: user.id,
         email: user.email,
         role: user.role,
         name: `${user.firstName} ${user.lastName}`,
       },
+      loginCredentials: {
+        email: 'bala@nationalgroupindia.com',
+        password: 'Password@123',
+      },
     });
   } catch (error: any) {
     console.error('Setup error:', error);
     return NextResponse.json(
-      { error: error.message || 'Setup failed' },
+      { error: error.message || 'Setup failed', details: String(error) },
       { status: 500 }
     );
   }
