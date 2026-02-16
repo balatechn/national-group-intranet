@@ -96,7 +96,7 @@ export async function PATCH(
           to: existing.email,
           subject: emailContent.subject,
           html: emailContent.html,
-        });
+        }, true);
         if (emailResult.skipped) {
           console.warn('[Password Reset] Email skipped - SMTP not enabled. Enable it in Settings > Email.');
         } else if (!emailResult.success) {
@@ -199,7 +199,7 @@ export async function PATCH(
           to: updatedEmployee.email,
           subject: emailContent.subject,
           html: emailContent.html,
-        });
+        }, true);
       }
     } catch (emailError) {
       console.error('Failed to send profile update email:', emailError);

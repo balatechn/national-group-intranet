@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       to: user.email,
       subject: userEmail.subject,
       html: userEmail.html,
-    });
+    }, true);
 
     // Send alert to admins
     const adminAlert = getPasswordChangedAdminAlert(userName, user.email);

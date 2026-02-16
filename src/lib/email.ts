@@ -86,14 +86,16 @@ export async function sendEmail(options: EmailOptions, force = false): Promise<{
     const config = await getSmtpConfig();
 
     if (!config.enabled && !force) {
-      console.warn('[Email] SMTP not enabled, skipping email send');
+      console.warn('[Email] SMTP not enabled, skipping email send. Subject:', options.subject);
       return { success: true, skipped: true };
     }
 
     if (!config.user || !config.pass) {
-      console.warn('[Email] SMTP credentials not configured');
-      return { success: false, error: 'SMTP credentials not configured' };
+      console.error('[Email] SMTP credentials not configured. Cannot send email. Subject:', options.subject);
+      return { success: false, error: 'SMTP credentials not configured. Go to Settings > Email/SMTP to configure.' };
     }
+
+    console.log('[Email] Sending email to:', options.to, '| Subject:', options.subject, '| Force:', force);
 
     const transporter = createTransporter(config);
 
@@ -217,7 +219,7 @@ export async function sendAdminAlert(subject: string, htmlBody: string) {
       to: adminEmails,
       subject: `[Admin Alert] ${subject}`,
       html: getBaseEmailTemplate('Admin Alert', htmlBody),
-    });
+    }, true);
   } catch (error) {
     console.error('[Email] Failed to send admin alert:', error);
   }
@@ -237,7 +239,7 @@ export async function notifyUser(userId: string, subject: string, htmlBody: stri
       to: user.email,
       subject,
       html: getBaseEmailTemplate(subject, htmlBody),
-    });
+    }, true);
   } catch (error) {
     console.error('[Email] Failed to notify user:', error);
   }

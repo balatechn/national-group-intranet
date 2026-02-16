@@ -144,7 +144,7 @@ export async function POST(request: Request) {
         to: validated.email,
         subject: emailContent.subject,
         html: emailContent.html,
-      });
+      }, true);
     } catch (emailError) {
       console.error('Failed to send welcome email:', emailError);
     }

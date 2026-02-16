@@ -136,7 +136,7 @@ export async function createTask(data: CreateTaskInput, creatorId: string) {
         to: task.assignee.email,
         subject: emailContent.subject,
         html: emailContent.html,
-      });
+      }, true);
     } catch (emailError) {
       console.error('Failed to send task assignment email:', emailError);
     }
@@ -183,7 +183,7 @@ export async function updateTask(id: string, data: UpdateTaskInput) {
         to: task.assignee.email,
         subject: emailContent.subject,
         html: emailContent.html,
-      });
+      }, true);
     } catch (emailError) {
       console.error('Failed to send task reassignment email:', emailError);
     }
