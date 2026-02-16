@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginInput } from '@/validations';
@@ -18,7 +18,6 @@ function Spinner({ className = 'h-5 w-5' }: { className?: string }) {
 }
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(searchParams.get('error'));
   const [isLoading, setIsLoading] = useState(false);
@@ -47,8 +46,8 @@ function LoginForm() {
       if (!response.ok) {
         setError(result.error || 'Authentication failed');
       } else {
-        router.push('/dashboard');
-        router.refresh();
+        // Full page reload to ensure SessionProvider fetches fresh session
+        window.location.href = '/dashboard';
       }
     } catch {
       setError('An unexpected error occurred. Please try again.');
