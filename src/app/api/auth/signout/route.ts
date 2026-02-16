@@ -1,12 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clearSession } from '@/lib/workos-auth';
+
+export const dynamic = 'force-dynamic';
+
+const COOKIE_NAME = 'workos_session';
 
 export async function GET(request: NextRequest) {
-  await clearSession();
-  return NextResponse.redirect(new URL('/login', request.url));
+  const response = NextResponse.redirect(new URL('/login', request.url));
+  response.cookies.set(COOKIE_NAME, '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 0,
+    path: '/',
+  });
+  return response;
 }
 
-export async function POST(request: NextRequest) {
-  await clearSession();
-  return NextResponse.json({ success: true });
+export async function POST() {
+  const response = NextResponse.json({ success: true });
+  response.cookies.set(COOKIE_NAME, '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 0,
+    path: '/',
+  });
+  return response;
 }
