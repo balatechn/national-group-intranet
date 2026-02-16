@@ -411,3 +411,73 @@ export function getGenericAlertEmail(
     ),
   };
 }
+
+// Admin-initiated password reset notification
+export function getPasswordResetByAdminEmail(userName: string): { subject: string; html: string } {
+  return {
+    subject: `Your Password Has Been Reset - ${APP_NAME}`,
+    html: getBaseEmailTemplate(
+      'Password Reset',
+      `
+        <h2>Hello ${userName},</h2>
+        <p>Your password has been reset by an administrator.</p>
+        <div class="alert-box">
+          <strong>⚠️ Important:</strong> Please contact your administrator for your new password and change it after logging in.
+        </div>
+        <div class="info-box">
+          <p><strong>🔒 Security Notice</strong></p>
+          <p>If you were not expecting this change, please contact your administrator immediately.</p>
+        </div>
+        <a href="${APP_URL}/login" class="btn">Login Now</a>
+        <p style="font-size: 13px; color: #666; margin-top: 16px;">Reset at: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
+      `
+    ),
+  };
+}
+
+// Employee profile updated notification
+export function getEmployeeUpdatedEmail(userName: string, changes: string[]): { subject: string; html: string } {
+  const changesList = changes.map((c) => `<li>${c}</li>`).join('');
+  return {
+    subject: `Your Profile Has Been Updated - ${APP_NAME}`,
+    html: getBaseEmailTemplate(
+      'Profile Updated',
+      `
+        <h2>Hello ${userName},</h2>
+        <p>Your employee profile has been updated by an administrator.</p>
+        <div class="info-box">
+          <p><strong>Updated Fields:</strong></p>
+          <ul style="margin: 8px 0; padding-left: 20px; color: #333;">${changesList}</ul>
+        </div>
+        <p>If you have any questions about these changes, please contact your administrator or HR department.</p>
+        <a href="${APP_URL}/dashboard" class="btn">Go to Dashboard</a>
+        <p style="font-size: 13px; color: #666; margin-top: 16px;">Updated at: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
+      `
+    ),
+  };
+}
+
+// Task assigned notification
+export function getTaskAssignedEmail(
+  assigneeName: string,
+  taskTitle: string,
+  taskUrl: string,
+  dueDate?: string
+): { subject: string; html: string } {
+  return {
+    subject: `New Task Assigned: ${taskTitle} - ${APP_NAME}`,
+    html: getBaseEmailTemplate(
+      'Task Assigned',
+      `
+        <h2>Hello ${assigneeName},</h2>
+        <p>A new task has been assigned to you.</p>
+        <div class="info-box">
+          <p><strong>📋 Task:</strong> ${taskTitle}</p>
+          ${dueDate ? `<p><strong>📅 Due Date:</strong> ${dueDate}</p>` : ''}
+        </div>
+        <a href="${taskUrl}" class="btn">View Task</a>
+        <p style="font-size: 13px; color: #666; margin-top: 16px;">Assigned at: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
+      `
+    ),
+  };
+}

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/db';
-import { sendEmail, getTaskAssignedEmail } from '@/lib/mailgun';
+import { sendEmail, getTaskAssignedEmail } from '@/lib/email';
 import {
   createTaskSchema,
   updateTaskSchema,
@@ -124,7 +124,7 @@ export async function createTask(data: CreateTaskInput, creatorId: string) {
   if (task.assignee) {
     try {
       const assigneeName = `${task.assignee.firstName} ${task.assignee.lastName}`;
-      const taskUrl = `${process.env.APP_URL}/tasks/${task.id}`;
+      const taskUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://sharepoint.nationalgroupindia.com'}/tasks/${task.id}`;
       const emailContent = getTaskAssignedEmail(
         assigneeName,
         task.title,
@@ -155,6 +155,11 @@ export async function updateTask(id: string, data: UpdateTaskInput) {
     updateData.completedAt = new Date();
   }
 
+  // Check if assignee is changing
+  const existingTask = validated.assigneeId
+    ? await prisma.task.findUnique({ where: { id }, select: { assigneeId: true } })
+    : null;
+
   const task = await prisma.task.update({
     where: { id },
     data: updateData,
@@ -162,6 +167,27 @@ export async function updateTask(id: string, data: UpdateTaskInput) {
       assignee: { select: { id: true, firstName: true, lastName: true, email: true } },
     },
   });
+
+  // Send email if assignee changed
+  if (task.assignee && validated.assigneeId && existingTask?.assigneeId !== validated.assigneeId) {
+    try {
+      const assigneeName = `${task.assignee.firstName} ${task.assignee.lastName}`;
+      const taskUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://sharepoint.nationalgroupindia.com'}/tasks/${task.id}`;
+      const emailContent = getTaskAssignedEmail(
+        assigneeName,
+        task.title,
+        taskUrl,
+        task.dueDate?.toLocaleDateString()
+      );
+      await sendEmail({
+        to: task.assignee.email,
+        subject: emailContent.subject,
+        html: emailContent.html,
+      });
+    } catch (emailError) {
+      console.error('Failed to send task reassignment email:', emailError);
+    }
+  }
 
   revalidatePath('/tasks');
   revalidatePath(`/tasks/${id}`);

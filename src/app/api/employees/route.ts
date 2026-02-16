@@ -4,6 +4,7 @@ import { getSessionUser } from '@/lib/workos-auth';
 import { hash } from 'bcryptjs';
 import { createUserSchema } from '@/validations';
 import { requireView, requireEdit } from '@/lib/api-permissions';
+import { sendEmail, getNewUserWelcomeEmail } from '@/lib/email';
 
 export const revalidate = 60;
 
@@ -134,6 +135,19 @@ export async function POST(request: Request) {
         department: { select: { id: true, name: true } },
       },
     });
+
+    // Send welcome email to new employee
+    try {
+      const empName = `${validated.firstName} ${validated.lastName}`;
+      const emailContent = getNewUserWelcomeEmail(empName, validated.email, validated.password);
+      await sendEmail({
+        to: validated.email,
+        subject: emailContent.subject,
+        html: emailContent.html,
+      });
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+    }
 
     return NextResponse.json({ success: true, employee: newEmployee }, { status: 201 });
   } catch (error: any) {

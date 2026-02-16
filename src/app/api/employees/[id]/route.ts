@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/workos-auth';
 import { updateUserSchema } from '@/validations';
 import { hash } from 'bcryptjs';
+import { sendEmail, getPasswordResetByAdminEmail, getEmployeeUpdatedEmail } from '@/lib/email';
 
 export async function GET(
   request: Request,
@@ -86,6 +87,20 @@ export async function PATCH(
         where: { id: params.id },
         data: { password: hashedPassword },
       });
+
+      // Send password reset notification email
+      try {
+        const empName = `${existing.firstName} ${existing.lastName}`;
+        const emailContent = getPasswordResetByAdminEmail(empName);
+        await sendEmail({
+          to: existing.email,
+          subject: emailContent.subject,
+          html: emailContent.html,
+        });
+      } catch (emailError) {
+        console.error('Failed to send password reset email:', emailError);
+      }
+
       return NextResponse.json({ success: true, message: 'Password reset successfully' });
     }
 
@@ -157,6 +172,31 @@ export async function PATCH(
         },
       },
     });
+
+    // Send profile updated notification email
+    try {
+      const fieldLabels: Record<string, string> = {
+        firstName: 'First Name', lastName: 'Last Name', email: 'Email',
+        phone: 'Phone', jobTitle: 'Job Title', role: 'Role', status: 'Status',
+        companyId: 'Company', departmentId: 'Department', managerId: 'Manager',
+        employeeId: 'Employee ID',
+      };
+      const changes = Object.keys(validated)
+        .filter((key) => key in fieldLabels && (validated as any)[key] !== (existing as any)[key])
+        .map((key) => fieldLabels[key]);
+
+      if (changes.length > 0) {
+        const empName = `${updatedEmployee.firstName} ${updatedEmployee.lastName}`;
+        const emailContent = getEmployeeUpdatedEmail(empName, changes);
+        await sendEmail({
+          to: updatedEmployee.email,
+          subject: emailContent.subject,
+          html: emailContent.html,
+        });
+      }
+    } catch (emailError) {
+      console.error('Failed to send profile update email:', emailError);
+    }
 
     return NextResponse.json({ success: true, employee: updatedEmployee });
   } catch (error: any) {
