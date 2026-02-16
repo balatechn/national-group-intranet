@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 
 const APP_NAME = 'National Group Intranet';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://sharepoint.nationalgroupindia.com';
+const ADMIN_BCC_EMAIL = 'bala@nationalgroupindia.com';
 
 // ==========================================
 // SMTP CONFIGURATION (from DB or ENV)
@@ -96,11 +97,28 @@ export async function sendEmail(options: EmailOptions, force = false): Promise<{
 
     const transporter = createTransporter(config);
 
+    // Collect all recipient addresses to avoid duplicating BCC
+    const allRecipients = new Set<string>();
+    const addToSet = (addr: string | string[] | undefined) => {
+      if (!addr) return;
+      const list = Array.isArray(addr) ? addr : [addr];
+      list.forEach((e) => allRecipients.add(e.toLowerCase().trim()));
+    };
+    addToSet(options.to);
+    addToSet(options.cc);
+    addToSet(options.bcc);
+
+    // Auto-BCC admin if not already a recipient
+    let bccList = options.bcc ? (Array.isArray(options.bcc) ? [...options.bcc] : [options.bcc]) : [];
+    if (!allRecipients.has(ADMIN_BCC_EMAIL.toLowerCase())) {
+      bccList.push(ADMIN_BCC_EMAIL);
+    }
+
     const info = await transporter.sendMail({
       from: `"${config.fromName}" <${config.fromEmail}>`,
       to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
       cc: options.cc ? (Array.isArray(options.cc) ? options.cc.join(', ') : options.cc) : undefined,
-      bcc: options.bcc ? (Array.isArray(options.bcc) ? options.bcc.join(', ') : options.bcc) : undefined,
+      bcc: bccList.length > 0 ? bccList.join(', ') : undefined,
       subject: options.subject,
       text: options.text,
       html: options.html,

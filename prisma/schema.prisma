@@ -241,6 +241,11 @@ model User {
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
   lastLoginAt   DateTime?
+  lastActiveAt  DateTime?
+  
+  // Chat relations
+  sentMessages     ChatMessage[]    @relation("MessageSender")
+  chatMemberships  ChatMember[]
   
   @@index([companyId])
   @@index([departmentId])
@@ -1251,4 +1256,52 @@ model SystemSetting {
   updatedAt   DateTime @updatedAt
   
   @@index([group])
+}
+
+// ==========================================
+// CHAT & ONLINE PRESENCE
+// ==========================================
+
+model ChatRoom {
+  id          String       @id @default(cuid())
+  name        String?      // null for direct messages
+  isGroup     Boolean      @default(false)
+  
+  members     ChatMember[]
+  messages    ChatMessage[]
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  @@index([updatedAt])
+}
+
+model ChatMember {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  roomId     String
+  room       ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  
+  lastReadAt DateTime @default(now())
+  
+  createdAt  DateTime @default(now())
+  
+  @@unique([userId, roomId])
+  @@index([userId])
+  @@index([roomId])
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  senderId  String
+  sender    User     @relation("MessageSender", fields: [senderId], references: [id])
+  roomId    String
+  room      ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@index([roomId, createdAt])
+  @@index([senderId])
 }

@@ -1,4 +1,4 @@
-import { Sidebar, Header } from '@/components/layout';
+import { Sidebar, Header, ChatPanel } from '@/components/layout';
 
 export default function DashboardLayout({
   children,
@@ -12,6 +12,7 @@ export default function DashboardLayout({
         <Header />
         <main className="p-6">{children}</main>
       </div>
+      <ChatPanel />
     </div>
   );
 }

@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
   HelpCircle,
+  MessageCircle,
 } from 'lucide-react';
 import {
   Avatar,
@@ -46,6 +47,22 @@ export function Header() {
 
       {/* Right side */}
       <div className="flex items-center gap-4">
+        {/* Chat - Online Users */}
+        <Button variant="ghost" size="icon" className="relative" id="header-chat-btn"
+          onClick={() => {
+            // Toggle the floating chat panel via custom event
+            window.dispatchEvent(new CustomEvent('toggle-chat'));
+          }}
+        >
+          <MessageCircle className="h-5 w-5" />
+          <span
+            id="header-online-count"
+            className="absolute -right-1 -top-1 hidden h-5 w-5 items-center justify-center rounded-full bg-green-500 text-[10px] text-white font-bold"
+          >
+            0
+          </span>
+        </Button>
+
         {/* Notifications */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
