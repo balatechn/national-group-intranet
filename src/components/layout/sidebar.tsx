@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useSession } from '@/lib/session-context';
 import { cn } from '@/lib/utils';
+import type { Permission, AppModule } from '@/lib/permissions';
 import {
   Home,
   Building2,
@@ -33,28 +34,27 @@ interface NavItem {
   href: string;
   icon: React.ElementType;
   children?: NavItem[];
-  /** Restrict this item to specific roles */
+  /** Restrict this item to specific roles (legacy, now permission-based) */
   roles?: string[];
+  /** The AppModule this nav item corresponds to */
+  module?: AppModule;
 }
 
-/** Roles allowed to see "IT & Systems" menu */
-const IT_ROLES = ['SUPER_ADMIN', 'ADMIN', 'IT_ADMIN'];
-
 const navigation: NavItem[] = [
-  { title: 'Home', href: '/dashboard', icon: Home },
-  { title: 'Companies', href: '/companies', icon: Building2 },
-  { title: 'Departments', href: '/departments', icon: Users },
-  { title: 'Employees', href: '/employees', icon: UserCircle },
-  { title: 'Calendar', href: '/calendar', icon: Calendar },
-  { title: 'Tasks', href: '/tasks', icon: CheckSquare },
-  { title: 'Shared Drives', href: '/drives', icon: FolderOpen },
-  { title: 'Projects', href: '/projects', icon: Briefcase },
-  { title: 'Policies', href: '/policies', icon: FileText },
+  { title: 'Home', href: '/dashboard', icon: Home, module: 'DASHBOARD' },
+  { title: 'Companies', href: '/companies', icon: Building2, module: 'COMPANIES' },
+  { title: 'Departments', href: '/departments', icon: Users, module: 'DEPARTMENTS' },
+  { title: 'Employees', href: '/employees', icon: UserCircle, module: 'EMPLOYEES' },
+  { title: 'Calendar', href: '/calendar', icon: Calendar, module: 'CALENDAR' },
+  { title: 'Tasks', href: '/tasks', icon: CheckSquare, module: 'TASKS' },
+  { title: 'Shared Drives', href: '/drives', icon: FolderOpen, module: 'DRIVES' },
+  { title: 'Projects', href: '/projects', icon: Briefcase, module: 'PROJECTS' },
+  { title: 'Policies', href: '/policies', icon: FileText, module: 'POLICIES' },
   {
     title: 'IT & Systems',
     href: '/it',
     icon: Monitor,
-    roles: IT_ROLES,
+    module: 'IT',
     children: [
       { title: 'IT Requests', href: '/it/requests', icon: ClipboardList },
       { title: 'IT Tickets', href: '/it/tickets', icon: Ticket },
@@ -72,7 +72,7 @@ const navigation: NavItem[] = [
       { title: 'Reports', href: '/it/reports', icon: BarChart3 },
     ],
   },
-  { title: 'Settings', href: '/settings', icon: Settings },
+  { title: 'Settings', href: '/settings', icon: Settings, module: 'SETTINGS' },
 ];
 
 function NavItemComponent({
@@ -144,12 +144,40 @@ export function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const { data: session } = useSession();
   const userRole = (session?.user as any)?.role || 'EMPLOYEE';
+  const [permissions, setPermissions] = useState<Permission[]>([]);
 
-  // Filter navigation items based on user role
-  const filteredNavigation = useMemo(
-    () => navigation.filter((item) => !item.roles || item.roles.includes(userRole)),
-    [userRole]
-  );
+  // Fetch user permissions
+  useEffect(() => {
+    async function fetchPermissions() {
+      try {
+        const res = await fetch('/api/auth/permissions');
+        if (res.ok) {
+          const data = await res.json();
+          setPermissions(data.permissions || []);
+        }
+      } catch (e) {
+        console.error('Failed to fetch permissions', e);
+      }
+    }
+    if (session?.user) {
+      fetchPermissions();
+    }
+  }, [session?.user]);
+
+  // Filter navigation items based on permissions
+  const filteredNavigation = useMemo(() => {
+    // If permissions haven't loaded yet, show all (will refine on load)
+    if (permissions.length === 0) {
+      // Fallback: legacy role filter
+      return navigation.filter((item) => !item.roles || item.roles.includes(userRole));
+    }
+
+    return navigation.filter((item) => {
+      if (!item.module) return true; // No module mapping = always show
+      const perm = permissions.find((p) => p.module === item.module);
+      return perm ? perm.canView : false;
+    });
+  }, [userRole, permissions]);
 
   return (
     <>

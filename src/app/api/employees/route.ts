@@ -3,11 +3,16 @@ import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/workos-auth';
 import { hash } from 'bcryptjs';
 import { createUserSchema } from '@/validations';
+import { requireView, requireEdit } from '@/lib/api-permissions';
 
 export const revalidate = 60;
 
 export async function GET() {
   try {
+    // Permission check
+    const { response } = await requireView('EMPLOYEES');
+    if (response) return response;
+
     const employees = await prisma.user.findMany({
       select: {
         id: true,
@@ -75,14 +80,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const sessionUser = await getSessionUser();
+    // Permission check - require edit access to EMPLOYEES module
+    const { user: sessionUser, response: permResponse } = await requireEdit('EMPLOYEES');
+    if (permResponse) return permResponse;
     if (!sessionUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const adminRoles = ['SUPER_ADMIN', 'ADMIN', 'HR_ADMIN'];
-    if (!adminRoles.includes(sessionUser.role)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const body = await request.json();

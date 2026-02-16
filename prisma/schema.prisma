@@ -1202,6 +1202,42 @@ model Announcement {
 }
 
 // ==========================================
+// MODULE PERMISSIONS (Role-based Access)
+// ==========================================
+
+enum AppModule {
+  DASHBOARD
+  COMPANIES
+  DEPARTMENTS
+  EMPLOYEES
+  IT
+  PROJECTS
+  TASKS
+  CALENDAR
+  DRIVES
+  POLICIES
+  SETTINGS
+}
+
+model RolePermission {
+  id          String    @id @default(cuid())
+  role        UserRole
+  module      AppModule
+  canView     Boolean   @default(false)
+  canEdit     Boolean   @default(false)
+
+  // Company/Department scoping (empty = all)
+  companyIds    String[]  @default([])
+  departmentIds String[]  @default([])
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([role, module])
+  @@index([role])
+}
+
+// ==========================================
 // SYSTEM SETTINGS
 // ==========================================
 

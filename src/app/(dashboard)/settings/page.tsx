@@ -8,6 +8,7 @@ import {
   Save,
   Image as ImageIcon,
   Loader2,
+  Shield,
 } from 'lucide-react';
 import {
   Card,
@@ -17,7 +18,12 @@ import {
   Button,
   Input,
   Label,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
 } from '@/components/ui';
+import UserManagement from './UserManagement';
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -116,107 +122,132 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Branding */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ImageIcon className="h-5 w-5" />
+      {/* Tabs */}
+      <Tabs defaultValue="branding">
+        <TabsList>
+          <TabsTrigger value="branding" className="gap-2">
+            <ImageIcon className="h-4 w-4" />
             Branding
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="companyName">Company Name</Label>
-            <Input
-              id="companyName"
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              placeholder="Enter company name"
-              disabled={!isAdmin}
-            />
-          </div>
+          </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="user-management" className="gap-2">
+              <Shield className="h-4 w-4" />
+              User Management
+            </TabsTrigger>
+          )}
+        </TabsList>
 
-          <div className="space-y-2">
-            <Label>Company Logo</Label>
-            <div className="flex items-start gap-6">
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 overflow-hidden">
-                  {logo ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={logo} alt="Company Logo" className="max-w-full max-h-full object-contain" />
-                  ) : (
-                    <ImageIcon className="h-12 w-12 text-gray-400" />
-                  )}
-                </div>
-                <span className="text-xs text-text-secondary">Preview</span>
-              </div>
-              <div className="flex-1 space-y-3">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  accept="image/*"
-                  className="hidden"
+        {/* Branding Tab */}
+        <TabsContent value="branding">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ImageIcon className="h-5 w-5" />
+                Branding
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="companyName">Company Name</Label>
+                <Input
+                  id="companyName"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder="Enter company name"
                   disabled={!isAdmin}
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={!isAdmin}
-                  className="gap-2"
-                >
-                  <Upload className="h-4 w-4" />
-                  Upload Logo
-                </Button>
-                <p className="text-xs text-text-secondary">
-                  Recommended: PNG or SVG with transparent background.
-                  <br />
-                  Maximum size: 2MB. Optimal dimensions: 400x180 pixels.
-                </p>
-                {logo && isAdmin && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setLogo('')}
-                    className="text-danger hover:text-danger"
-                  >
-                    Remove Logo
-                  </Button>
-                )}
               </div>
-            </div>
-          </div>
 
-          {message && (
-            <div
-              className={`p-3 rounded-lg text-sm ${
-                message.type === 'success'
-                  ? 'bg-success-50 text-success-700 border border-success-200'
-                  : 'bg-danger-50 text-danger-700 border border-danger-200'
-              }`}
-            >
-              {message.text}
-            </div>
-          )}
+              <div className="space-y-2">
+                <Label>Company Logo</Label>
+                <div className="flex items-start gap-6">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 overflow-hidden">
+                      {logo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={logo} alt="Company Logo" className="max-w-full max-h-full object-contain" />
+                      ) : (
+                        <ImageIcon className="h-12 w-12 text-gray-400" />
+                      )}
+                    </div>
+                    <span className="text-xs text-text-secondary">Preview</span>
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      accept="image/*"
+                      className="hidden"
+                      disabled={!isAdmin}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={!isAdmin}
+                      className="gap-2"
+                    >
+                      <Upload className="h-4 w-4" />
+                      Upload Logo
+                    </Button>
+                    <p className="text-xs text-text-secondary">
+                      Recommended: PNG or SVG with transparent background.
+                      <br />
+                      Maximum size: 2MB. Optimal dimensions: 400x180 pixels.
+                    </p>
+                    {logo && isAdmin && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setLogo('')}
+                        className="text-danger hover:text-danger"
+                      >
+                        Remove Logo
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
 
-          {isAdmin && (
-            <div className="flex justify-end pt-4 border-t">
-              <Button onClick={handleSave} disabled={saving} className="gap-2">
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                Save Settings
-              </Button>
-            </div>
-          )}
+              {message && (
+                <div
+                  className={`p-3 rounded-lg text-sm ${
+                    message.type === 'success'
+                      ? 'bg-success-50 text-success-700 border border-success-200'
+                      : 'bg-danger-50 text-danger-700 border border-danger-200'
+                  }`}
+                >
+                  {message.text}
+                </div>
+              )}
 
-          {!isAdmin && (
-            <div className="p-3 rounded-lg bg-warning-50 text-warning-700 border border-warning-200 text-sm">
-              You need Admin privileges to modify settings.
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              {isAdmin && (
+                <div className="flex justify-end pt-4 border-t">
+                  <Button onClick={handleSave} disabled={saving} className="gap-2">
+                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    Save Settings
+                  </Button>
+                </div>
+              )}
+
+              {!isAdmin && (
+                <div className="p-3 rounded-lg bg-warning-50 text-warning-700 border border-warning-200 text-sm">
+                  You need Admin privileges to modify settings.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* User Management Tab */}
+        {isAdmin && (
+          <TabsContent value="user-management">
+            <UserManagement />
+          </TabsContent>
+        )}
+      </Tabs>
     </div>
   );
 }

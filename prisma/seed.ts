@@ -1054,6 +1054,85 @@ async function main() {
   console.log('   Admin:    demo.admin@nationalgroupindia.com / Demo@123');
   console.log('   Manager:  demo.manager@nationalgroupindia.com / Demo@123');
   console.log('   Employee: demo.employee@nationalgroupindia.com / Demo@123');
+
+  // ==========================================
+  // SEED DEFAULT ROLE PERMISSIONS
+  // ==========================================
+  console.log('');
+  console.log('🔐 Seeding role permissions...');
+
+  const modules = [
+    'DASHBOARD', 'COMPANIES', 'DEPARTMENTS', 'EMPLOYEES', 'IT',
+    'PROJECTS', 'TASKS', 'CALENDAR', 'DRIVES', 'POLICIES', 'SETTINGS',
+  ] as const;
+
+  type AppModule = typeof modules[number];
+  type PermDef = { canView: boolean; canEdit: boolean };
+
+  const roleDefaults: Record<string, Record<AppModule, PermDef>> = {
+    SUPER_ADMIN: Object.fromEntries(modules.map(m => [m, { canView: true, canEdit: true }])) as Record<AppModule, PermDef>,
+    ADMIN: Object.fromEntries(modules.map(m => [m, { canView: true, canEdit: true }])) as Record<AppModule, PermDef>,
+    IT_ADMIN: {
+      DASHBOARD: { canView: true, canEdit: false },
+      COMPANIES: { canView: true, canEdit: false },
+      DEPARTMENTS: { canView: true, canEdit: false },
+      EMPLOYEES: { canView: true, canEdit: false },
+      IT: { canView: true, canEdit: true },
+      PROJECTS: { canView: true, canEdit: false },
+      TASKS: { canView: true, canEdit: true },
+      CALENDAR: { canView: true, canEdit: true },
+      DRIVES: { canView: true, canEdit: false },
+      POLICIES: { canView: true, canEdit: false },
+      SETTINGS: { canView: false, canEdit: false },
+    },
+    HR_ADMIN: {
+      DASHBOARD: { canView: true, canEdit: false },
+      COMPANIES: { canView: true, canEdit: true },
+      DEPARTMENTS: { canView: true, canEdit: true },
+      EMPLOYEES: { canView: true, canEdit: true },
+      IT: { canView: true, canEdit: false },
+      PROJECTS: { canView: true, canEdit: false },
+      TASKS: { canView: true, canEdit: true },
+      CALENDAR: { canView: true, canEdit: true },
+      DRIVES: { canView: true, canEdit: false },
+      POLICIES: { canView: true, canEdit: true },
+      SETTINGS: { canView: false, canEdit: false },
+    },
+    MANAGER: {
+      DASHBOARD: { canView: true, canEdit: false },
+      COMPANIES: { canView: true, canEdit: false },
+      DEPARTMENTS: { canView: true, canEdit: false },
+      EMPLOYEES: { canView: true, canEdit: true },
+      IT: { canView: true, canEdit: false },
+      PROJECTS: { canView: true, canEdit: true },
+      TASKS: { canView: true, canEdit: true },
+      CALENDAR: { canView: true, canEdit: true },
+      DRIVES: { canView: true, canEdit: false },
+      POLICIES: { canView: true, canEdit: false },
+      SETTINGS: { canView: false, canEdit: false },
+    },
+    EMPLOYEE: Object.fromEntries(
+      modules.map(m => [m, { canView: m !== 'SETTINGS', canEdit: false }])
+    ) as Record<AppModule, PermDef>,
+  };
+
+  for (const [role, perms] of Object.entries(roleDefaults)) {
+    for (const [module, perm] of Object.entries(perms)) {
+      await prisma.rolePermission.upsert({
+        where: { role_module: { role: role as any, module: module as any } },
+        update: { canView: perm.canView, canEdit: perm.canEdit },
+        create: {
+          role: role as any,
+          module: module as any,
+          canView: perm.canView,
+          canEdit: perm.canEdit,
+          companyIds: [],
+          departmentIds: [],
+        },
+      });
+    }
+  }
+  console.log('   ✅ Role permissions seeded for all 6 roles × 11 modules');
 }
 
 main()

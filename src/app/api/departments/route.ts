@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { requireView } from '@/lib/api-permissions';
 
 export const revalidate = 300; // Cache for 5 minutes
 
 export async function GET() {
   try {
+    // Permission check
+    const { response } = await requireView('DEPARTMENTS');
+    if (response) return response;
+
     const departments = await prisma.department.findMany({
       where: { isActive: true },
       select: {
