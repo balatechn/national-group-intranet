@@ -78,9 +78,18 @@ export async function POST(request: NextRequest) {
 
     if (action === 'send-test') {
       const testTo = settings.test_email || user.email;
-      // First save settings, then send test
-      await saveEmailSettings(settings);
-      const result = await sendTestEmail(testTo);
+      // Resolve the actual password (if masked, fetch from DB)
+      const actualPass = settings.smtp_pass === '••••••••' ? await getActualPassword() : settings.smtp_pass;
+      // Send test directly with form values (bypasses enabled check)
+      const result = await sendTestEmail(testTo, {
+        host: settings.smtp_host || 'smtp.gmail.com',
+        port: parseInt(settings.smtp_port || '587'),
+        secure: settings.smtp_secure === 'true',
+        user: settings.smtp_user,
+        pass: actualPass,
+        fromEmail: settings.smtp_from_email || settings.smtp_user,
+        fromName: settings.smtp_from_name || 'National Group Intranet',
+      });
       return NextResponse.json(result);
     }
 

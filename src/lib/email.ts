@@ -80,13 +80,13 @@ export interface EmailOptions {
   bcc?: string | string[];
 }
 
-export async function sendEmail(options: EmailOptions): Promise<{ success: boolean; error?: string }> {
+export async function sendEmail(options: EmailOptions, force = false): Promise<{ success: boolean; error?: string; skipped?: boolean }> {
   try {
     const config = await getSmtpConfig();
 
-    if (!config.enabled) {
+    if (!config.enabled && !force) {
       console.warn('[Email] SMTP not enabled, skipping email send');
-      return { success: true };
+      return { success: true, skipped: true };
     }
 
     if (!config.user || !config.pass) {
@@ -132,21 +132,49 @@ export async function testSmtpConnection(config?: Partial<SmtpConfig>): Promise<
   }
 }
 
-// Send test email
-export async function sendTestEmail(to: string): Promise<{ success: boolean; error?: string }> {
-  return sendEmail({
-    to,
-    subject: `[Test] ${APP_NAME} - Email Configuration Test`,
-    html: getBaseEmailTemplate(
-      'Email Test Successful',
-      `
-        <h2>Hello!</h2>
-        <p>This is a test email from <strong>${APP_NAME}</strong>.</p>
-        <p>If you received this email, your SMTP configuration is working correctly.</p>
-        <p style="color: #22c55e; font-weight: bold;">✅ Email delivery is active</p>
-      `
-    ),
-  });
+// Send test email (always force-sends, bypasses enabled check)
+export async function sendTestEmail(to: string, smtpOverride?: { host: string; port: number; secure: boolean; user: string; pass: string; fromEmail: string; fromName: string }): Promise<{ success: boolean; error?: string }> {
+  try {
+    let config: SmtpConfig;
+    if (smtpOverride) {
+      config = { ...smtpOverride, enabled: true };
+    } else {
+      config = await getSmtpConfig();
+    }
+
+    if (!config.user || !config.pass) {
+      return { success: false, error: 'SMTP username and password are required' };
+    }
+
+    const transporter = createTransporter(config);
+
+    const info = await transporter.sendMail({
+      from: `"${config.fromName || APP_NAME}" <${config.fromEmail || config.user}>`,
+      to,
+      subject: `[Test] ${APP_NAME} - Email Configuration Test`,
+      html: getBaseEmailTemplate(
+        'Email Test Successful',
+        `
+          <h2>Hello!</h2>
+          <p>This is a test email from <strong>${APP_NAME}</strong>.</p>
+          <p>If you received this email, your SMTP configuration is working correctly.</p>
+          <p style="color: #22c55e; font-weight: bold;">✅ Email delivery is active</p>
+          <p style="color: #666; font-size: 12px;">Sent at: ${new Date().toISOString()}</p>
+        `
+      ),
+    });
+
+    console.log('[Email] Test email sent:', info.messageId, 'accepted:', info.accepted, 'rejected:', info.rejected);
+
+    if (info.rejected && info.rejected.length > 0) {
+      return { success: false, error: `Email rejected for: ${info.rejected.join(', ')}` };
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    console.error('[Email] Test email failed:', error);
+    return { success: false, error: error.message };
+  }
 }
 
 // ==========================================

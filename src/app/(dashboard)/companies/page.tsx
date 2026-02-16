@@ -4,8 +4,7 @@ import { getCompanyHierarchy, getCompanies } from '@/actions/companies';
 import { CompanyActions } from '@/components/masters';
 import { CompanyHierarchyView } from './CompanyHierarchyView';
 
-// Revalidate every 60 seconds
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 // Types for hierarchy
 interface CompanyWithHierarchy {
