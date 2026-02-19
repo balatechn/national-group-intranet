@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { getSessionUser } from '@/lib/workos-auth';
+import ProfilePhotoUpload from '@/components/dashboard/ProfilePhotoUpload';
 import prisma from '@/lib/db';
 import {
   Building2,
@@ -298,18 +299,6 @@ async function getPersonalStats(userId: string) {
   }
 }
 
-// Quick Access Apps
-const quickAccessApps = [
-  { title: 'Companies', href: '/companies', icon: Building2, gradient: 'from-purple-500 to-violet-600' },
-  { title: 'Departments', href: '/departments', icon: Users, gradient: 'from-blue-500 to-cyan-600' },
-  { title: 'Employees', href: '/employees', icon: UserCircle, gradient: 'from-teal-500 to-emerald-600' },
-  { title: 'Projects', href: '/projects', icon: Briefcase, gradient: 'from-indigo-500 to-blue-600' },
-  { title: 'Tasks', href: '/tasks', icon: CheckSquare, gradient: 'from-green-500 to-emerald-600' },
-  { title: 'Calendar', href: '/calendar', icon: Calendar, gradient: 'from-orange-500 to-amber-600' },
-  { title: 'Drives', href: '/drives', icon: FolderOpen, gradient: 'from-yellow-500 to-orange-600' },
-  { title: 'Policies', href: '/policies', icon: BookOpen, gradient: 'from-rose-500 to-pink-600' },
-];
-
 function getGreeting() {
   const hour = new Date().getHours();
   if (hour < 12) return 'Good Morning';
@@ -422,23 +411,11 @@ export default async function DashboardPage() {
 
           {/* Profile Card */}
           <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm p-6 flex flex-col items-center text-center">
-            <div className="relative mb-4">
-              <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-[#DAA520] to-[#FFD700] opacity-20 blur-sm" />
-              {user?.avatar ? (
-                <Image
-                  src={user.avatar}
-                  alt={firstName}
-                  width={72}
-                  height={72}
-                  className="relative rounded-full border-2 border-[#DAA520]/30 object-cover shadow-md"
-                />
-              ) : (
-                <div className="relative h-[72px] w-[72px] rounded-full bg-gradient-to-br from-[#DAA520] to-[#B8860B] flex items-center justify-center text-2xl font-bold text-white border-2 border-[#DAA520]/30 shadow-md">
-                  {userInitials}
-                </div>
-              )}
-              <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-emerald-500 border-2 border-white shadow-sm" />
-            </div>
+            <ProfilePhotoUpload
+              currentAvatar={user?.avatar || null}
+              userInitials={userInitials}
+              userName={firstName}
+            />
             <h3 className="text-lg font-semibold text-gray-900 mb-0.5">{user?.name || firstName}</h3>
             <p className="text-xs text-gray-400 mb-5">{user?.role?.replace('_', ' ') || 'EMPLOYEE'}</p>
 
@@ -480,30 +457,7 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* ── Quick Access Grid ── */}
-        <div className="rounded-2xl bg-white/60 backdrop-blur-xl border border-gray-200/80 shadow-sm p-6">
-          <h2 className="text-base font-semibold text-gray-700 mb-4 flex items-center gap-2">
-            <Zap className="h-4 w-4 text-[#B8860B]" />
-            Quick Access
-          </h2>
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-4">
-            {quickAccessApps.map((app) => {
-              const Icon = app.icon;
-              return (
-                <Link
-                  key={app.href}
-                  href={app.href}
-                  className="group flex flex-col items-center gap-2.5"
-                >
-                  <div className={`rounded-2xl bg-gradient-to-br ${app.gradient} p-3 text-white transition-all group-hover:scale-110 group-hover:shadow-lg`}>
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <span className="text-xs text-gray-400 group-hover:text-gray-700 transition-colors font-medium">{app.title}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
+
 
         {/* ── Personal Work Dashboard ── */}
         {personalStats && (
