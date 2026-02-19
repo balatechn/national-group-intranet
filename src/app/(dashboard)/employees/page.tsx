@@ -614,16 +614,27 @@ export default function EmployeeMasterPage() {
           {filteredEmployees.map((employee) => (
             <div
               key={employee.id}
-              className="bg-white rounded-xl border border-surface-200 p-6 hover:shadow-lg hover:border-primary/30 transition-all group relative"
+              className="bg-white rounded-xl border border-surface-200 p-6 hover:shadow-lg hover:border-primary/30 transition-all group relative cursor-pointer"
+              onClick={() => window.location.href = `/employees/${employee.id}`}
             >
-              {/* Edit Button */}
-              <button
-                onClick={(e) => openEditDialog(employee, e)}
-                className="absolute top-4 right-4 p-2 rounded-lg bg-surface-50 text-text-secondary hover:bg-primary/10 hover:text-primary transition-colors opacity-0 group-hover:opacity-100 z-10"
-                title="Edit Employee"
-              >
-                <Pencil className="w-4 h-4" />
+              {/* Action Buttons */}
+              <div className="absolute top-4 right-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 z-10">
+                <Link
+                  href={`/employees/${employee.id}`}
+                  className="p-2 rounded-lg bg-surface-50 text-text-secondary hover:bg-primary/10 hover:text-primary transition-colors"
+                  title="View Dashboard"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Eye className="w-4 h-4" />
+                </Link>
+                <button
+                  onClick={(e) => openEditDialog(employee, e)}
+                  className="p-2 rounded-lg bg-surface-50 text-text-secondary hover:bg-primary/10 hover:text-primary transition-colors"
+                  title="Edit Employee"
+                >
+                  <Pencil className="w-4 h-4" />
               </button>
+              </div>
               <div className="flex items-start gap-4">
                 <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl flex-shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
                   {employee.firstName[0]}{employee.lastName[0]}
@@ -796,13 +807,22 @@ export default function EmployeeMasterPage() {
                       </div>
                     </td>
                     <td className="px-4 py-4 text-center">
-                      <button
-                        onClick={() => openEditDialog(employee)}
-                        className="p-2 rounded-lg text-text-secondary hover:bg-primary/10 hover:text-primary transition-colors"
-                        title="Edit Employee"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-center gap-1">
+                        <Link
+                          href={`/employees/${employee.id}`}
+                          className="p-2 rounded-lg text-text-secondary hover:bg-primary/10 hover:text-primary transition-colors"
+                          title="View Dashboard"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Link>
+                        <button
+                          onClick={() => openEditDialog(employee)}
+                          className="p-2 rounded-lg text-text-secondary hover:bg-primary/10 hover:text-primary transition-colors"
+                          title="Edit Employee"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
