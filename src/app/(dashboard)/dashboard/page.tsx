@@ -11,11 +11,8 @@ import {
   FolderOpen,
   ChevronRight,
   Briefcase,
-  Settings,
-  BookOpen,
   Globe,
   Zap,
-  Activity,
   Sparkles,
   UserCircle,
   TrendingUp,
@@ -24,14 +21,10 @@ import {
   MapPin,
   Timer,
   Target,
-  AlertCircle,
   FolderKanban,
-  CheckCircle2,
   CircleDot,
   PauseCircle,
-  XCircle,
   IndianRupee,
-  BarChart3,
 } from 'lucide-react';
 
 // Revalidate every 60 seconds for fresh data
@@ -306,27 +299,6 @@ function getGreeting() {
   return 'Good Evening';
 }
 
-function getStatusBadge(status: string) {
-  const map: Record<string, { bg: string; text: string }> = {
-    COMPLETED: { bg: 'bg-emerald-50', text: 'text-emerald-700' },
-    IN_PROGRESS: { bg: 'bg-blue-50', text: 'text-blue-700' },
-    PENDING: { bg: 'bg-amber-50', text: 'text-amber-700' },
-    TODO: { bg: 'bg-slate-100', text: 'text-slate-600' },
-    CANCELLED: { bg: 'bg-red-50', text: 'text-red-700' },
-  };
-  return map[status] || { bg: 'bg-slate-100', text: 'text-slate-600' };
-}
-
-function getPriorityDot(priority: string) {
-  const map: Record<string, string> = {
-    CRITICAL: 'bg-red-500 shadow-red-500/30',
-    HIGH: 'bg-orange-500 shadow-orange-500/30',
-    MEDIUM: 'bg-amber-500 shadow-amber-500/30',
-    LOW: 'bg-emerald-500 shadow-emerald-500/30',
-  };
-  return map[priority] || 'bg-slate-400';
-}
-
 export default async function DashboardPage() {
   const [user, stats] = await Promise.all([
     getSessionUser(),
@@ -356,52 +328,51 @@ export default async function DashboardPage() {
         <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] rounded-full bg-blue-100/30 blur-[120px]" />
       </div>
 
-      <div className="space-y-6 relative z-10">
-        {/* ── Top Section: Hero + Profile ── */}
-        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="space-y-5 relative z-10 max-w-[1400px] mx-auto">
+
+        {/* ═══ ROW 1: Hero Greeting + Profile Card ═══ */}
+        <div className="grid gap-5 lg:grid-cols-[1fr_300px]">
           {/* Hero / Greeting */}
-          <div className="relative overflow-hidden rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm p-8">
+          <div className="relative overflow-hidden rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm p-6 lg:p-7">
             <div className="absolute inset-0 overflow-hidden">
               <div className="absolute -top-32 -right-32 h-64 w-64 rounded-full bg-gradient-to-br from-[#DAA520]/15 to-orange-400/10 blur-3xl" />
               <div className="absolute bottom-0 left-0 h-48 w-48 rounded-full bg-blue-400/10 blur-3xl" />
               <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, rgba(184,134,11,0.4) 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
             </div>
-            <div className="relative z-10 space-y-5">
+            <div className="relative z-10 space-y-4">
               <div className="flex items-center gap-3">
                 <Image
                   src="/national-logo.png"
                   alt="National Group"
-                  width={40}
-                  height={40}
-                  className="rounded-xl border border-gray-200 bg-white p-1 shadow-sm"
+                  width={36}
+                  height={36}
+                  className="rounded-lg border border-gray-200 bg-white p-0.5 shadow-sm"
                 />
-                <span className="text-xs text-gray-400 font-medium tracking-widest uppercase">{dateStr}</span>
+                <span className="text-[11px] text-gray-400 font-medium tracking-widest uppercase">{dateStr}</span>
               </div>
-
               <div>
-                <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-1.5">
                   {greeting}, <span className="bg-gradient-to-r from-[#B8860B] via-[#DAA520] to-[#B8860B] bg-clip-text text-transparent">{firstName}</span>
-                  <Sparkles className="inline-block ml-2 h-6 w-6 text-amber-500/70" />
+                  <Sparkles className="inline-block ml-2 h-5 w-5 text-amber-500/70" />
                 </h1>
-                <p className="text-gray-500 text-base max-w-lg">
+                <p className="text-gray-500 text-sm">
                   Welcome to National Group Intranet — your central hub for collaboration and productivity.
                 </p>
               </div>
-
               {/* Stat Chips */}
-              <div className="flex flex-wrap gap-3 pt-1">
-                <Link href="/employees" className="inline-flex items-center gap-2 rounded-full bg-white border border-gray-200 px-4 py-2 text-sm shadow-sm transition-all hover:shadow-md hover:border-gray-300">
-                  <div className="h-2 w-2 rounded-full bg-blue-500 shadow-sm shadow-blue-500/30" />
+              <div className="flex flex-wrap gap-2.5">
+                <Link href="/employees" className="inline-flex items-center gap-2 rounded-full bg-white border border-gray-200 px-3.5 py-1.5 text-xs shadow-sm transition-all hover:shadow-md hover:border-gray-300">
+                  <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
                   <span className="text-gray-500">Employees</span>
                   <span className="font-bold text-gray-900">{stats.activeEmployees}</span>
                 </Link>
-                <Link href="/companies" className="inline-flex items-center gap-2 rounded-full bg-white border border-gray-200 px-4 py-2 text-sm shadow-sm transition-all hover:shadow-md hover:border-gray-300">
-                  <div className="h-2 w-2 rounded-full bg-purple-500 shadow-sm shadow-purple-500/30" />
+                <Link href="/companies" className="inline-flex items-center gap-2 rounded-full bg-white border border-gray-200 px-3.5 py-1.5 text-xs shadow-sm transition-all hover:shadow-md hover:border-gray-300">
+                  <div className="h-1.5 w-1.5 rounded-full bg-purple-500" />
                   <span className="text-gray-500">Companies</span>
                   <span className="font-bold text-gray-900">{stats.totalCompanies}</span>
                 </Link>
-                <Link href="/departments" className="inline-flex items-center gap-2 rounded-full bg-white border border-gray-200 px-4 py-2 text-sm shadow-sm transition-all hover:shadow-md hover:border-gray-300">
-                  <div className="h-2 w-2 rounded-full bg-teal-500 shadow-sm shadow-teal-500/30" />
+                <Link href="/departments" className="inline-flex items-center gap-2 rounded-full bg-white border border-gray-200 px-3.5 py-1.5 text-xs shadow-sm transition-all hover:shadow-md hover:border-gray-300">
+                  <div className="h-1.5 w-1.5 rounded-full bg-teal-500" />
                   <span className="text-gray-500">Departments</span>
                   <span className="font-bold text-gray-900">{stats.totalDepartments}</span>
                 </Link>
@@ -410,17 +381,17 @@ export default async function DashboardPage() {
           </div>
 
           {/* Profile Card */}
-          <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm p-6 flex flex-col items-center text-center">
+          <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm p-5 flex flex-col items-center text-center">
             <ProfilePhotoUpload
               currentAvatar={user?.avatar || null}
               userInitials={userInitials}
               userName={firstName}
             />
-            <h3 className="text-lg font-semibold text-gray-900 mb-0.5">{user?.name || firstName}</h3>
-            <p className="text-xs text-gray-400 mb-5">{user?.role?.replace('_', ' ') || 'EMPLOYEE'}</p>
+            <h3 className="text-base font-semibold text-gray-900 mb-0.5">{user?.name || firstName}</h3>
+            <p className="text-[11px] text-gray-400 mb-4 tracking-wide">{user?.role?.replace('_', ' ') || 'EMPLOYEE'}</p>
 
             {/* Quick Action Icons */}
-            <div className="grid grid-cols-4 gap-3 w-full mb-5">
+            <div className="grid grid-cols-4 gap-2 w-full mb-4">
               {[
                 { icon: CheckSquare, label: 'Tasks', href: '/tasks', gradient: 'from-green-500 to-emerald-600' },
                 { icon: Briefcase, label: 'Projects', href: '/projects', gradient: 'from-indigo-500 to-blue-600' },
@@ -429,248 +400,253 @@ export default async function DashboardPage() {
               ].map((action) => {
                 const Icon = action.icon;
                 return (
-                  <Link
-                    key={action.href}
-                    href={action.href}
-                    className="flex flex-col items-center gap-1.5 group"
-                  >
-                    <div className={`rounded-xl bg-gradient-to-br ${action.gradient} p-2.5 transition-transform group-hover:scale-110 shadow-md`}>
-                      <Icon className="h-4 w-4 text-white" />
+                  <Link key={action.href} href={action.href} className="flex flex-col items-center gap-1 group">
+                    <div className={`rounded-lg bg-gradient-to-br ${action.gradient} p-2 transition-transform group-hover:scale-110 shadow-sm`}>
+                      <Icon className="h-3.5 w-3.5 text-white" />
                     </div>
-                    <span className="text-[10px] text-gray-400 group-hover:text-gray-600 transition-colors">{action.label}</span>
+                    <span className="text-[9px] text-gray-400 group-hover:text-gray-600 transition-colors">{action.label}</span>
                   </Link>
                 );
               })}
             </div>
 
-            {/* Mini Stats Card */}
-            <div className="w-full rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/60 p-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-[#B8860B] font-medium">My Productivity</span>
-                <TrendingUp className="h-3.5 w-3.5 text-[#B8860B]" />
+            {/* Mini Productivity */}
+            <div className="w-full rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/60 p-3">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] text-[#B8860B] font-medium">My Productivity</span>
+                <TrendingUp className="h-3 w-3 text-[#B8860B]" />
               </div>
               <div className="flex items-end gap-1">
-                <span className="text-2xl font-bold text-gray-900">{personalStats?.taskStats.completionRate ?? stats.taskCompletionRate}%</span>
-                <span className="text-xs text-emerald-600 mb-1 ml-1">tasks done</span>
+                <span className="text-xl font-bold text-gray-900">{personalStats?.taskStats.completionRate ?? stats.taskCompletionRate}%</span>
+                <span className="text-[10px] text-emerald-600 mb-0.5 ml-0.5">tasks done</span>
               </div>
             </div>
           </div>
         </div>
 
+        {/* ═══ ROW 2: 4 Key Metric Cards ═══ */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            {
+              label: 'My Tasks',
+              value: personalStats ? `${personalStats.taskStats.inProgress + personalStats.taskStats.todo}` : stats.inProgressTasks,
+              sub: personalStats ? `of ${personalStats.taskStats.total} total` : 'in progress',
+              icon: CheckSquare,
+              color: 'text-emerald-600', bg: 'bg-emerald-50', accent: 'border-emerald-200/60',
+              href: '/tasks',
+            },
+            {
+              label: 'My Projects',
+              value: personalStats ? personalStats.projects.length : stats.activeProjects,
+              sub: personalStats ? `${personalStats.projects.filter(p => p.status === 'ACTIVE').length} active` : `of ${stats.totalProjects} total`,
+              icon: FolderKanban,
+              color: 'text-violet-600', bg: 'bg-violet-50', accent: 'border-violet-200/60',
+              href: '/projects',
+            },
+            {
+              label: 'Hours This Week',
+              value: personalStats ? `${personalStats.timeStats.totalHoursWeek}h` : '—',
+              sub: personalStats ? `${personalStats.timeStats.totalHoursMonth}h this month` : 'no data',
+              icon: Timer,
+              color: 'text-blue-600', bg: 'bg-blue-50', accent: 'border-blue-200/60',
+              href: '/tasks',
+            },
+            {
+              label: 'Completion Rate',
+              value: `${personalStats?.taskStats.completionRate ?? stats.taskCompletionRate}%`,
+              sub: personalStats ? `${personalStats.taskStats.completed} completed` : `${stats.completedTasks} completed`,
+              icon: Target,
+              color: 'text-[#B8860B]', bg: 'bg-amber-50', accent: 'border-amber-200/60',
+              href: '/tasks',
+            },
+          ].map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <Link
+                key={stat.label}
+                href={stat.href}
+                className={`group rounded-2xl bg-white/80 backdrop-blur-xl border ${stat.accent} p-4 shadow-sm transition-all hover:shadow-md hover:scale-[1.02]`}
+              >
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className={`rounded-lg ${stat.bg} p-2`}>
+                    <Icon className={`h-4 w-4 ${stat.color}`} />
+                  </div>
+                  <ArrowUpRight className="h-3.5 w-3.5 text-gray-300 group-hover:text-gray-500 transition-colors" />
+                </div>
+                <p className="text-2xl font-bold text-gray-900 leading-tight">{stat.value}</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">{stat.sub}</p>
+                <p className="text-[10px] text-gray-300 mt-1 font-medium tracking-wide uppercase">{stat.label}</p>
+              </Link>
+            );
+          })}
+        </div>
 
-
-        {/* ── Personal Work Dashboard ── */}
+        {/* ═══ ROW 3: Progress + Time Tracker + Performance ═══ */}
         {personalStats && (
-          <>
-            {/* Progress + Time Tracker + My Stats Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-              {/* Weekly Progress Bar Chart */}
-              <div className="lg:col-span-4 rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm p-5 flex flex-col">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-base font-semibold text-gray-800">My Progress</h3>
-                  <Link href="/tasks" className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
-                    <ArrowUpRight className="w-3.5 h-3.5 text-gray-500" />
-                  </Link>
-                </div>
-                <div className="flex items-baseline gap-2 mb-4">
-                  <span className="text-3xl font-bold text-gray-900">{personalStats.timeStats.totalHoursWeek}h</span>
-                  <span className="text-sm text-gray-400">Work Time<br/>this week</span>
-                </div>
-                <div className="flex items-end justify-between gap-1.5 flex-1 min-h-[80px]">
-                  {personalStats.timeStats.weeklyHours.map((d, i) => {
-                    const maxH = Math.max(...personalStats.timeStats.weeklyHours.map(x => x.hours), 1);
-                    const height = maxH > 0 ? (d.hours / maxH) * 100 : 0;
-                    const isToday = new Date(d.date).toDateString() === new Date().toDateString();
-                    return (
-                      <div key={i} className="flex flex-col items-center gap-1.5 flex-1">
-                        {d.hours > 0 && (
-                          <span className={`text-[10px] font-medium ${isToday ? 'text-[#B8860B]' : 'text-gray-400'}`}>
-                            {d.hours}h
-                          </span>
-                        )}
-                        <div className="w-full flex items-end justify-center" style={{ height: '70px' }}>
-                          <div
-                            className={`w-full max-w-[28px] rounded-t-md transition-all ${
-                              isToday ? 'bg-[#B8860B]' : d.hours > 0 ? 'bg-[#2C2103]' : 'bg-gray-200'
-                            }`}
-                            style={{ height: `${Math.max(height, 6)}%` }}
-                          />
-                        </div>
-                        <span className={`text-[11px] ${isToday ? 'text-[#B8860B] font-semibold' : 'text-gray-400'}`}>
-                          {d.day}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            {/* Weekly Progress Bar Chart */}
+            <div className="lg:col-span-5 rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm p-5">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="text-sm font-semibold text-gray-800">My Progress</h3>
+                <Link href="/tasks" className="w-6 h-6 rounded-md bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
+                  <ArrowUpRight className="w-3 h-3 text-gray-500" />
+                </Link>
+              </div>
+              <div className="flex items-baseline gap-2 mb-3">
+                <span className="text-2xl font-bold text-gray-900">{personalStats.timeStats.totalHoursWeek}h</span>
+                <span className="text-xs text-gray-400">this week</span>
+              </div>
+              <div className="flex items-end justify-between gap-1 min-h-[90px]">
+                {personalStats.timeStats.weeklyHours.map((d, i) => {
+                  const maxH = Math.max(...personalStats.timeStats.weeklyHours.map(x => x.hours), 1);
+                  const height = maxH > 0 ? (d.hours / maxH) * 100 : 0;
+                  const isToday = new Date(d.date).toDateString() === new Date().toDateString();
+                  return (
+                    <div key={i} className="flex flex-col items-center gap-1 flex-1">
+                      {d.hours > 0 && (
+                        <span className={`text-[9px] font-semibold ${isToday ? 'text-[#B8860B]' : 'text-gray-400'}`}>
+                          {d.hours}h
                         </span>
+                      )}
+                      <div className="w-full flex items-end justify-center" style={{ height: '72px' }}>
+                        <div
+                          className={`w-full max-w-[24px] rounded-t-md transition-all ${
+                            isToday ? 'bg-gradient-to-t from-[#B8860B] to-[#DAA520]' : d.hours > 0 ? 'bg-gray-800' : 'bg-gray-100'
+                          }`}
+                          style={{ height: `${Math.max(height, 5)}%` }}
+                        />
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Time Tracker Ring */}
-              <div className="lg:col-span-4 rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm p-5 flex flex-col">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-base font-semibold text-gray-800">Time Tracker</h3>
-                  <span className="text-xs text-gray-400">All Time</span>
-                </div>
-                <div className="flex-1 flex flex-col items-center justify-center">
-                  <div className="relative w-32 h-32">
-                    <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-                      <circle cx="60" cy="60" r="50" fill="none" stroke="#f1f5f9" strokeWidth="9" />
-                      <circle
-                        cx="60" cy="60" r="50"
-                        fill="none"
-                        stroke="url(#dashGold)"
-                        strokeWidth="9"
-                        strokeLinecap="round"
-                        strokeDasharray={`${2 * Math.PI * 50}`}
-                        strokeDashoffset={`${2 * Math.PI * 50 * (1 - Math.min(personalStats.performance.hoursUtilization, 100) / 100)}`}
-                      />
-                      <defs>
-                        <linearGradient id="dashGold" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#B8860B" />
-                          <stop offset="100%" stopColor="#DAA520" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-2xl font-bold text-gray-900">{personalStats.timeStats.totalHours}</span>
-                      <span className="text-[10px] text-gray-400">Total Hrs</span>
+                      <span className={`text-[10px] ${isToday ? 'text-[#B8860B] font-bold' : 'text-gray-400'}`}>
+                        {d.day}
+                      </span>
                     </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4 mt-3 w-full text-center">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{personalStats.timeStats.totalHoursMonth}h</p>
-                      <p className="text-[10px] text-gray-400">This Month</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{personalStats.performance.totalEstimated}h</p>
-                      <p className="text-[10px] text-gray-400">Estimated</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-[#B8860B]">
-                        {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(personalStats.timeStats.totalCost)}
-                      </p>
-                      <p className="text-[10px] text-gray-400">Total Cost</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Performance Card */}
-              <div className="lg:col-span-4 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200/60 shadow-sm p-5 flex flex-col">
-                <h3 className="text-base font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-[#B8860B]" />
-                  Performance
-                </h3>
-                <div className="space-y-3 flex-1">
-                  <div>
-                    <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="text-gray-500">Task Completion</span>
-                      <span className="font-semibold text-gray-900">{personalStats.performance.completionRate}%</span>
-                    </div>
-                    <div className="h-2 bg-white rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${personalStats.performance.completionRate}%` }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="text-gray-500">On-Time Delivery</span>
-                      <span className="font-semibold text-gray-900">{personalStats.performance.onTimeRate}%</span>
-                    </div>
-                    <div className="h-2 bg-white rounded-full overflow-hidden">
-                      <div className="h-full bg-[#B8860B] rounded-full transition-all" style={{ width: `${personalStats.performance.onTimeRate}%` }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="text-gray-500">Hours Budget</span>
-                      <span className="font-semibold text-gray-900">{personalStats.performance.hoursUtilization}%</span>
-                    </div>
-                    <div className="h-2 bg-white rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all ${
-                          personalStats.performance.hoursUtilization > 120 ? 'bg-red-500' :
-                          personalStats.performance.hoursUtilization > 100 ? 'bg-amber-500' : 'bg-blue-500'
-                        }`}
-                        style={{ width: `${Math.min(personalStats.performance.hoursUtilization, 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-                {/* Hourly Rate Badge */}
-                {personalStats.hourlyRate > 0 && (
-                  <div className="mt-3 pt-3 border-t border-amber-200/60 flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Hourly Rate</span>
-                    <span className="text-sm font-bold text-[#B8860B] flex items-center gap-0.5">
-                      <IndianRupee className="w-3 h-3" />{personalStats.hourlyRate.toLocaleString('en-IN')}/hr
-                    </span>
-                  </div>
-                )}
+                  );
+                })}
               </div>
             </div>
 
-            {/* Personal Stats Tiles */}
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-              {[
-                { label: 'Total Tasks', value: personalStats.taskStats.total, icon: Target, color: 'text-[#B8860B]', bg: 'bg-amber-50', border: 'border-amber-100' },
-                { label: 'In Progress', value: personalStats.taskStats.inProgress, icon: Timer, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100' },
-                { label: 'Completed', value: personalStats.taskStats.completed, icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-                { label: 'Overdue', value: personalStats.taskStats.overdue, icon: AlertCircle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100' },
-                { label: 'Projects', value: personalStats.projects.length, icon: FolderKanban, color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100' },
-                { label: 'Completion', value: `${personalStats.taskStats.completionRate}%`, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100' },
-              ].map((stat, i) => {
-                const Icon = stat.icon;
-                return (
-                  <div key={i} className={`rounded-xl bg-white/80 backdrop-blur-xl border ${stat.border} p-3 flex items-center gap-2.5`}>
-                    <div className={`w-8 h-8 rounded-lg ${stat.bg} flex items-center justify-center shrink-0`}>
-                      <Icon className={`w-4 h-4 ${stat.color}`} />
-                    </div>
-                    <div>
-                      <p className="text-lg font-bold text-gray-900 leading-tight">{stat.value}</p>
-                      <p className="text-[10px] text-gray-400">{stat.label}</p>
-                    </div>
-                  </div>
-                );
-              })}
+            {/* Time Tracker Ring */}
+            <div className="lg:col-span-3 rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm p-5 flex flex-col items-center">
+              <h3 className="text-sm font-semibold text-gray-800 self-start mb-3">Time Tracker</h3>
+              <div className="relative w-28 h-28 mb-3">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
+                  <circle cx="60" cy="60" r="50" fill="none" stroke="#f1f5f9" strokeWidth="8" />
+                  <circle
+                    cx="60" cy="60" r="50"
+                    fill="none"
+                    stroke="url(#dashGold)"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    strokeDasharray={`${2 * Math.PI * 50}`}
+                    strokeDashoffset={`${2 * Math.PI * 50 * (1 - Math.min(personalStats.performance.hoursUtilization, 100) / 100)}`}
+                  />
+                  <defs>
+                    <linearGradient id="dashGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#B8860B" />
+                      <stop offset="100%" stopColor="#DAA520" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-xl font-bold text-gray-900">{personalStats.timeStats.totalHours}</span>
+                  <span className="text-[9px] text-gray-400 font-medium">TOTAL HRS</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 w-full text-center">
+                <div className="rounded-lg bg-gray-50 p-2">
+                  <p className="text-xs font-bold text-gray-900">{personalStats.timeStats.totalHoursMonth}h</p>
+                  <p className="text-[9px] text-gray-400">This Month</p>
+                </div>
+                <div className="rounded-lg bg-amber-50 p-2">
+                  <p className="text-xs font-bold text-[#B8860B]">
+                    {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(personalStats.timeStats.totalCost)}
+                  </p>
+                  <p className="text-[9px] text-gray-400">Total Cost</p>
+                </div>
+              </div>
             </div>
 
-            {/* Active Tasks (Dark Card) + My Projects Side-by-Side */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {/* Active Tasks - Dark Card */}
-              <div className="rounded-2xl bg-[#1a1a2e] p-5 text-white">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-white/90 flex items-center gap-2">
-                    <CheckSquare className="h-4 w-4 text-[#DAA520]" />
-                    My Active Tasks
-                  </h3>
-                  <span className="text-lg font-bold text-[#DAA520]">
-                    {personalStats.taskStats.todo + personalStats.taskStats.inProgress}/{personalStats.taskStats.total}
+            {/* Performance Card */}
+            <div className="lg:col-span-4 rounded-2xl bg-gradient-to-br from-amber-50/80 to-orange-50/80 border border-amber-200/50 shadow-sm p-5 flex flex-col">
+              <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-1.5">
+                <Zap className="h-3.5 w-3.5 text-[#B8860B]" />
+                Performance
+              </h3>
+              <div className="space-y-3.5 flex-1">
+                {[
+                  { label: 'Task Completion', value: personalStats.performance.completionRate, color: 'bg-emerald-500' },
+                  { label: 'On-Time Delivery', value: personalStats.performance.onTimeRate, color: 'bg-[#B8860B]' },
+                  {
+                    label: 'Hours Budget',
+                    value: personalStats.performance.hoursUtilization,
+                    color: personalStats.performance.hoursUtilization > 120 ? 'bg-red-500' :
+                           personalStats.performance.hoursUtilization > 100 ? 'bg-amber-500' : 'bg-blue-500',
+                  },
+                ].map((item) => (
+                  <div key={item.label}>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="text-gray-500">{item.label}</span>
+                      <span className="font-bold text-gray-800">{item.value}%</span>
+                    </div>
+                    <div className="h-1.5 bg-white rounded-full overflow-hidden">
+                      <div className={`h-full ${item.color} rounded-full transition-all`} style={{ width: `${Math.min(item.value, 100)}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {personalStats.hourlyRate > 0 && (
+                <div className="mt-4 pt-3 border-t border-amber-200/50 flex items-center justify-between">
+                  <span className="text-[11px] text-gray-500">Hourly Rate</span>
+                  <span className="text-xs font-bold text-[#B8860B] flex items-center gap-0.5">
+                    <IndianRupee className="w-3 h-3" />{personalStats.hourlyRate.toLocaleString('en-IN')}/hr
                   </span>
                 </div>
+              )}
+            </div>
+          </div>
+        )}
 
-                {/* Mini task breakdown */}
+        {/* ═══ ROW 4: Active Tasks + Events | Projects + Org ═══ */}
+        <div className="grid gap-5 lg:grid-cols-12">
+          {/* Left Column */}
+          <div className="lg:col-span-7 space-y-5">
+            {/* Active Tasks — Dark Card */}
+            {personalStats && (
+              <div className="rounded-2xl bg-[#1a1a2e] p-5 text-white">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-white/90 flex items-center gap-2">
+                    <CheckSquare className="h-4 w-4 text-[#DAA520]" />
+                    Active Tasks
+                  </h3>
+                  <Link href="/tasks" className="text-[10px] text-[#DAA520] hover:text-[#FFD700] transition-colors flex items-center gap-1">
+                    View all <ChevronRight className="h-3 w-3" />
+                  </Link>
+                </div>
+
+                {/* Task breakdown bar */}
                 <div className="flex items-center gap-3 mb-3 pb-3 border-b border-white/10">
-                  <div className="relative w-12 h-12 shrink-0">
+                  <div className="relative w-11 h-11 shrink-0">
                     <svg className="w-full h-full -rotate-90" viewBox="0 0 44 44">
-                      <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="4" />
-                      <circle cx="22" cy="22" r="18" fill="none" stroke="#DAA520" strokeWidth="4" strokeLinecap="round"
+                      <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3.5" />
+                      <circle cx="22" cy="22" r="18" fill="none" stroke="#DAA520" strokeWidth="3.5" strokeLinecap="round"
                         strokeDasharray={`${2 * Math.PI * 18}`}
                         strokeDashoffset={`${2 * Math.PI * 18 * (1 - personalStats.taskStats.completionRate / 100)}`}
                       />
                     </svg>
-                    <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold">{personalStats.taskStats.completionRate}%</span>
+                    <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-[#DAA520]">{personalStats.taskStats.completionRate}%</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px] flex-1">
-                    <span className="text-white/50 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-gray-400 inline-block" /> To Do: {personalStats.taskStats.todo}</span>
-                    <span className="text-white/50 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-400 inline-block" /> Active: {personalStats.taskStats.inProgress}</span>
-                    <span className="text-white/50 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" /> Hold: {personalStats.taskStats.onHold}</span>
-                    <span className="text-white/50 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" /> Done: {personalStats.taskStats.completed}</span>
+                  <div className="grid grid-cols-4 gap-x-3 text-[10px] flex-1">
+                    <span className="text-white/50 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-gray-400 inline-block" /> To Do {personalStats.taskStats.todo}</span>
+                    <span className="text-white/50 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-400 inline-block" /> Active {personalStats.taskStats.inProgress}</span>
+                    <span className="text-white/50 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" /> Hold {personalStats.taskStats.onHold}</span>
+                    <span className="text-white/50 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" /> Done {personalStats.taskStats.completed}</span>
                   </div>
                 </div>
 
                 {/* Task list */}
-                <div className="space-y-0.5 max-h-[220px] overflow-y-auto">
+                <div className="space-y-0.5 max-h-[240px] overflow-y-auto scrollbar-thin">
                   {personalStats.pendingTasks.length === 0 ? (
-                    <p className="text-white/40 text-sm text-center py-4">No pending tasks</p>
+                    <p className="text-white/40 text-sm text-center py-6">No pending tasks — nicely done!</p>
                   ) : (
                     personalStats.pendingTasks.map((task) => (
                       <Link
@@ -683,7 +659,7 @@ export default async function DashboardPage() {
                          <CircleDot className="w-3.5 h-3.5 text-gray-500 shrink-0" />}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm text-white/80 truncate group-hover:text-white">{task.title}</p>
-                          <p className="text-[10px] text-white/40">
+                          <p className="text-[10px] text-white/35">
                             {task.project?.name || 'No Project'}
                             {task.dueDate && (
                               <span className={task.dueDate && new Date(task.dueDate) < new Date() ? ' text-red-400' : ''}>
@@ -692,7 +668,7 @@ export default async function DashboardPage() {
                             )}
                           </p>
                         </div>
-                        <span className={`px-1.5 py-0.5 rounded text-[9px] font-medium ${
+                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-semibold tracking-wide ${
                           task.priority === 'CRITICAL' ? 'bg-red-500/20 text-red-300' :
                           task.priority === 'HIGH' ? 'bg-orange-500/20 text-orange-300' :
                           task.priority === 'MEDIUM' ? 'bg-amber-500/20 text-amber-300' :
@@ -705,192 +681,56 @@ export default async function DashboardPage() {
                   )}
                 </div>
               </div>
-
-              {/* My Projects */}
-              <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm p-5">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-base font-semibold text-gray-800 flex items-center gap-2">
-                    <FolderKanban className="h-4 w-4 text-violet-500" />
-                    My Projects
-                  </h3>
-                  <Link href="/projects" className="text-xs text-[#B8860B] hover:text-[#DAA520] transition-colors flex items-center gap-1">
-                    View all <ChevronRight className="h-3 w-3" />
-                  </Link>
-                </div>
-                <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                  {personalStats.projects.length === 0 ? (
-                    <div className="text-center py-8">
-                      <FolderKanban className="h-10 w-10 mx-auto mb-3 text-gray-200" />
-                      <p className="text-sm text-gray-400">Not part of any projects yet.</p>
-                    </div>
-                  ) : (
-                    personalStats.projects.map((proj) => (
-                      <Link
-                        key={proj.id}
-                        href={`/projects/${proj.id}`}
-                        className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-[#B8860B]/30 hover:shadow-sm transition-all group"
-                      >
-                        <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-violet-100 to-purple-50 border border-violet-200/60 flex items-center justify-center text-sm font-bold text-violet-600 flex-shrink-0">
-                          {proj.name.charAt(0)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-700 truncate group-hover:text-gray-900">{proj.name}</p>
-                          <p className="text-[11px] text-gray-400">{proj.code} · {proj.role || 'Member'} · {proj.totalMembers} members</p>
-                        </div>
-                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
-                          proj.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700' :
-                          proj.status === 'PLANNED' ? 'bg-blue-50 text-blue-700' :
-                          proj.status === 'ON_HOLD' ? 'bg-amber-50 text-amber-700' :
-                          proj.status === 'COMPLETED' ? 'bg-gray-100 text-gray-600' :
-                          'bg-gray-100 text-gray-600'
-                        }`}>
-                          {proj.status}
-                        </span>
-                      </Link>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* ── Stat Cards Row ── */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { label: 'Active Employees', value: stats.activeEmployees, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', href: '/employees' },
-            { label: 'Active Projects', value: stats.activeProjects, icon: Briefcase, color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-100', href: '/projects' },
-            { label: 'Tasks In Progress', value: stats.inProgressTasks, icon: Activity, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100', href: '/tasks' },
-            { label: 'Completion Rate', value: `${stats.taskCompletionRate}%`, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', href: '/tasks' },
-          ].map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <Link
-                key={stat.label}
-                href={stat.href}
-                className={`group rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 ${stat.border} p-5 shadow-sm transition-all hover:shadow-md hover:border-gray-300 hover:scale-[1.02]`}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className={`rounded-xl ${stat.bg} p-2.5`}>
-                    <Icon className={`h-5 w-5 ${stat.color}`} />
-                  </div>
-                  <ArrowUpRight className="h-4 w-4 text-gray-300 group-hover:text-gray-500 transition-colors" />
-                </div>
-                <p className="text-2xl lg:text-3xl font-bold text-gray-900">{stat.value}</p>
-                <p className="text-xs text-gray-400 mt-1">{stat.label}</p>
-              </Link>
-            );
-          })}
-        </div>
-
-        {/* ── Main Content Grid ── */}
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* My Tasks */}
-            <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm overflow-hidden">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                <h3 className="text-base font-semibold text-gray-800 flex items-center gap-2">
-                  <CheckSquare className="h-4 w-4 text-emerald-500" />
-                  My Tasks
-                </h3>
-                <Link href="/tasks" className="text-xs text-[#B8860B] hover:text-[#DAA520] transition-colors flex items-center gap-1">
-                  View all <ChevronRight className="h-3 w-3" />
-                </Link>
-              </div>
-              <div className="p-4">
-                {stats.recentTasks.length === 0 ? (
-                  <div className="text-center py-10">
-                    <CheckSquare className="h-10 w-10 mx-auto mb-3 text-gray-200" />
-                    <p className="text-sm text-gray-400">No tasks assigned yet.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    {stats.recentTasks.map((task) => {
-                      const statusStyle = getStatusBadge(task.status);
-                      return (
-                        <Link
-                          key={task.id}
-                          href={`/tasks/${task.id}`}
-                          className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-all group"
-                        >
-                          <div className={`h-2.5 w-2.5 rounded-full flex-shrink-0 shadow-sm ${getPriorityDot(task.priority)}`} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-700 truncate group-hover:text-gray-900 transition-colors">
-                              {task.title}
-                            </p>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              {task.assignee && (
-                                <span className="text-xs text-gray-400">
-                                  {task.assignee.firstName} {task.assignee.lastName}
-                                </span>
-                              )}
-                              {task.dueDate && (
-                                <span className="text-xs text-gray-400">
-                                  • {new Date(task.dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full ${statusStyle.bg} ${statusStyle.text}`}>
-                            {task.status.replace('_', ' ')}
-                          </span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
+            )}
 
             {/* Upcoming Events */}
             <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm overflow-hidden">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                <h3 className="text-base font-semibold text-gray-800 flex items-center gap-2">
+              <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
+                <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-orange-500" />
                   Upcoming Events
                 </h3>
-                <Link href="/calendar" className="text-xs text-[#B8860B] hover:text-[#DAA520] transition-colors flex items-center gap-1">
+                <Link href="/calendar" className="text-[10px] text-[#B8860B] hover:text-[#DAA520] transition-colors flex items-center gap-1">
                   View all <ChevronRight className="h-3 w-3" />
                 </Link>
               </div>
               <div className="p-4">
                 {stats.upcomingEvents.length === 0 ? (
-                  <div className="text-center py-10">
-                    <Calendar className="h-10 w-10 mx-auto mb-3 text-gray-200" />
-                    <p className="text-sm text-gray-400">No upcoming events.</p>
+                  <div className="text-center py-8">
+                    <Calendar className="h-8 w-8 mx-auto mb-2 text-gray-200" />
+                    <p className="text-xs text-gray-400">No upcoming events.</p>
                   </div>
                 ) : (
                   <div className="space-y-1">
                     {stats.upcomingEvents.map((event) => (
                       <div
                         key={event.id}
-                        className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-all"
+                        className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-all"
                       >
-                        <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200/60 flex flex-col items-center justify-center flex-shrink-0">
-                          <span className="text-[10px] font-medium text-orange-500/70 leading-none">
+                        <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-200/60 flex flex-col items-center justify-center flex-shrink-0">
+                          <span className="text-[8px] font-bold text-orange-500/70 leading-none">
                             {new Date(event.startDate).toLocaleDateString('en-IN', { month: 'short' }).toUpperCase()}
                           </span>
-                          <span className="text-lg font-bold text-orange-600 leading-tight">
+                          <span className="text-sm font-bold text-orange-600 leading-tight">
                             {new Date(event.startDate).getDate()}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-700 truncate">{event.title}</p>
-                          <div className="flex items-center gap-2 mt-0.5">
+                          <div className="flex items-center gap-1.5 mt-0.5">
                             <Clock className="h-3 w-3 text-gray-300" />
-                            <span className="text-xs text-gray-400">
+                            <span className="text-[11px] text-gray-400">
                               {event.isAllDay ? 'All Day' : new Date(event.startDate).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                             {event.location && (
                               <>
-                                <MapPin className="h-3 w-3 text-gray-300" />
-                                <span className="text-xs text-gray-400 truncate">{event.location}</span>
+                                <MapPin className="h-3 w-3 text-gray-300 ml-1" />
+                                <span className="text-[11px] text-gray-400 truncate">{event.location}</span>
                               </>
                             )}
                           </div>
                         </div>
-                        <span className="text-[10px] font-medium px-2.5 py-1 rounded-full bg-orange-50 text-orange-600">
+                        <span className="text-[9px] font-medium px-2 py-0.5 rounded-full bg-orange-50 text-orange-600">
                           {event.type.replace('_', ' ')}
                         </span>
                       </div>
@@ -901,137 +741,62 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          {/* Right Sidebar */}
-          <div className="space-y-6">
-            {/* Productivity Ring */}
-            <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm p-6">
-              <h3 className="text-base font-semibold text-gray-800 mb-5 flex items-center gap-2">
-                <Activity className="h-4 w-4 text-[#B8860B]" />
-                My Goals
-              </h3>
-              <div className="flex items-center justify-center gap-6 mb-5">
-                {/* Task Completion Ring */}
-                <div className="text-center">
-                  <div className="relative inline-flex items-center justify-center">
-                    <svg className="h-20 w-20 -rotate-90" viewBox="0 0 100 100">
-                      <circle cx="50" cy="50" r="40" fill="none" stroke="#f1f5f9" strokeWidth="7" />
-                      <circle
-                        cx="50" cy="50" r="40" fill="none"
-                        stroke="url(#goldGrad)"
-                        strokeWidth="7"
-                        strokeLinecap="round"
-                        strokeDasharray={`${stats.taskCompletionRate * 2.51} 251`}
-                      />
-                      <defs>
-                        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#B8860B" />
-                          <stop offset="100%" stopColor="#DAA520" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                    <span className="absolute text-lg font-bold text-gray-900">{stats.taskCompletionRate}%</span>
-                  </div>
-                  <p className="text-[10px] text-gray-400 mt-2">Tasks Done</p>
+          {/* Right Column */}
+          <div className="lg:col-span-5 space-y-5">
+            {/* My Projects */}
+            {personalStats && (
+              <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
+                  <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                    <FolderKanban className="h-4 w-4 text-violet-500" />
+                    My Projects
+                  </h3>
+                  <Link href="/projects" className="text-[10px] text-[#B8860B] hover:text-[#DAA520] transition-colors flex items-center gap-1">
+                    View all <ChevronRight className="h-3 w-3" />
+                  </Link>
                 </div>
-
-                {/* Project Progress Ring */}
-                <div className="text-center">
-                  <div className="relative inline-flex items-center justify-center">
-                    <svg className="h-20 w-20 -rotate-90" viewBox="0 0 100 100">
-                      <circle cx="50" cy="50" r="40" fill="none" stroke="#f1f5f9" strokeWidth="7" />
-                      <circle
-                        cx="50" cy="50" r="40" fill="none"
-                        stroke="url(#blueGrad)"
-                        strokeWidth="7"
-                        strokeLinecap="round"
-                        strokeDasharray={`${stats.totalProjects > 0 ? Math.round((stats.activeProjects / stats.totalProjects) * 100) * 2.51 : 0} 251`}
-                      />
-                      <defs>
-                        <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" stopColor="#3B82F6" />
-                          <stop offset="100%" stopColor="#60A5FA" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                    <span className="absolute text-lg font-bold text-gray-900">
-                      {stats.totalProjects > 0 ? Math.round((stats.activeProjects / stats.totalProjects) * 100) : 0}%
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-gray-400 mt-2">Projects Active</p>
-                </div>
-              </div>
-
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 gap-2">
-                <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-3 text-center">
-                  <p className="text-lg font-bold text-emerald-600">{stats.completedTasks}</p>
-                  <p className="text-[10px] text-emerald-500/70">Completed</p>
-                </div>
-                <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 text-center">
-                  <p className="text-lg font-bold text-blue-600">{stats.inProgressTasks}</p>
-                  <p className="text-[10px] text-blue-500/70">In Progress</p>
-                </div>
-                <div className="rounded-xl bg-red-50 border border-red-100 p-3 text-center">
-                  <p className="text-lg font-bold text-red-600">{stats.overdueTasks}</p>
-                  <p className="text-[10px] text-red-500/70">Overdue</p>
-                </div>
-                <div className="rounded-xl bg-gray-50 border border-gray-200 p-3 text-center">
-                  <p className="text-lg font-bold text-gray-700">{stats.totalTasks}</p>
-                  <p className="text-[10px] text-gray-400">Total Tasks</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Active Projects */}
-            <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm overflow-hidden">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                <h3 className="text-base font-semibold text-gray-800 flex items-center gap-2">
-                  <Briefcase className="h-4 w-4 text-indigo-500" />
-                  Active Projects
-                </h3>
-                <Link href="/projects" className="text-xs text-[#B8860B] hover:text-[#DAA520] transition-colors flex items-center gap-1">
-                  See all <ChevronRight className="h-3 w-3" />
-                </Link>
-              </div>
-              <div className="p-4">
-                {stats.recentProjects.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Briefcase className="h-10 w-10 mx-auto mb-3 text-gray-200" />
-                    <p className="text-sm text-gray-400">No active projects.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    {stats.recentProjects.map((project) => (
+                <div className="p-4 space-y-1.5 max-h-[260px] overflow-y-auto">
+                  {personalStats.projects.length === 0 ? (
+                    <div className="text-center py-8">
+                      <FolderKanban className="h-8 w-8 mx-auto mb-2 text-gray-200" />
+                      <p className="text-xs text-gray-400">Not part of any projects yet.</p>
+                    </div>
+                  ) : (
+                    personalStats.projects.map((proj) => (
                       <Link
-                        key={project.id}
-                        href="/projects"
-                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-all group"
+                        key={proj.id}
+                        href={`/projects/${proj.id}`}
+                        className="flex items-center gap-3 p-2.5 rounded-xl border border-gray-100 hover:border-[#B8860B]/30 hover:shadow-sm transition-all group"
                       >
-                        <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-100 to-purple-50 border border-indigo-200/60 flex items-center justify-center text-sm font-bold text-indigo-600 flex-shrink-0">
-                          {project.name.charAt(0)}
+                        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-violet-100 to-purple-50 border border-violet-200/60 flex items-center justify-center text-xs font-bold text-violet-600 flex-shrink-0">
+                          {proj.name.charAt(0)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-700 truncate group-hover:text-gray-900 transition-colors">
-                            {project.name}
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            {project.owner.firstName} {project.owner.lastName} • {project._count.members} members
-                          </p>
+                          <p className="text-sm font-medium text-gray-700 truncate group-hover:text-gray-900">{proj.name}</p>
+                          <p className="text-[10px] text-gray-400">{proj.code} · {proj.role || 'Member'}</p>
                         </div>
+                        <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${
+                          proj.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700' :
+                          proj.status === 'PLANNED' ? 'bg-blue-50 text-blue-700' :
+                          proj.status === 'ON_HOLD' ? 'bg-amber-50 text-amber-700' :
+                          'bg-gray-100 text-gray-600'
+                        }`}>
+                          {proj.status}
+                        </span>
                       </Link>
-                    ))}
-                  </div>
-                )}
+                    ))
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Organization */}
+            {/* Organization Overview */}
             <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm p-5">
-              <h3 className="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
                 <Globe className="h-4 w-4 text-[#B8860B]" />
                 Organization
               </h3>
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {[
                   { label: 'Companies', value: stats.totalCompanies, icon: Building2, color: 'text-purple-600', bg: 'bg-purple-50', href: '/companies' },
                   { label: 'Departments', value: stats.totalDepartments, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50', href: '/departments' },
@@ -1043,13 +808,13 @@ export default async function DashboardPage() {
                     <Link
                       key={item.label}
                       href={item.href}
-                      className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors group"
+                      className="flex items-center justify-between p-2.5 rounded-lg hover:bg-gray-50 transition-colors group"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className={`rounded-lg ${item.bg} p-2`}>
-                          <Icon className={`h-4 w-4 ${item.color}`} />
+                      <div className="flex items-center gap-2.5">
+                        <div className={`rounded-md ${item.bg} p-1.5`}>
+                          <Icon className={`h-3.5 w-3.5 ${item.color}`} />
                         </div>
-                        <span className="text-sm text-gray-500 group-hover:text-gray-700 transition-colors">{item.label}</span>
+                        <span className="text-xs text-gray-500 group-hover:text-gray-700 transition-colors">{item.label}</span>
                       </div>
                       <span className="text-sm font-bold text-gray-800">{item.value}</span>
                     </Link>
@@ -1058,27 +823,6 @@ export default async function DashboardPage() {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* ── Footer Links ── */}
-        <div className="grid grid-cols-3 gap-3 pt-4 border-t border-gray-200/60">
-          {[
-            { label: 'Our Companies', href: '/companies', icon: Building2 },
-            { label: 'Policies', href: '/policies', icon: BookOpen },
-            { label: 'Settings', href: '/settings', icon: Settings },
-          ].map((link) => {
-            const Icon = link.icon;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="flex items-center gap-2 p-4 rounded-xl hover:bg-white/80 transition-colors"
-              >
-                <Icon className="h-4 w-4 text-[#B8860B]/60" />
-                <span className="text-sm text-gray-400 hover:text-gray-600">{link.label}</span>
-              </Link>
-            );
-          })}
         </div>
       </div>
     </div>
