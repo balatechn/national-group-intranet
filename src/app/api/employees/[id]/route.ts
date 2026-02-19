@@ -22,6 +22,7 @@ export async function GET(
         phone: true,
         avatar: true,
         jobTitle: true,
+        hourlyRate: true,
         role: true,
         status: true,
         companyId: true,

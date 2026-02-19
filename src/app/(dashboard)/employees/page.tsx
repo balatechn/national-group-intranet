@@ -55,6 +55,7 @@ interface Employee {
   phone: string | null;
   avatar: string | null;
   jobTitle: string | null;
+  hourlyRate: number | null;
   role: string;
   status: string;
   company: {
@@ -337,6 +338,7 @@ export default function EmployeeMasterPage() {
     lastName: '',
     phone: '',
     jobTitle: '',
+    hourlyRate: '',
     role: 'EMPLOYEE',
     status: 'ACTIVE',
     companyId: '',
@@ -365,6 +367,7 @@ export default function EmployeeMasterPage() {
       lastName: employee.lastName,
       phone: employee.phone || '',
       jobTitle: employee.jobTitle || '',
+      hourlyRate: employee.hourlyRate != null ? String(employee.hourlyRate) : '',
       role: employee.role,
       status: employee.status,
       companyId: employee.company?.id || '',
@@ -445,6 +448,7 @@ export default function EmployeeMasterPage() {
 
       payload.phone = editForm.phone.trim() || null;
       payload.jobTitle = editForm.jobTitle.trim() || null;
+      payload.hourlyRate = editForm.hourlyRate ? parseFloat(editForm.hourlyRate) : null;
       payload.companyId = editForm.companyId || null;
       payload.departmentId = editForm.departmentId || null;
       payload.managerId = editForm.managerId || null;
@@ -957,6 +961,23 @@ export default function EmployeeMasterPage() {
                   onChange={(e) => handleEditChange('jobTitle', e.target.value)}
                 />
               </div>
+            </div>
+
+            {/* Row 3b: Hourly Rate */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-hourlyRate">Hourly Rate (₹)</Label>
+                <Input
+                  id="edit-hourlyRate"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="e.g. 500"
+                  value={editForm.hourlyRate}
+                  onChange={(e) => handleEditChange('hourlyRate', e.target.value)}
+                />
+              </div>
+              <div />
             </div>
 
             {/* Row 4: Role & Status */}

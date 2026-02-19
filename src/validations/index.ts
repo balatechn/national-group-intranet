@@ -49,6 +49,7 @@ export const createUserSchema = z.object({
   phone: z.string().optional(),
   role: userRoleEnum.default('EMPLOYEE'),
   jobTitle: z.string().optional(),
+  hourlyRate: z.number().min(0).optional().nullable(),
   companyId: z.string().cuid().optional(),
   departmentId: z.string().cuid().optional(),
   managerId: z.string().cuid().optional(),

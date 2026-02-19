@@ -44,6 +44,7 @@ import {
 } from '@/components/ui';
 import { getInitials } from '@/lib/utils';
 import { updateTaskStatus, addTaskComment, deleteTask } from '@/actions/tasks';
+import TaskTimeLog from '@/components/tasks/TaskTimeLog';
 
 interface Task {
   id: string;
@@ -346,6 +347,15 @@ export default function TaskDetailPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Time Log */}
+          {session?.user?.id && (
+            <TaskTimeLog
+              taskId={taskId}
+              estimatedHours={task.estimatedHours}
+              currentUserId={session.user.id}
+            />
+          )}
         </div>
 
         {/* Sidebar */}

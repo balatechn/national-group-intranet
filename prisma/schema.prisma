@@ -195,6 +195,7 @@ model User {
   role          UserRole   @default(EMPLOYEE)
   status        UserStatus @default(ACTIVE)
   jobTitle      String?
+  hourlyRate    Float?     // Cost per hour for manpower calculation
   
   companyId     String?
   company       Company?   @relation(fields: [companyId], references: [id])
@@ -506,6 +507,8 @@ model TaskTimeEntry {
   description String?
   hours       Float
   date        DateTime @default(now())
+  hourlyRate  Float    @default(0)
+  cost        Float    @default(0)
   
   taskId      String
   task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
