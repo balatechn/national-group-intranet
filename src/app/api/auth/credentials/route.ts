@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       lastName: user.lastName,
       employeeId: user.employeeId,
       role: user.role,
-      avatar: user.avatar,
+      avatar: user.avatar ? '/api/profile/avatar' : null,
       companyId: user.companyId,
       companyName: user.company?.name || null,
       departmentId: user.departmentId,

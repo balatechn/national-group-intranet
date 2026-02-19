@@ -73,7 +73,7 @@ export const authOptions: NextAuthOptions = {
           lastName: user.lastName,
           employeeId: user.employeeId,
           role: user.role,
-          avatar: user.avatar,
+          avatar: user.avatar ? '/api/profile/avatar' : null,
           companyId: user.companyId,
           companyName: user.company?.name || null,
           departmentId: user.departmentId,
@@ -174,7 +174,7 @@ export const authOptions: NextAuthOptions = {
           token.lastName = dbUser.lastName;
           token.employeeId = dbUser.employeeId;
           token.role = dbUser.role;
-          token.avatar = dbUser.avatar;
+          token.avatar = dbUser.avatar ? '/api/profile/avatar' : null;
           token.companyId = dbUser.companyId;
           token.companyName = dbUser.company?.name || null;
           token.departmentId = dbUser.departmentId;
@@ -190,7 +190,7 @@ export const authOptions: NextAuthOptions = {
         token.lastName = user.lastName;
         token.employeeId = user.employeeId;
         token.role = user.role;
-        token.avatar = user.avatar;
+        token.avatar = user.avatar ? '/api/profile/avatar' : null;
         token.companyId = user.companyId;
         token.companyName = user.companyName;
         token.departmentId = user.departmentId;

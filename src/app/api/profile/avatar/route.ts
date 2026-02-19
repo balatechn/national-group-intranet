@@ -1,6 +1,54 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/workos-auth';
+
+// GET - Serve the current user's avatar image
+export async function GET(request: NextRequest) {
+  try {
+    // Check for userId query param (for other users' avatars)
+    const userId = request.nextUrl.searchParams.get('userId');
+    
+    let targetUserId: string;
+    if (userId) {
+      targetUserId = userId;
+    } else {
+      const sessionUser = await getSessionUser();
+      if (!sessionUser?.id) {
+        return new NextResponse(null, { status: 401 });
+      }
+      targetUserId = sessionUser.id;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { avatar: true },
+    });
+
+    if (!user?.avatar) {
+      return new NextResponse(null, { status: 404 });
+    }
+
+    // If it's a base64 data URL, extract and serve as image
+    const match = user.avatar.match(/^data:(image\/\w+);base64,(.+)$/);
+    if (match) {
+      const contentType = match[1];
+      const base64Data = match[2];
+      const buffer = Buffer.from(base64Data, 'base64');
+      return new NextResponse(buffer, {
+        headers: {
+          'Content-Type': contentType,
+          'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+        },
+      });
+    }
+
+    // If it's a URL, redirect to it
+    return NextResponse.redirect(user.avatar);
+  } catch (error) {
+    console.error('Avatar fetch error:', error);
+    return new NextResponse(null, { status: 500 });
+  }
+}
 
 export async function POST(request: Request) {
   try {
