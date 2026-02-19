@@ -834,99 +834,107 @@ export default async function DashboardPage() {
             )}
           </div>
 
-          {/* ── Dark Task Checklist ── */}
-          <div className="rounded-2xl bg-[#1a1a2e] p-5 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-white/90">Active Tasks</h3>
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-white">
-                  {personalStats?.taskStats.completed || 0}
-                </span>
-                <span className="text-white/40 text-sm">/</span>
-                <span className="text-lg text-white/50">{personalStats?.taskStats.total || 0}</span>
+          {/* ── Active Tasks Card (Light with Amber Highlight) ── */}
+          <div className="rounded-2xl bg-gradient-to-br from-amber-50/40 via-white/80 to-orange-50/30 backdrop-blur-xl border border-amber-200/50 shadow-sm overflow-hidden">
+            {/* Gold accent top bar */}
+            <div className="h-1 bg-gradient-to-r from-[#B8860B] via-[#DAA520] to-[#B8860B]" />
+
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                  <CheckSquare className="h-4 w-4 text-[#B8860B]" />
+                  Active Tasks
+                </h3>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-bold text-[#B8860B]">
+                    {personalStats?.taskStats.completed || 0}
+                  </span>
+                  <span className="text-gray-400 text-sm">/</span>
+                  <span className="text-lg text-gray-400">{personalStats?.taskStats.total || 0}</span>
+                </div>
               </div>
-            </div>
 
-            {/* Task checklist */}
-            <div className="space-y-1 max-h-[340px] overflow-y-auto scrollbar-thin">
-              {personalStats && personalStats.pendingTasks.length > 0 ? (
-                personalStats.pendingTasks.map((task, idx) => {
-                  const isOverdue = task.dueDate && new Date(task.dueDate) < today;
-                  const statusColor = task.status === 'IN_PROGRESS' ? 'bg-blue-400'
-                    : task.status === 'ON_HOLD' ? 'bg-amber-400' : 'bg-gray-500';
-                  const typeIcon = idx % 5 === 0 ? Target : idx % 5 === 1 ? Zap : idx % 5 === 2 ? Clock : idx % 5 === 3 ? Globe : FolderKanban;
-                  const TypeIcon = typeIcon;
-                  const iconBg = idx % 5 === 0 ? 'bg-violet-500/20 text-violet-400'
-                    : idx % 5 === 1 ? 'bg-blue-500/20 text-blue-400'
-                    : idx % 5 === 2 ? 'bg-amber-500/20 text-amber-400'
-                    : idx % 5 === 3 ? 'bg-emerald-500/20 text-emerald-400'
-                    : 'bg-pink-500/20 text-pink-400';
+              {/* Task checklist */}
+              <div className="space-y-1 max-h-[340px] overflow-y-auto scrollbar-thin">
+                {personalStats && personalStats.pendingTasks.length > 0 ? (
+                  personalStats.pendingTasks.map((task, idx) => {
+                    const isOverdue = task.dueDate && new Date(task.dueDate) < today;
+                    const statusColor = task.status === 'IN_PROGRESS' ? 'bg-blue-500'
+                      : task.status === 'ON_HOLD' ? 'bg-amber-500' : 'bg-gray-400';
+                    const typeIcon = idx % 5 === 0 ? Target : idx % 5 === 1 ? Zap : idx % 5 === 2 ? Clock : idx % 5 === 3 ? Globe : FolderKanban;
+                    const TypeIcon = typeIcon;
+                    const iconBg = idx % 5 === 0 ? 'bg-violet-100 text-violet-600'
+                      : idx % 5 === 1 ? 'bg-blue-100 text-blue-600'
+                      : idx % 5 === 2 ? 'bg-amber-100 text-amber-600'
+                      : idx % 5 === 3 ? 'bg-emerald-100 text-emerald-600'
+                      : 'bg-pink-100 text-pink-600';
 
-                  return (
-                    <Link
-                      key={task.id}
-                      href={`/tasks/${task.id}`}
-                      className={`flex items-center gap-3 p-2.5 rounded-xl transition-colors group ${
-                        isOverdue ? 'bg-red-500/10 hover:bg-red-500/15' : 'hover:bg-white/5'
-                      }`}
-                    >
-                      <div className={`w-8 h-8 rounded-lg ${iconBg} flex items-center justify-center shrink-0`}>
-                        <TypeIcon className="w-3.5 h-3.5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-white/85 truncate group-hover:text-white">{task.title}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {task.project && (
-                            <span className="text-[9px] text-white/30 truncate">{task.project.name}</span>
-                          )}
-                          {task.dueDate && (
-                            <span className={`text-[9px] ${isOverdue ? 'text-red-400' : 'text-white/30'}`}>
-                              {new Date(task.dueDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
-                              {!task.project && ', '}
-                              {new Date(task.dueDate).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          )}
+                    return (
+                      <Link
+                        key={task.id}
+                        href={`/tasks/${task.id}`}
+                        className={`flex items-center gap-3 p-2.5 rounded-xl transition-colors group ${
+                          isOverdue ? 'bg-red-50 hover:bg-red-100/60 border border-red-200/40' : 'hover:bg-amber-50/50'
+                        }`}
+                      >
+                        <div className={`w-8 h-8 rounded-lg ${iconBg} flex items-center justify-center shrink-0`}>
+                          <TypeIcon className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-800 truncate group-hover:text-gray-900">{task.title}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {task.project && (
+                              <span className="text-[9px] text-gray-400 truncate">{task.project.name}</span>
+                            )}
+                            {task.dueDate && (
+                              <span className={`text-[9px] ${isOverdue ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+                                {new Date(task.dueDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                                {!task.project && ', '}
+                                {new Date(task.dueDate).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className={`w-2 h-2 rounded-full ${statusColor} shrink-0`} />
+                      </Link>
+                    );
+                  })
+                ) : (
+                  <>
+                    {/* Completed tasks indicator */}
+                    {stats.recentTasks.filter((t: any) => t.status === 'COMPLETED').slice(0, 3).map((task: any) => (
+                      <div key={task.id} className="flex items-center gap-3 p-2.5 rounded-xl opacity-60">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
+                          <CheckSquare className="w-3.5 h-3.5 text-emerald-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-400 truncate line-through">{task.title}</p>
+                        </div>
+                        <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center">
+                          <CheckSquare className="w-3 h-3 text-emerald-600" />
                         </div>
                       </div>
-                      <div className={`w-2 h-2 rounded-full ${statusColor} shrink-0`} />
-                    </Link>
-                  );
-                })
-              ) : (
-                <>
-                  {/* Completed tasks indicator */}
-                  {stats.recentTasks.filter((t: any) => t.status === 'COMPLETED').slice(0, 3).map((task: any) => (
-                    <div key={task.id} className="flex items-center gap-3 p-2.5 rounded-xl opacity-60">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0">
-                        <CheckSquare className="w-3.5 h-3.5 text-emerald-400" />
+                    ))}
+                    {stats.recentTasks.length === 0 && (
+                      <div className="text-center py-12">
+                        <CheckSquare className="h-8 w-8 mx-auto mb-2 text-gray-200" />
+                        <p className="text-xs text-gray-400">No tasks assigned yet</p>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-white/60 truncate line-through">{task.title}</p>
-                      </div>
-                      <div className="w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                        <CheckSquare className="w-3 h-3 text-emerald-400" />
-                      </div>
-                    </div>
-                  ))}
-                  {stats.recentTasks.length === 0 && (
-                    <div className="text-center py-12">
-                      <CheckSquare className="h-8 w-8 mx-auto mb-2 text-white/20" />
-                      <p className="text-xs text-white/40">No tasks assigned yet</p>
-                    </div>
-                  )}
-                </>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Footer link */}
+              {personalStats && personalStats.pendingTasks.length > 0 && (
+                <Link
+                  href="/tasks"
+                  className="mt-3 pt-3 border-t border-amber-200/40 flex items-center justify-center gap-1.5 text-[11px] text-[#B8860B] hover:text-[#DAA520] transition-colors"
+                >
+                  View all tasks <ChevronRight className="h-3 w-3" />
+                </Link>
               )}
             </div>
-
-            {/* Footer link */}
-            {personalStats && personalStats.pendingTasks.length > 0 && (
-              <Link
-                href="/tasks"
-                className="mt-3 pt-3 border-t border-white/10 flex items-center justify-center gap-1.5 text-[11px] text-[#DAA520] hover:text-[#FFD700] transition-colors"
-              >
-                View all tasks <ChevronRight className="h-3 w-3" />
-              </Link>
-            )}
           </div>
         </div>
       </div>
