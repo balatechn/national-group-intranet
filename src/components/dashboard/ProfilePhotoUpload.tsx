@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import Image from 'next/image';
 import { Camera, Loader2 } from 'lucide-react';
 
 interface ProfilePhotoUploadProps {
@@ -41,8 +40,9 @@ export default function ProfilePhotoUpload({ currentAvatar, userInitials, userNa
       });
 
       const data = await res.json();
-      if (data.success && data.avatar) {
-        setAvatar(data.avatar);
+      if (data.success) {
+        // Use API endpoint URL with cache-busting param so browser fetches fresh image
+        setAvatar(`/api/profile/avatar?t=${Date.now()}`);
       } else {
         alert(data.error || 'Failed to upload photo');
       }
@@ -67,11 +67,9 @@ export default function ProfilePhotoUpload({ currentAvatar, userInitials, userNa
       />
       <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-[#DAA520] to-[#FFD700] opacity-20 blur-sm" />
       {avatar ? (
-        <Image
+        <img
           src={avatar}
           alt={userName}
-          width={72}
-          height={72}
           className="relative rounded-full border-2 border-[#DAA520]/30 object-cover shadow-md w-[72px] h-[72px]"
         />
       ) : (

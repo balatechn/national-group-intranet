@@ -129,7 +129,7 @@ async function getPersonalStats(userId: string) {
 
     const userInfo = await prisma.user.findUnique({
       where: { id: userId },
-      select: { hourlyRate: true, lastLoginAt: true },
+      select: { hourlyRate: true, lastLoginAt: true, avatar: true },
     });
 
     const allTasks = await prisma.task.findMany({
@@ -226,6 +226,7 @@ async function getPersonalStats(userId: string) {
     return {
       hourlyRate: userInfo?.hourlyRate || 0,
       lastLoginAt: userInfo?.lastLoginAt || null,
+      hasAvatar: !!userInfo?.avatar,
       loginStreak: weeklyHours.filter(d => d.hours > 0).length,
       taskStats,
       pendingTasks,
@@ -417,7 +418,7 @@ export default async function DashboardPage() {
             <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, rgba(184,134,11,0.5) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
             <div className="relative z-10 flex flex-col items-center w-full">
               <ProfilePhotoUpload
-                currentAvatar={user?.avatar || null}
+                currentAvatar={personalStats?.hasAvatar ? '/api/profile/avatar' : null}
                 userInitials={userInitials}
                 userName={firstName}
               />
