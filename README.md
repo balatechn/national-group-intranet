@@ -9,19 +9,21 @@ Enterprise intranet portal for **National Group India** — a centralized platfo
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-06B6D4?logo=tailwindcss)
 ![Vercel](https://img.shields.io/badge/Deployed_on-Vercel-000?logo=vercel)
 
-🔗 **Live:** [national-group-intranet.vercel.app](https://national-group-intranet.vercel.app)
+🔗 **Live:** [sharepoint.nationalgroupindia.com](https://sharepoint.nationalgroupindia.com)
 
 ---
 
 ## ✨ Features
 
 ### Dashboard
-- Personalized greeting with live date and user info
-- Real-time stats from database (employees, companies, tasks, tickets, projects)
-- Task progress ring with completion rate
-- Recent tasks & IT tickets feed
-- Dynamic alerts for overdue tasks, open tickets, and pending requests
-- Quick action buttons for common workflows
+- Personalized greeting with live date, user profile card, and avatar
+- Real-time stats from database (employees, companies, departments, tasks, projects)
+- Quick Access grid for fast navigation to all modules
+- Stat cards with Active Employees, Active Projects, Tasks In Progress, and Completion Rate
+- Task completion & project progress rings (My Goals)
+- Recent tasks, upcoming events, active projects feed
+- Organization summary sidebar with direct links
+- Resilient data loading with graceful error handling
 
 ### Company Management
 - Multi-company hierarchy support
@@ -31,9 +33,13 @@ Enterprise intranet portal for **National Group India** — a centralized platfo
 
 ### Employee Directory
 - Complete employee profiles with department & company mapping
+- **Inline Edit** — Edit any employee directly from the Employees page via a full-featured dialog (Employee ID, Email, Name, Phone, Job Title, Role, Status, Company, Department, Reporting Manager)
+- **Admin Password Reset** — Admins can reset any employee's password from the Edit Employee dialog with confirmation and validation
+- **Add Employee** — Full creation form with all fields including initial password
 - Role-based access (Super Admin, Admin, IT Admin, HR Admin, Manager, Employee)
+- Grid view, table view, and org chart view
 - Avatar support and employee ID tracking
-- Bulk import from Excel spreadsheets
+- Bulk import from Excel spreadsheets with sample template download
 
 ### Department Management
 - Department hierarchy within companies
@@ -54,16 +60,17 @@ Enterprise intranet portal for **National Group India** — a centralized platfo
 - Task templates and analytics
 
 ### Project Management
+- **Advanced Project Creation Wizard** — 4-step guided flow: Basic Info → Team → Milestones → Review
 - Project creation with milestones and team members
 - Status tracking (Planned → Active → On Hold → Completed)
 - Company-linked project organization
+- Owner and member management
 
 ### Additional Modules
-- 📅 **Calendar** — Events and meetings
+- 📅 **Calendar** — Events and meetings management
 - 📁 **Shared Drives** — Company document management (OneDrive integration)
 - 📜 **Policies** — HR & IT policy repository
-- ⚙️ **Settings** — System configuration and logo management
-- ℹ️ **About** — Company information page
+- ⚙️ **Settings** — Organization branding (company name & logo upload)
 
 ---
 
@@ -74,13 +81,16 @@ Enterprise intranet portal for **National Group India** — a centralized platfo
 - **Role-Based Access Control** — 6 user roles with granular permissions
 - **JWT Sessions** — 30-day session persistence
 
-### Demo Accounts
+### User Roles
 
-| Role     | Email                            | Password     |
-|----------|----------------------------------|--------------|
-| Admin    | admin@nationalgroupindia.com     | Admin@123    |
-| Manager  | manager@nationalgroupindia.com   | Manager@123  |
-| Employee | employee@nationalgroupindia.com  | Employee@123 |
+| Role         | Access Level                                         |
+|--------------|------------------------------------------------------|
+| Super Admin  | Full system access, all modules                      |
+| Admin        | Company-wide management, employee & settings control |
+| IT Admin     | IT Helpdesk, tickets, requests, asset management     |
+| HR Admin     | Employee management, departments, policies           |
+| Manager      | Team tasks, projects, department oversight            |
+| Employee     | Personal tasks, profile, company resources            |
 
 ---
 
@@ -88,10 +98,10 @@ Enterprise intranet portal for **National Group India** — a centralized platfo
 
 | Layer        | Technology                                              |
 |--------------|--------------------------------------------------------|
-| Framework    | Next.js 14 (App Router, Server Components)             |
+| Framework    | Next.js 14.1.3 (App Router, Server Components)        |
 | Language     | TypeScript 5.3 (strict mode)                           |
 | Database     | PostgreSQL (via Vercel Postgres)                        |
-| ORM          | Prisma 5.10                                             |
+| ORM          | Prisma 5.10 (39 models)                                |
 | Auth         | NextAuth.js 4 (Credentials + Azure AD)                 |
 | Styling      | Tailwind CSS 3.4 + Radix UI primitives                 |
 | Icons        | Lucide React                                            |
@@ -99,7 +109,7 @@ Enterprise intranet portal for **National Group India** — a centralized platfo
 | Tables       | TanStack Table v8                                       |
 | State        | Zustand + TanStack React Query                         |
 | Charts       | Recharts                                                |
-| Email        | Mailgun                                                 |
+| Email        | Mailgun + Nodemailer                                    |
 | File Storage | Microsoft OneDrive integration                         |
 | File Export  | xlsx (SheetJS)                                          |
 | Deployment   | Vercel (Region: Mumbai `bom1`)                         |
@@ -112,28 +122,60 @@ Enterprise intranet portal for **National Group India** — a centralized platfo
 src/
 ├── actions/            # Server actions (companies, users, tasks, tickets, etc.)
 ├── app/
-│   ├── (dashboard)/    # Authenticated pages (dashboard, companies, employees...)
-│   ├── api/            # API routes (auth, CRUD, settings)
+│   ├── (dashboard)/    # Authenticated pages
+│   │   ├── dashboard/      # Home dashboard with stats & quick access
+│   │   ├── companies/      # Company management
+│   │   ├── departments/    # Department management with member views
+│   │   ├── employees/      # Employee directory with edit & password reset
+│   │   ├── projects/       # Project listing & advanced creation wizard
+│   │   ├── tasks/          # Task management with detail views
+│   │   ├── calendar/       # Events & meetings
+│   │   ├── drives/         # Shared document drives
+│   │   ├── it/             # IT Helpdesk (tickets, requests, masters, reports)
+│   │   ├── policies/       # Policy repository
+│   │   ├── profile/        # User profile
+│   │   └── settings/       # Organization branding settings
+│   ├── api/            # API routes (auth, CRUD, settings, bulk operations)
 │   └── login/          # Login page with glassmorphism UI
 ├── components/
 │   ├── bulk-upload/    # Excel bulk upload modal
 │   ├── layout/         # Sidebar & Header
-│   ├── masters/        # Action components for each entity
+│   ├── masters/        # Action components (Add/Edit/Bulk for each entity)
 │   └── ui/             # Reusable UI components (Button, Card, Dialog, etc.)
 ├── lib/
-│   ├── auth.ts         # NextAuth configuration
-│   ├── db.ts           # Prisma client
+│   ├── auth.ts         # NextAuth configuration (Credentials + Azure AD)
+│   ├── db.ts           # Prisma client singleton
 │   ├── mailgun.ts      # Mailgun email client
 │   ├── onedrive.ts     # OneDrive integration
 │   ├── excel.ts        # Excel import/export utilities
-│   └── utils.ts        # General utilities
+│   └── utils.ts        # General utilities (cn, formatters)
 ├── types/              # NextAuth type declarations
 └── validations/        # Zod schemas for form validation
 
 prisma/
-├── schema.prisma       # Database schema (20+ models)
+├── schema.prisma       # Database schema (39 models)
 └── seed.ts             # Seed data (demo accounts, companies, departments)
 ```
+
+---
+
+## 🗄️ Database Models
+
+The schema includes **39 Prisma models** organized across these domains:
+
+| Domain       | Models                                                                 |
+|--------------|------------------------------------------------------------------------|
+| Users        | User, Session                                                          |
+| Organization | Company, Department                                                    |
+| Tasks        | Task, TaskComment, TaskTemplate, TaskAttachment, TaskDependency, TaskTimeEntry, TaskMention |
+| Projects     | Project, ProjectMember, ProjectMilestone                               |
+| Calendar     | Event, EventAttendee                                                   |
+| Policies     | Policy, PolicyVersion                                                  |
+| IT Helpdesk  | ITTicket, TicketComment, ITRequest, ITRequestApproval                  |
+| IT Assets    | SystemAsset, Software, AssetSoftware, MobileDevice, Vendor             |
+| Drives       | SharedFolder, FolderPermission                                         |
+| System       | Notification, AuditLog, Announcement, RolePermission, SystemSetting    |
+| Chat         | ChatRoom, ChatMember, ChatMessage                                      |
 
 ---
 
@@ -202,7 +244,7 @@ npx prisma db seed
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) — login with any demo account above.
+Open [http://localhost:3000](http://localhost:3000) to access the portal.
 
 ---
 
@@ -226,16 +268,12 @@ Open [http://localhost:3000](http://localhost:3000) — login with any demo acco
 
 Deployed on **Vercel** with the following configuration:
 
+- **Domain:** [sharepoint.nationalgroupindia.com](https://sharepoint.nationalgroupindia.com)
 - **Region:** Mumbai (`bom1`)
 - **Node.js:** 20.x
 - **Build Command:** `prisma generate && next build`
 - **Framework:** Next.js (auto-detected)
-
-Manual deploy:
-
-```bash
-npx vercel deploy --prod
-```
+- **Auto-deploy:** Pushes to `main` branch trigger automatic deployments
 
 ---
 
@@ -245,9 +283,12 @@ npx vercel deploy --prod
 |------------------|------------------------------------------|
 | Primary          | Rich Gold `#B8860B`                      |
 | Secondary        | Goldenrod `#DAA520`                      |
-| Background       | Light Surface `#FAFAFA`                  |
+| Background       | Light Surface `slate-50` to `white`      |
+| Cards            | `white/80` with `backdrop-blur-xl`       |
+| Borders          | `gray-200/80` with subtle shadows        |
 | UI Style         | Glassmorphism accents, gradient cards    |
 | Branding         | National Group India logo throughout     |
+| Responsive       | Mobile-first with lg breakpoint grid     |
 
 ---
 
