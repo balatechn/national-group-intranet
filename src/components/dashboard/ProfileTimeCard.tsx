@@ -5,12 +5,10 @@ import Link from 'next/link';
 import {
   Clock,
   Play,
-  Coffee,
   MapPin,
   Building2,
   Home,
   Briefcase,
-  Pause,
   LogIn,
   LogOut,
   CheckSquare,
@@ -173,46 +171,6 @@ export function ProfileTimeCard({
     }
   };
 
-  const handleStartBreak = async (breakType: string = 'SHORT_BREAK') => {
-    setActionLoading('break');
-    try {
-      const res = await fetch('/api/attendance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'start_break', breakType }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error);
-      }
-      await fetchAttendance();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Start break failed');
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleEndBreak = async () => {
-    setActionLoading('break');
-    try {
-      const res = await fetch('/api/attendance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'end_break' }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error);
-      }
-      await fetchAttendance();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'End break failed');
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
   const formatTime = (h: number, m: number, s?: number) => {
     const hh = String(h).padStart(2, '0');
     const mm = String(m).padStart(2, '0');
@@ -332,49 +290,14 @@ export function ProfileTimeCard({
                 Check In
               </Button>
             ) : (
-              <div className="grid grid-cols-3 gap-1.5">
-                {data.isOnBreak ? (
-                  <Button
-                    onClick={handleEndBreak}
-                    disabled={actionLoading === 'break'}
-                    size="sm"
-                    className="col-span-3 h-8 bg-gradient-to-r from-emerald-600 to-green-600 text-white text-xs"
-                  >
-                    {actionLoading === 'break' ? '...' : <><Play className="h-3.5 w-3.5 mr-1" />Resume</>}
-                  </Button>
-                ) : (
-                  <>
-                    <Button
-                      onClick={() => handleStartBreak('LUNCH')}
-                      disabled={actionLoading === 'break'}
-                      variant="outline"
-                      size="sm"
-                      className="h-8 border-amber-200 text-amber-700 hover:bg-amber-50 text-[10px]"
-                    >
-                      <Coffee className="h-3 w-3 mr-0.5" />
-                      Lunch
-                    </Button>
-                    <Button
-                      onClick={() => handleStartBreak('SHORT_BREAK')}
-                      disabled={actionLoading === 'break'}
-                      variant="outline"
-                      size="sm"
-                      className="h-8 border-blue-200 text-blue-700 hover:bg-blue-50 text-[10px]"
-                    >
-                      <Pause className="h-3 w-3 mr-0.5" />
-                      Break
-                    </Button>
-                    <Button
-                      onClick={handleCheckOut}
-                      disabled={actionLoading === 'checkout'}
-                      size="sm"
-                      className="h-8 bg-gradient-to-r from-red-600 to-rose-600 text-white text-[10px]"
-                    >
-                      {actionLoading === 'checkout' ? '...' : <><LogOut className="h-3 w-3 mr-0.5" />Out</>}
-                    </Button>
-                  </>
-                )}
-              </div>
+              <Button
+                onClick={handleCheckOut}
+                disabled={actionLoading === 'checkout'}
+                size="sm"
+                className="w-full h-8 bg-gradient-to-r from-red-600 to-rose-600 text-white text-xs"
+              >
+                {actionLoading === 'checkout' ? '...' : <><LogOut className="h-3.5 w-3.5 mr-1" />Check Out</>}
+              </Button>
             )}
           </div>
         )}
