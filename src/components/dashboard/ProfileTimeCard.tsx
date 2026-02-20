@@ -23,9 +23,11 @@ import ProfilePhotoUpload from './ProfilePhotoUpload';
 interface AttendanceData {
   isCheckedIn: boolean;
   isOnBreak: boolean;
+  hasCheckedOutToday?: boolean;
   attendance: {
     id: string;
     locationType: string;
+    lastCheckOut?: string | null;
     sessions: Array<{ checkInAt: string; checkOutAt: string | null; durationMinutes: number }>;
     breaks: Array<{ id: string; endTime: string | null; duration: number }>;
   } | null;
@@ -304,7 +306,19 @@ export function ProfileTimeCard({
         {/* Action Buttons */}
         {!showLocationSelect && !loading && (
           <div className="mb-3">
-            {!data?.isCheckedIn ? (
+            {data?.attendance?.lastCheckOut && !data?.isCheckedIn ? (
+              // Already checked out - show regularization link
+              <div className="text-center space-y-1.5">
+                <p className="text-[10px] text-gray-500">Checked out for today</p>
+                <Link
+                  href="/attendance?tab=regularization"
+                  className="inline-flex items-center gap-1 text-[10px] text-amber-600 hover:text-amber-700 font-medium"
+                >
+                  <Clock className="h-3 w-3" />
+                  Request Regularization
+                </Link>
+              </div>
+            ) : !data?.isCheckedIn ? (
               <Button
                 onClick={() => setShowLocationSelect(true)}
                 size="sm"
