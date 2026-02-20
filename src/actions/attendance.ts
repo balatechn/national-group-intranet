@@ -603,3 +603,174 @@ export async function getTaskTimeLogs(taskId: string) {
 
   return logs;
 }
+
+// ==========================================
+// MONTHLY ATTENDANCE
+// ==========================================
+
+export interface MonthlyAttendanceSummary {
+  month: number;
+  year: number;
+  totalDays: number;
+  presentDays: number;
+  absentDays: number;
+  lateDays: number;
+  totalWorkHours: number;
+  averageWorkHours: number;
+  totalBreakHours: number;
+  totalOvertimeHours: number;
+  attendances: {
+    id: string;
+    date: Date;
+    checkInAt: Date;
+    checkOutAt: Date | null;
+    status: AttendanceStatus;
+    locationType: WorkLocationType;
+    workMinutes: number;
+    breakMinutes: number;
+    overtimeMinutes: number;
+    isLate: boolean;
+  }[];
+}
+
+export async function getMonthlyAttendance(
+  month?: number,
+  year?: number,
+  userId?: string
+): Promise<MonthlyAttendanceSummary | null> {
+  const user = await getSessionUser();
+  if (!user) {
+    return null;
+  }
+
+  const targetUserId = userId || user.id;
+  const now = new Date();
+  const targetMonth = month ?? now.getMonth();
+  const targetYear = year ?? now.getFullYear();
+
+  // Get first and last day of the month
+  const firstDay = new Date(targetYear, targetMonth, 1);
+  const lastDay = new Date(targetYear, targetMonth + 1, 0);
+
+  // Get all attendances for the month
+  const attendances = await prisma.attendance.findMany({
+    where: {
+      userId: targetUserId,
+      date: {
+        gte: firstDay,
+        lte: lastDay,
+      },
+    },
+    orderBy: { date: 'asc' },
+  });
+
+  // Calculate working days (excluding weekends)
+  let workingDays = 0;
+  for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+    const dayOfWeek = d.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      workingDays++;
+    }
+  }
+
+  // Standard working hours start time (9:00 AM)
+  const STANDARD_START_HOUR = 9;
+  const STANDARD_START_MINUTE = 0;
+
+  const processedAttendances = attendances.map((att) => {
+    const checkInTime = new Date(att.checkInAt);
+    const isLate =
+      checkInTime.getHours() > STANDARD_START_HOUR ||
+      (checkInTime.getHours() === STANDARD_START_HOUR &&
+        checkInTime.getMinutes() > STANDARD_START_MINUTE + 15); // 15 min grace period
+
+    return {
+      id: att.id,
+      date: att.date,
+      checkInAt: att.checkInAt,
+      checkOutAt: att.checkOutAt,
+      status: att.status,
+      locationType: att.locationType,
+      workMinutes: att.workMinutes,
+      breakMinutes: att.breakMinutes,
+      overtimeMinutes: att.overtimeMinutes,
+      isLate,
+    };
+  });
+
+  const presentDays = attendances.filter(
+    (a) => a.status === 'CHECKED_OUT' || a.status === 'CHECKED_IN'
+  ).length;
+
+  const lateDays = processedAttendances.filter((a) => a.isLate).length;
+
+  const totalWorkMinutes = attendances.reduce((sum, a) => sum + a.workMinutes, 0);
+  const totalBreakMinutes = attendances.reduce((sum, a) => sum + a.breakMinutes, 0);
+  const totalOvertimeMinutes = attendances.reduce(
+    (sum, a) => sum + a.overtimeMinutes,
+    0
+  );
+
+  // Count days up to today for absent calculation
+  const today = new Date();
+  const countUntil = today < lastDay ? today : lastDay;
+  let workingDaysUntilToday = 0;
+  for (
+    let d = new Date(firstDay);
+    d <= countUntil;
+    d.setDate(d.getDate() + 1)
+  ) {
+    const dayOfWeek = d.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      workingDaysUntilToday++;
+    }
+  }
+
+  const absentDays = Math.max(0, workingDaysUntilToday - presentDays);
+
+  return {
+    month: targetMonth,
+    year: targetYear,
+    totalDays: workingDays,
+    presentDays,
+    absentDays,
+    lateDays,
+    totalWorkHours: Math.round((totalWorkMinutes / 60) * 10) / 10,
+    averageWorkHours:
+      presentDays > 0
+        ? Math.round((totalWorkMinutes / 60 / presentDays) * 10) / 10
+        : 0,
+    totalBreakHours: Math.round((totalBreakMinutes / 60) * 10) / 10,
+    totalOvertimeHours: Math.round((totalOvertimeMinutes / 60) * 10) / 10,
+    attendances: processedAttendances,
+  };
+}
+
+export async function getAttendanceHistory(
+  startDate: Date,
+  endDate: Date,
+  userId?: string
+) {
+  const user = await getSessionUser();
+  if (!user) {
+    return [];
+  }
+
+  const targetUserId = userId || user.id;
+
+  const attendances = await prisma.attendance.findMany({
+    where: {
+      userId: targetUserId,
+      date: {
+        gte: startDate,
+        lte: endDate,
+      },
+    },
+    include: {
+      breaks: true,
+    },
+    orderBy: { date: 'desc' },
+  });
+
+  return attendances;
+}

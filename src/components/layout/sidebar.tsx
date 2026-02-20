@@ -27,6 +27,7 @@ import {
   Menu,
   X,
   UserCircle,
+  Clock,
 } from 'lucide-react';
 
 interface NavItem {
@@ -47,6 +48,7 @@ const navigation: NavItem[] = [
   { title: 'Employees', href: '/employees', icon: UserCircle, module: 'EMPLOYEES' },
   { title: 'Calendar', href: '/calendar', icon: Calendar, module: 'CALENDAR' },
   { title: 'Tasks', href: '/tasks', icon: CheckSquare, module: 'TASKS' },
+  { title: 'Attendance', href: '/attendance', icon: Clock, module: 'ATTENDANCE' },
   { title: 'Shared Drives', href: '/drives', icon: FolderOpen, module: 'DRIVES' },
   { title: 'Projects', href: '/projects', icon: Briefcase, module: 'PROJECTS' },
   { title: 'Policies', href: '/policies', icon: FileText, module: 'POLICIES' },
