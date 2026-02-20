@@ -45,6 +45,7 @@ interface ProfileTimeCardProps {
   hasAvatar: boolean;
   hourlyRate: number;
   loginStreak: number;
+  initialAttendance?: AttendanceData | null;
 }
 
 const locationIcons = {
@@ -66,9 +67,10 @@ export function ProfileTimeCard({
   hasAvatar,
   hourlyRate,
   loginStreak,
+  initialAttendance,
 }: ProfileTimeCardProps) {
-  const [data, setData] = useState<AttendanceData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<AttendanceData | null>(initialAttendance || null);
+  const [loading, setLoading] = useState(!initialAttendance);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showLocationSelect, setShowLocationSelect] = useState(false);
@@ -98,10 +100,14 @@ export function ProfileTimeCard({
   }, []);
 
   useEffect(() => {
-    fetchAttendance();
+    // Skip initial fetch if we have server-side data
+    if (!initialAttendance) {
+      fetchAttendance();
+    }
+    // Refresh every 60 seconds regardless
     const interval = setInterval(fetchAttendance, 60000);
     return () => clearInterval(interval);
-  }, [fetchAttendance]);
+  }, [fetchAttendance, initialAttendance]);
 
   // Live timer effect
   useEffect(() => {

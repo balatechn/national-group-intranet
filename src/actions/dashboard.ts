@@ -1,5 +1,4 @@
-'use server';
-
+import { cache } from 'react';
 import prisma from '@/lib/db';
 import { getSessionUser } from '@/lib/workos-auth';
 
@@ -117,7 +116,7 @@ export interface DashboardData {
 // ORG STATS (Lightweight - just counts)
 // ==========================================
 
-export async function getDashboardOrgStats(): Promise<DashboardOrgStats> {
+async function _getDashboardOrgStats(): Promise<DashboardOrgStats> {
   try {
     const [
       totalEmployees,
@@ -178,6 +177,9 @@ export async function getDashboardOrgStats(): Promise<DashboardOrgStats> {
   }
 }
 
+// Request-level cached export - prevents duplicate calls within same request
+export const getDashboardOrgStats = cache(_getDashboardOrgStats);
+
 // ==========================================
 // RECENT TASKS (Separate query)
 // ==========================================
@@ -207,7 +209,7 @@ export async function getDashboardRecentTasks(): Promise<RecentTask[]> {
 // UPCOMING EVENTS (Separate query)
 // ==========================================
 
-export async function getDashboardEvents(): Promise<{ upcoming: UpcomingEvent[]; week: UpcomingEvent[] }> {
+async function _getDashboardEvents(): Promise<{ upcoming: UpcomingEvent[]; week: UpcomingEvent[] }> {
   try {
     const today = new Date();
     const dayOfW = today.getDay();
@@ -241,11 +243,14 @@ export async function getDashboardEvents(): Promise<{ upcoming: UpcomingEvent[];
   }
 }
 
+// Request-level cached export
+export const getDashboardEvents = cache(_getDashboardEvents);
+
 // ==========================================
 // PERSONAL STATS (User-specific)
 // ==========================================
 
-export async function getDashboardPersonalStats(): Promise<PersonalStats | null> {
+async function _getDashboardPersonalStats(): Promise<PersonalStats | null> {
   const user = await getSessionUser();
   if (!user?.id) return null;
 
@@ -414,11 +419,17 @@ export async function getDashboardPersonalStats(): Promise<PersonalStats | null>
   }
 }
 
+// Request-level cached export - prevents duplicate calls within same request
+export const getDashboardPersonalStats = cache(_getDashboardPersonalStats);
+
 // ==========================================
 // CURRENT USER INFO (Minimal)
 // ==========================================
 
-export async function getDashboardUser() {
+async function _getDashboardUser() {
   const user = await getSessionUser();
   return user;
 }
+
+// Request-level cached export
+export const getDashboardUser = cache(_getDashboardUser);
