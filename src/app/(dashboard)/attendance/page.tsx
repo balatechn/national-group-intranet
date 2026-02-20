@@ -332,10 +332,10 @@ export default function AttendancePage() {
                 <TableRow>
                   <TableHead>Date</TableHead>
                   <TableHead>Day</TableHead>
-                  <TableHead>Check In</TableHead>
-                  <TableHead>Check Out</TableHead>
+                  <TableHead>First In</TableHead>
+                  <TableHead>Last Out</TableHead>
+                  <TableHead>Sessions</TableHead>
                   <TableHead>Work Hours</TableHead>
-                  <TableHead>Break</TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
@@ -361,7 +361,7 @@ export default function AttendancePage() {
                             att.isLate ? 'text-red-600 font-medium' : ''
                           }
                         >
-                          {formatTime(att.checkInAt)}
+                          {formatTime(att.firstCheckIn)}
                         </span>
                         {att.isLate && (
                           <Badge
@@ -372,9 +372,13 @@ export default function AttendancePage() {
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell>{formatTime(att.checkOutAt)}</TableCell>
+                      <TableCell>{formatTime(att.lastCheckOut)}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-blue-600 border-blue-200">
+                          {att.sessionCount || 1}
+                        </Badge>
+                      </TableCell>
                       <TableCell>{formatDuration(att.workMinutes)}</TableCell>
-                      <TableCell>{formatDuration(att.breakMinutes)}</TableCell>
                       <TableCell>
                         <Badge className={getLocationBadge(att.locationType)}>
                           <MapPin className="h-3 w-3 mr-1" />

@@ -9,12 +9,22 @@ import { AttendanceStatus, BreakType, WorkLocationType } from '@prisma/client';
 // TYPES
 // ==========================================
 
-export interface AttendanceWithBreaks {
+export interface AttendanceSession {
+  id: string;
+  checkInAt: Date;
+  checkOutAt: Date | null;
+  locationType: WorkLocationType;
+  location: string | null;
+  durationMinutes: number;
+}
+
+export interface AttendanceWithSessions {
   id: string;
   userId: string;
   date: Date;
-  checkInAt: Date;
-  checkOutAt: Date | null;
+  firstCheckIn: Date;
+  lastCheckOut: Date | null;
+  isCurrentlyIn: boolean;
   status: AttendanceStatus;
   locationType: WorkLocationType;
   checkInLocation: string | null;
@@ -23,6 +33,7 @@ export interface AttendanceWithBreaks {
   workMinutes: number;
   overtimeMinutes: number;
   notes: string | null;
+  sessions: AttendanceSession[];
   breaks: {
     id: string;
     breakType: BreakType;
@@ -42,7 +53,8 @@ export interface AttendanceWithBreaks {
 export interface TodayAttendanceSummary {
   isCheckedIn: boolean;
   isOnBreak: boolean;
-  attendance: AttendanceWithBreaks | null;
+  attendance: AttendanceWithSessions | null;
+  currentSession: AttendanceSession | null;
   currentBreak: {
     id: string;
     breakType: BreakType;
@@ -52,6 +64,7 @@ export interface TodayAttendanceSummary {
   todayMinutes: number;
   weekHours: number;
   activeTasksCount: number;
+  sessionCount: number;
 }
 
 // ==========================================
@@ -75,7 +88,7 @@ function calculateMinutes(startTime: Date, endTime: Date): number {
 }
 
 // ==========================================
-// CHECK-IN / CHECK-OUT
+// CHECK-IN / CHECK-OUT (Multi-Session)
 // ==========================================
 
 export async function checkIn(options?: {
@@ -89,8 +102,9 @@ export async function checkIn(options?: {
   }
 
   const today = getTodayDate();
+  const now = new Date();
 
-  // Check if already checked in today
+  // Check for existing attendance record today
   const existingAttendance = await prisma.attendance.findUnique({
     where: {
       userId_date: {
@@ -98,30 +112,42 @@ export async function checkIn(options?: {
         date: today,
       },
     },
+    include: {
+      sessions: { orderBy: { checkInAt: 'desc' } },
+      breaks: true,
+    },
   });
 
-  if (existingAttendance && existingAttendance.status !== 'CHECKED_OUT') {
-    return { success: false, error: 'Already checked in today' };
+  // If already checked in (has active session), return error
+  if (existingAttendance?.isCurrentlyIn) {
+    return { success: false, error: 'Already checked in' };
   }
 
-  // If already checked out today, update the existing record to allow re-check-in
-  if (existingAttendance && existingAttendance.status === 'CHECKED_OUT') {
+  const locationType = options?.locationType || 'OFFICE';
+
+  if (existingAttendance) {
+    // Create new session for existing attendance record
+    const newSession = await prisma.attendanceSession.create({
+      data: {
+        attendanceId: existingAttendance.id,
+        checkInAt: now,
+        locationType,
+        location: options?.location || null,
+        notes: options?.notes || null,
+      },
+    });
+
+    // Update attendance record
     const attendance = await prisma.attendance.update({
       where: { id: existingAttendance.id },
       data: {
-        checkInAt: new Date(),
-        checkOutAt: null,
+        isCurrentlyIn: true,
         status: 'CHECKED_IN',
-        locationType: options?.locationType || 'OFFICE',
-        checkInLocation: options?.location || null,
-        totalMinutes: 0,
-        breakMinutes: 0,
-        workMinutes: 0,
-        overtimeMinutes: 0,
-        notes: options?.notes || null,
+        // Keep firstCheckIn as is, don't update location for subsequent check-ins
       },
       include: {
-        breaks: true,
+        sessions: { orderBy: { checkInAt: 'desc' } },
+        breaks: { orderBy: { startTime: 'desc' } },
         user: {
           select: { id: true, firstName: true, lastName: true, avatar: true },
         },
@@ -129,22 +155,31 @@ export async function checkIn(options?: {
     });
 
     revalidatePath('/dashboard');
-    return { success: true, attendance };
+    return { success: true, attendance, session: newSession };
   }
 
-  // Create new attendance record
+  // Create new attendance record with first session
   const attendance = await prisma.attendance.create({
     data: {
       userId: user.id,
       date: today,
-      checkInAt: new Date(),
+      firstCheckIn: now,
+      isCurrentlyIn: true,
       status: 'CHECKED_IN',
-      locationType: options?.locationType || 'OFFICE',
+      locationType,
       checkInLocation: options?.location || null,
-      checkInIp: null, // Could be captured from request headers
       notes: options?.notes || null,
+      sessions: {
+        create: {
+          checkInAt: now,
+          locationType,
+          location: options?.location || null,
+          notes: options?.notes || null,
+        },
+      },
     },
     include: {
+      sessions: { orderBy: { checkInAt: 'desc' } },
       breaks: true,
       user: {
         select: { id: true, firstName: true, lastName: true, avatar: true },
@@ -163,8 +198,9 @@ export async function checkOut(notes?: string) {
   }
 
   const today = getTodayDate();
+  const now = new Date();
 
-  // Get today's attendance
+  // Get today's attendance with sessions
   const attendance = await prisma.attendance.findUnique({
     where: {
       userId_date: {
@@ -172,16 +208,28 @@ export async function checkOut(notes?: string) {
         date: today,
       },
     },
-    include: { breaks: true },
+    include: {
+      sessions: { orderBy: { checkInAt: 'desc' } },
+      breaks: true,
+    },
   });
 
   if (!attendance) {
     return { success: false, error: 'Not checked in today' };
   }
 
-  if (attendance.status === 'CHECKED_OUT') {
+  if (!attendance.isCurrentlyIn) {
     return { success: false, error: 'Already checked out' };
   }
+
+  // Find the active session (no checkOutAt)
+  const activeSession = attendance.sessions.find((s) => !s.checkOutAt);
+  if (!activeSession) {
+    return { success: false, error: 'No active session found' };
+  }
+
+  // Calculate session duration
+  const sessionDuration = calculateMinutes(activeSession.checkInAt, now);
 
   // End any active breaks
   const activeBreak = attendance.breaks.find((b) => !b.endTime);
@@ -189,40 +237,63 @@ export async function checkOut(notes?: string) {
     await prisma.attendanceBreak.update({
       where: { id: activeBreak.id },
       data: {
-        endTime: new Date(),
-        duration: calculateMinutes(activeBreak.startTime, new Date()),
+        endTime: now,
+        duration: calculateMinutes(activeBreak.startTime, now),
       },
     });
   }
 
-  const now = new Date();
-  const totalMinutes = calculateMinutes(attendance.checkInAt, now);
-  
-  // Calculate total break minutes
+  // Update the active session
+  await prisma.attendanceSession.update({
+    where: { id: activeSession.id },
+    data: {
+      checkOutAt: now,
+      durationMinutes: sessionDuration,
+    },
+  });
+
+  // Get all sessions to calculate total time
+  const allSessions = await prisma.attendanceSession.findMany({
+    where: { attendanceId: attendance.id },
+  });
+
+  // Calculate total work time from all sessions
+  const totalSessionMinutes = allSessions.reduce((sum, s) => {
+    if (s.checkOutAt) {
+      return sum + s.durationMinutes;
+    } else {
+      // This is the current session being closed
+      return sum + sessionDuration;
+    }
+  }, 0);
+
+  // Get all breaks
   const breaks = await prisma.attendanceBreak.findMany({
     where: { attendanceId: attendance.id },
   });
   const breakMinutes = breaks.reduce((sum, b) => sum + b.duration, 0);
-  const workMinutes = totalMinutes - breakMinutes;
+  const workMinutes = totalSessionMinutes - breakMinutes;
 
   // Calculate overtime (assuming 8 hour workday = 480 minutes)
   const standardMinutes = 480;
   const overtimeMinutes = Math.max(0, workMinutes - standardMinutes);
 
-  // Update attendance
+  // Update attendance record
   const updatedAttendance = await prisma.attendance.update({
     where: { id: attendance.id },
     data: {
-      checkOutAt: now,
+      lastCheckOut: now,
+      isCurrentlyIn: false,
       status: 'CHECKED_OUT',
-      totalMinutes,
+      totalMinutes: totalSessionMinutes,
       breakMinutes,
       workMinutes,
       overtimeMinutes,
       notes: notes || attendance.notes,
     },
     include: {
-      breaks: true,
+      sessions: { orderBy: { checkInAt: 'desc' } },
+      breaks: { orderBy: { startTime: 'desc' } },
       user: {
         select: { id: true, firstName: true, lastName: true, avatar: true },
       },
@@ -258,7 +329,7 @@ export async function startBreak(breakType: BreakType = 'SHORT_BREAK', notes?: s
     include: { breaks: true },
   });
 
-  if (!attendance || attendance.status === 'CHECKED_OUT') {
+  if (!attendance || !attendance.isCurrentlyIn) {
     return { success: false, error: 'Not checked in' };
   }
 
@@ -305,7 +376,7 @@ export async function endBreak() {
     include: { breaks: true },
   });
 
-  if (!attendance) {
+  if (!attendance || !attendance.isCurrentlyIn) {
     return { success: false, error: 'Not checked in' };
   }
 
@@ -401,11 +472,13 @@ export async function getTodayAttendance(): Promise<TodayAttendanceSummary> {
       isCheckedIn: false,
       isOnBreak: false,
       attendance: null,
+      currentSession: null,
       currentBreak: null,
       todayHours: 0,
       todayMinutes: 0,
       weekHours: 0,
       activeTasksCount: 0,
+      sessionCount: 0,
     };
   }
 
@@ -421,6 +494,9 @@ export async function getTodayAttendance(): Promise<TodayAttendanceSummary> {
         },
       },
       include: {
+        sessions: {
+          orderBy: { checkInAt: 'desc' },
+        },
         breaks: {
           orderBy: { startTime: 'desc' },
         },
@@ -444,24 +520,41 @@ export async function getTodayAttendance(): Promise<TodayAttendanceSummary> {
     }),
   ]);
 
-  const isCheckedIn = attendance?.status === 'CHECKED_IN' || attendance?.status === 'ON_BREAK';
+  const isCheckedIn = attendance?.isCurrentlyIn === true;
   const isOnBreak = attendance?.status === 'ON_BREAK';
   const currentBreak = attendance?.breaks.find((b) => !b.endTime) || null;
+  const currentSession = attendance?.sessions.find((s) => !s.checkOutAt) || null;
 
-  // Calculate today's current time
+  // Calculate today's total accumulated time
   let todayMinutes = 0;
-  if (attendance && !attendance.checkOutAt) {
-    const now = new Date();
-    const elapsed = calculateMinutes(attendance.checkInAt, now);
-    const activeBreakMinutes = currentBreak
-      ? calculateMinutes(currentBreak.startTime, now)
-      : 0;
-    const completedBreakMinutes = attendance.breaks
+  
+  if (attendance) {
+    // Add up all completed sessions
+    const completedSessionMinutes = (attendance.sessions || [])
+      .filter((s) => s.checkOutAt)
+      .reduce((sum, s) => sum + s.durationMinutes, 0);
+    
+    todayMinutes = completedSessionMinutes;
+
+    // If currently in a session, add the active session time
+    if (currentSession && isCheckedIn) {
+      const now = new Date();
+      const activeSessionMinutes = calculateMinutes(currentSession.checkInAt, now);
+      
+      // Subtract active break time if on break
+      const activeBreakMinutes = currentBreak
+        ? calculateMinutes(currentBreak.startTime, now)
+        : 0;
+      
+      todayMinutes += activeSessionMinutes - activeBreakMinutes;
+    }
+
+    // Subtract completed break minutes
+    const completedBreakMinutes = (attendance.breaks || [])
       .filter((b) => b.endTime)
       .reduce((sum, b) => sum + b.duration, 0);
-    todayMinutes = elapsed - completedBreakMinutes - activeBreakMinutes;
-  } else if (attendance) {
-    todayMinutes = attendance.workMinutes;
+    
+    todayMinutes -= completedBreakMinutes;
   }
 
   const weekMinutes = weekAttendances.reduce((sum, a) => sum + a.workMinutes, 0);
@@ -469,7 +562,8 @@ export async function getTodayAttendance(): Promise<TodayAttendanceSummary> {
   return {
     isCheckedIn,
     isOnBreak,
-    attendance: attendance as AttendanceWithBreaks | null,
+    attendance: attendance as unknown as AttendanceWithSessions | null,
+    currentSession: currentSession as AttendanceSession | null,
     currentBreak: currentBreak
       ? {
           id: currentBreak.id,
@@ -477,10 +571,11 @@ export async function getTodayAttendance(): Promise<TodayAttendanceSummary> {
           startTime: currentBreak.startTime,
         }
       : null,
-    todayHours: Math.floor(todayMinutes / 60),
-    todayMinutes: todayMinutes % 60,
+    todayHours: Math.floor(Math.max(0, todayMinutes) / 60),
+    todayMinutes: Math.max(0, todayMinutes) % 60,
     weekHours: Math.round((weekMinutes / 60) * 10) / 10,
     activeTasksCount: activeTasks,
+    sessionCount: attendance?.sessions?.length || 0,
   };
 }
 
@@ -542,9 +637,10 @@ export async function getTeamAttendanceToday(departmentId?: string) {
           department: { select: { name: true } },
         },
       },
+      sessions: true,
       breaks: true,
     },
-    orderBy: { checkInAt: 'asc' },
+    orderBy: { firstCheckIn: 'asc' },
   });
 
   return attendances;
@@ -578,12 +674,14 @@ export async function logTaskTime(
 
   if (!attendance) {
     // Auto check-in if logging time without attendance
+    const now = new Date();
     attendance = await prisma.attendance.create({
       data: {
         userId: user.id,
         date: today,
-        checkInAt: new Date(),
-        status: 'CHECKED_IN',
+        firstCheckIn: now,
+        isCurrentlyIn: false, // Not an active session, just logging time
+        status: 'CHECKED_OUT',
         locationType: 'REMOTE',
       },
     });
@@ -650,13 +748,14 @@ export interface MonthlyAttendanceSummary {
   attendances: {
     id: string;
     date: Date;
-    checkInAt: Date;
-    checkOutAt: Date | null;
+    firstCheckIn: Date;
+    lastCheckOut: Date | null;
     status: AttendanceStatus;
     locationType: WorkLocationType;
     workMinutes: number;
     breakMinutes: number;
     overtimeMinutes: number;
+    sessionCount: number;
     isLate: boolean;
   }[];
 }
@@ -680,7 +779,7 @@ export async function getMonthlyAttendance(
   const firstDay = new Date(targetYear, targetMonth, 1);
   const lastDay = new Date(targetYear, targetMonth + 1, 0);
 
-  // Get all attendances for the month
+  // Get all attendances for the month with sessions
   const attendances = await prisma.attendance.findMany({
     where: {
       userId: targetUserId,
@@ -688,6 +787,9 @@ export async function getMonthlyAttendance(
         gte: firstDay,
         lte: lastDay,
       },
+    },
+    include: {
+      sessions: true,
     },
     orderBy: { date: 'asc' },
   });
@@ -706,7 +808,7 @@ export async function getMonthlyAttendance(
   const STANDARD_START_MINUTE = 0;
 
   const processedAttendances = attendances.map((att) => {
-    const checkInTime = new Date(att.checkInAt);
+    const checkInTime = new Date(att.firstCheckIn);
     const isLate =
       checkInTime.getHours() > STANDARD_START_HOUR ||
       (checkInTime.getHours() === STANDARD_START_HOUR &&
@@ -715,13 +817,14 @@ export async function getMonthlyAttendance(
     return {
       id: att.id,
       date: att.date,
-      checkInAt: att.checkInAt,
-      checkOutAt: att.checkOutAt,
+      firstCheckIn: att.firstCheckIn,
+      lastCheckOut: att.lastCheckOut,
       status: att.status,
       locationType: att.locationType,
       workMinutes: att.workMinutes,
       breakMinutes: att.breakMinutes,
       overtimeMinutes: att.overtimeMinutes,
+      sessionCount: att.sessions?.length || 1,
       isLate,
     };
   });

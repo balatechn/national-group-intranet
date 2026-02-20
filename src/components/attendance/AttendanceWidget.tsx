@@ -4,35 +4,39 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Clock,
   Play,
-  Square,
   Coffee,
   MapPin,
-  CheckCircle2,
-  Timer,
-  Activity,
   Building2,
   Home,
   Briefcase,
-  TrendingUp,
   Pause,
   LogIn,
   LogOut,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+interface AttendanceSession {
+  id: string;
+  checkInAt: string;
+  checkOutAt: string | null;
+  durationMinutes: number;
+}
+
 interface AttendanceData {
   isCheckedIn: boolean;
   isOnBreak: boolean;
   attendance: {
     id: string;
-    checkInAt: string;
-    checkOutAt: string | null;
+    firstCheckIn: string;
+    lastCheckOut: string | null;
+    isCurrentlyIn: boolean;
     status: string;
     locationType: string;
     checkInLocation: string | null;
     totalMinutes: number;
     breakMinutes: number;
     workMinutes: number;
+    sessions: AttendanceSession[];
     breaks: Array<{
       id: string;
       breakType: string;
@@ -41,6 +45,7 @@ interface AttendanceData {
       duration: number;
     }>;
   } | null;
+  currentSession: AttendanceSession | null;
   currentBreak: {
     id: string;
     breakType: string;
@@ -50,6 +55,7 @@ interface AttendanceData {
   todayMinutes: number;
   weekHours: number;
   activeTasksCount: number;
+  sessionCount: number;
 }
 
 const locationIcons = {
@@ -95,17 +101,30 @@ export function AttendanceWidget() {
     return () => clearInterval(interval);
   }, [fetchAttendance]);
 
-  // Live timer effect
+  // Live timer effect - shows accumulated time across all sessions
   useEffect(() => {
-    if (!data?.isCheckedIn || !data?.attendance?.checkInAt) return;
-
     const updateTimer = () => {
-      const checkInTime = new Date(data.attendance!.checkInAt);
+      if (!data?.attendance) {
+        setElapsedTime({ hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+
       const now = new Date();
-      const diffMs = now.getTime() - checkInTime.getTime();
+      
+      // Calculate completed sessions time
+      const completedSessionMs = (data.attendance.sessions || [])
+        .filter(s => s.checkOutAt)
+        .reduce((sum, s) => sum + s.durationMinutes * 60 * 1000, 0);
+      
+      // Calculate current active session time
+      let activeSessionMs = 0;
+      if (data.isCheckedIn && data.currentSession) {
+        const sessionStart = new Date(data.currentSession.checkInAt);
+        activeSessionMs = now.getTime() - sessionStart.getTime();
+      }
       
       // Subtract completed breaks
-      const completedBreakMs = (data.attendance!.breaks || [])
+      const completedBreakMs = (data.attendance.breaks || [])
         .filter(b => b.endTime)
         .reduce((sum, b) => sum + b.duration * 60 * 1000, 0);
       
@@ -116,8 +135,8 @@ export function AttendanceWidget() {
         currentBreakMs = now.getTime() - breakStart.getTime();
       }
 
-      const workMs = diffMs - completedBreakMs - currentBreakMs;
-      const totalSeconds = Math.floor(workMs / 1000);
+      const totalWorkMs = completedSessionMs + activeSessionMs - completedBreakMs - currentBreakMs;
+      const totalSeconds = Math.max(0, Math.floor(totalWorkMs / 1000));
       const hours = Math.floor(totalSeconds / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);
       const seconds = totalSeconds % 60;
@@ -128,7 +147,7 @@ export function AttendanceWidget() {
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [data?.isCheckedIn, data?.attendance?.checkInAt, data?.isOnBreak, data?.currentBreak, data?.attendance?.breaks]);
+  }, [data]);
 
   const handleCheckIn = async () => {
     setActionLoading('checkin');
