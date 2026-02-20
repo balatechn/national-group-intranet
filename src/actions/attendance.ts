@@ -123,6 +123,11 @@ export async function checkIn(options?: {
     return { success: false, error: 'Already checked in' };
   }
 
+  // If already checked out today, don't allow re-check-in (single check-in/out per day)
+  if (existingAttendance?.lastCheckOut) {
+    return { success: false, error: 'Already checked out for today. Only one check-in/check-out allowed per day.' };
+  }
+
   const locationType = options?.locationType || 'OFFICE';
 
   if (existingAttendance) {
