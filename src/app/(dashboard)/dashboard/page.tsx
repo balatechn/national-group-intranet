@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getSessionUser } from '@/lib/workos-auth';
 import ProfilePhotoUpload from '@/components/dashboard/ProfilePhotoUpload';
+import { AttendanceWidget } from '@/components/attendance/AttendanceWidget';
 import prisma from '@/lib/db';
 import {
   Building2,
@@ -467,6 +468,9 @@ export default async function DashboardPage() {
               </div>
             </div>
           </div>
+
+          {/* ── Attendance & Time Tracking Card ── */}
+          <AttendanceWidget />
 
           {/* ── Progress Card ── */}
           <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm p-5">

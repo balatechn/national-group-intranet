@@ -248,6 +248,10 @@ model User {
   sentMessages     ChatMessage[]    @relation("MessageSender")
   chatMemberships  ChatMember[]
   
+  // Attendance relations
+  attendances      Attendance[]     @relation("UserAttendance")
+  taskTimeLogs     TaskTimeLog[]    @relation("UserTaskTimeLogs")
+  
   @@index([companyId])
   @@index([departmentId])
   @@index([managerId])
@@ -402,6 +406,7 @@ model Task {
   comments      TaskComment[]
   attachments   TaskAttachment[]
   timeEntries   TaskTimeEntry[]
+  timeLogs      TaskTimeLog[]
   
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
@@ -1308,3 +1313,116 @@ model ChatMessage {
   @@index([roomId, createdAt])
   @@index([senderId])
 }
+
+// ==========================================
+// ATTENDANCE & TIME TRACKING
+// ==========================================
+
+enum AttendanceStatus {
+  CHECKED_IN
+  ON_BREAK
+  CHECKED_OUT
+}
+
+enum BreakType {
+  LUNCH
+  SHORT_BREAK
+  MEETING
+  OTHER
+}
+
+enum WorkLocationType {
+  OFFICE
+  REMOTE
+  HYBRID
+  FIELD
+}
+
+model Attendance {
+  id              String           @id @default(cuid())
+  userId          String
+  user            User             @relation("UserAttendance", fields: [userId], references: [id])
+  
+  date            DateTime         @db.Date
+  checkInAt       DateTime
+  checkOutAt      DateTime?
+  
+  status          AttendanceStatus @default(CHECKED_IN)
+  
+  // Location tracking
+  locationType    WorkLocationType @default(OFFICE)
+  checkInIp       String?
+  checkOutIp      String?
+  checkInLocation String?          // e.g., "Office - Floor 3" or "Remote - Home"
+  
+  // Time calculations (in minutes for precision)
+  totalMinutes    Int              @default(0)
+  breakMinutes    Int              @default(0)
+  workMinutes     Int              @default(0)  // totalMinutes - breakMinutes
+  
+  // Overtime
+  overtimeMinutes Int              @default(0)
+  
+  notes           String?          @db.Text
+  
+  // Relations
+  breaks          AttendanceBreak[]
+  taskTimeLogs    TaskTimeLog[]
+  
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+  @@index([status])
+}
+
+model AttendanceBreak {
+  id           String    @id @default(cuid())
+  attendanceId String
+  attendance   Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+  
+  breakType    BreakType @default(SHORT_BREAK)
+  startTime    DateTime
+  endTime      DateTime?
+  duration     Int       @default(0)  // in minutes
+  notes        String?
+  
+  createdAt    DateTime  @default(now())
+  
+  @@index([attendanceId])
+}
+
+// Task Time Log - Links attendance hours to specific tasks
+model TaskTimeLog {
+  id           String     @id @default(cuid())
+  
+  attendanceId String
+  attendance   Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+  
+  taskId       String
+  task         Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  
+  userId       String
+  user         User       @relation("UserTaskTimeLogs", fields: [userId], references: [id])
+  
+  // Time tracking
+  startTime    DateTime?
+  endTime      DateTime?
+  minutes      Int        @default(0)
+  
+  // For automatic distribution
+  isAutoAllocated Boolean  @default(false)
+  
+  description  String?
+  
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  
+  @@index([attendanceId])
+  @@index([taskId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
