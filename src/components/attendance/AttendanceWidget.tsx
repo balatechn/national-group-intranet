@@ -226,11 +226,11 @@ export function AttendanceWidget() {
 
   if (loading) {
     return (
-      <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-6 bg-gray-200 rounded w-1/3"></div>
-          <div className="h-20 bg-gray-200 rounded"></div>
-          <div className="h-10 bg-gray-200 rounded"></div>
+      <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm p-4">
+        <div className="animate-pulse space-y-3">
+          <div className="h-5 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-12 bg-gray-200 rounded"></div>
+          <div className="h-8 bg-gray-200 rounded"></div>
         </div>
       </div>
     );
@@ -243,18 +243,18 @@ export function AttendanceWidget() {
   return (
     <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-amber-50/80 to-orange-50/50">
+      <div className="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-amber-50/80 to-orange-50/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-gradient-to-br from-[#DAA520] to-[#B8860B] rounded-lg">
-              <Clock className="h-4 w-4 text-white" />
+            <div className="p-1.5 bg-gradient-to-br from-[#DAA520] to-[#B8860B] rounded-lg">
+              <Clock className="h-3.5 w-3.5 text-white" />
             </div>
-            <h3 className="font-semibold text-gray-900">Time Tracking</h3>
+            <h3 className="font-semibold text-sm text-gray-900">Time Tracking</h3>
           </div>
           {data?.isCheckedIn && (
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${data.isOnBreak ? 'bg-amber-500' : 'bg-emerald-500'} animate-pulse`} />
-              <span className="text-xs font-medium text-gray-600">
+            <div className="flex items-center gap-1.5">
+              <div className={`w-1.5 h-1.5 rounded-full ${data.isOnBreak ? 'bg-amber-500' : 'bg-emerald-500'} animate-pulse`} />
+              <span className="text-xs text-gray-600">
                 {data.isOnBreak ? 'On Break' : 'Working'}
               </span>
             </div>
@@ -263,74 +263,77 @@ export function AttendanceWidget() {
       </div>
 
       {/* Main Content */}
-      <div className="p-6 space-y-5">
+      <div className="p-4 space-y-3">
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-            {error}
-            <button onClick={() => setError(null)} className="ml-2 text-red-400 hover:text-red-600">×</button>
+          <div className="p-2 bg-red-50 border border-red-200 rounded-lg text-red-600 text-xs flex items-center justify-between">
+            <span>{error}</span>
+            <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600 ml-2">×</button>
           </div>
         )}
 
         {/* Timer Display */}
-        <div className="text-center py-4">
+        <div className="text-center py-2">
           {data?.isCheckedIn ? (
             <>
-              <div className={`text-4xl font-mono font-bold ${data.isOnBreak ? 'text-amber-600' : 'text-gray-900'}`}>
+              <div className={`text-3xl font-mono font-bold ${data.isOnBreak ? 'text-amber-600' : 'text-gray-900'}`}>
                 {formatTime(elapsedTime.hours, elapsedTime.minutes, elapsedTime.seconds)}
               </div>
-              <p className="text-sm text-gray-500 mt-1">
-                {data.isOnBreak ? 'Break Time' : 'Today\'s Work Time'}
+              <p className="text-xs text-gray-500 mt-0.5">
+                {data.isOnBreak ? 'Break Time' : 'Work Time'}
               </p>
             </>
           ) : (
             <>
-              <div className="text-4xl font-mono font-bold text-gray-300">
+              <div className="text-3xl font-mono font-bold text-gray-300">
                 00:00:00
               </div>
-              <p className="text-sm text-gray-400 mt-1">Not checked in</p>
+              <p className="text-xs text-gray-400 mt-0.5">Not checked in</p>
             </>
           )}
         </div>
 
         {/* Location Selection (when checking in) */}
         {showLocationSelect && !data?.isCheckedIn && (
-          <div className="space-y-3 p-4 bg-gray-50 rounded-xl">
-            <p className="text-sm font-medium text-gray-700">Select work location:</p>
-            <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-2 p-3 bg-gray-50 rounded-xl">
+            <p className="text-xs font-medium text-gray-700">Select work location:</p>
+            <div className="grid grid-cols-2 gap-1.5">
               {Object.entries(locationLabels).map(([key, label]) => {
                 const Icon = locationIcons[key as keyof typeof locationIcons];
                 return (
                   <button
                     key={key}
                     onClick={() => setSelectedLocation(key)}
-                    className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-all ${
+                    className={`flex items-center gap-1.5 p-2 rounded-lg border transition-all text-xs ${
                       selectedLocation === key
                         ? 'border-[#DAA520] bg-amber-50 text-[#B8860B]'
                         : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
                     }`}
                   >
-                    <Icon className="h-4 w-4" />
-                    <span className="text-sm font-medium">{label}</span>
+                    <Icon className="h-3.5 w-3.5" />
+                    <span className="font-medium">{label}</span>
                   </button>
                 );
               })}
             </div>
-            <div className="flex gap-2 mt-3">
+            <div className="flex gap-2 mt-2">
               <Button
                 onClick={handleCheckIn}
                 disabled={actionLoading === 'checkin'}
-                className="flex-1 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white"
+                size="sm"
+                className="flex-1 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white text-xs"
               >
                 {actionLoading === 'checkin' ? (
-                  <span className="animate-spin mr-2">⏳</span>
+                  <span className="animate-spin mr-1">⏳</span>
                 ) : (
-                  <LogIn className="h-4 w-4 mr-2" />
+                  <LogIn className="h-3.5 w-3.5 mr-1" />
                 )}
                 Confirm Check-In
               </Button>
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => setShowLocationSelect(false)}
+                className="text-xs"
               >
                 Cancel
               </Button>
@@ -340,27 +343,29 @@ export function AttendanceWidget() {
 
         {/* Action Buttons */}
         {!showLocationSelect && (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {!data?.isCheckedIn ? (
               <Button
                 onClick={() => setShowLocationSelect(true)}
-                className="w-full h-12 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white shadow-lg shadow-emerald-500/20"
+                size="sm"
+                className="w-full h-9 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white shadow-md text-sm"
               >
-                <Play className="h-5 w-5 mr-2" />
+                <Play className="h-4 w-4 mr-1.5" />
                 Check In
               </Button>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 {data.isOnBreak ? (
                   <Button
                     onClick={handleEndBreak}
                     disabled={actionLoading === 'break'}
-                    className="col-span-2 h-12 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white"
+                    size="sm"
+                    className="col-span-2 h-9 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white text-sm"
                   >
                     {actionLoading === 'break' ? (
-                      <span className="animate-spin mr-2">⏳</span>
+                      <span className="animate-spin mr-1">⏳</span>
                     ) : (
-                      <Play className="h-5 w-5 mr-2" />
+                      <Play className="h-4 w-4 mr-1" />
                     )}
                     Resume Work
                   </Button>
@@ -370,31 +375,34 @@ export function AttendanceWidget() {
                       onClick={() => handleStartBreak('LUNCH')}
                       disabled={actionLoading === 'break'}
                       variant="outline"
-                      className="h-12 border-amber-200 text-amber-700 hover:bg-amber-50"
+                      size="sm"
+                      className="h-9 border-amber-200 text-amber-700 hover:bg-amber-50 text-xs"
                     >
-                      <Coffee className="h-4 w-4 mr-2" />
-                      Lunch Break
+                      <Coffee className="h-3.5 w-3.5 mr-1" />
+                      Lunch
                     </Button>
                     <Button
                       onClick={() => handleStartBreak('SHORT_BREAK')}
                       disabled={actionLoading === 'break'}
                       variant="outline"
-                      className="h-12 border-blue-200 text-blue-700 hover:bg-blue-50"
+                      size="sm"
+                      className="h-9 border-blue-200 text-blue-700 hover:bg-blue-50 text-xs"
                     >
-                      <Pause className="h-4 w-4 mr-2" />
-                      Short Break
+                      <Pause className="h-3.5 w-3.5 mr-1" />
+                      Break
                     </Button>
                   </>
                 )}
                 <Button
                   onClick={handleCheckOut}
                   disabled={actionLoading === 'checkout'}
-                  className="col-span-2 h-12 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white"
+                  size="sm"
+                  className="col-span-2 h-9 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-sm"
                 >
                   {actionLoading === 'checkout' ? (
-                    <span className="animate-spin mr-2">⏳</span>
+                    <span className="animate-spin mr-1">⏳</span>
                   ) : (
-                    <LogOut className="h-5 w-5 mr-2" />
+                    <LogOut className="h-4 w-4 mr-1" />
                   )}
                   Check Out
                 </Button>
@@ -403,37 +411,23 @@ export function AttendanceWidget() {
           </div>
         )}
 
-        {/* Stats Row */}
-        <div className="grid grid-cols-3 gap-3 pt-3 border-t border-gray-100">
-          <div className="text-center p-3 bg-gray-50 rounded-xl">
-            <Timer className="h-4 w-4 mx-auto mb-1 text-blue-600" />
-            <div className="text-lg font-bold text-gray-900">{data?.weekHours || 0}h</div>
-            <div className="text-xs text-gray-500">This Week</div>
+        {/* Stats Row - Compact */}
+        <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-100">
+          <div className="text-center p-2 bg-gray-50 rounded-lg">
+            <div className="text-sm font-bold text-gray-900">{data?.weekHours || 0}h</div>
+            <div className="text-[10px] text-gray-500">Week</div>
           </div>
-          <div className="text-center p-3 bg-gray-50 rounded-xl">
-            <Activity className="h-4 w-4 mx-auto mb-1 text-emerald-600" />
-            <div className="text-lg font-bold text-gray-900">{data?.activeTasksCount || 0}</div>
-            <div className="text-xs text-gray-500">Active Tasks</div>
+          <div className="text-center p-2 bg-gray-50 rounded-lg">
+            <div className="text-sm font-bold text-gray-900">{data?.activeTasksCount || 0}</div>
+            <div className="text-[10px] text-gray-500">Tasks</div>
           </div>
-          <div className="text-center p-3 bg-gray-50 rounded-xl">
-            <TrendingUp className="h-4 w-4 mx-auto mb-1 text-amber-600" />
-            <div className="text-lg font-bold text-gray-900">
+          <div className="text-center p-2 bg-gray-50 rounded-lg">
+            <div className="text-sm font-bold text-gray-900">
               {formatTime(data?.todayHours || 0, data?.todayMinutes || 0)}
             </div>
-            <div className="text-xs text-gray-500">Today</div>
+            <div className="text-[10px] text-gray-500">Today</div>
           </div>
         </div>
-
-        {/* Current Location */}
-        {data?.isCheckedIn && data?.attendance && (
-          <div className="flex items-center justify-center gap-2 pt-2 text-sm text-gray-500">
-            <LocationIcon className="h-4 w-4" />
-            <span>
-              {locationLabels[data.attendance.locationType as keyof typeof locationLabels] || 'Office'}
-              {data.attendance.checkInLocation && ` • ${data.attendance.checkInLocation}`}
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );

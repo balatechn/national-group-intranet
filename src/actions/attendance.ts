@@ -104,6 +104,34 @@ export async function checkIn(options?: {
     return { success: false, error: 'Already checked in today' };
   }
 
+  // If already checked out today, update the existing record to allow re-check-in
+  if (existingAttendance && existingAttendance.status === 'CHECKED_OUT') {
+    const attendance = await prisma.attendance.update({
+      where: { id: existingAttendance.id },
+      data: {
+        checkInAt: new Date(),
+        checkOutAt: null,
+        status: 'CHECKED_IN',
+        locationType: options?.locationType || 'OFFICE',
+        checkInLocation: options?.location || null,
+        totalMinutes: 0,
+        breakMinutes: 0,
+        workMinutes: 0,
+        overtimeMinutes: 0,
+        notes: options?.notes || null,
+      },
+      include: {
+        breaks: true,
+        user: {
+          select: { id: true, firstName: true, lastName: true, avatar: true },
+        },
+      },
+    });
+
+    revalidatePath('/dashboard');
+    return { success: true, attendance };
+  }
+
   // Create new attendance record
   const attendance = await prisma.attendance.create({
     data: {
