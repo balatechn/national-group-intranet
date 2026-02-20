@@ -146,7 +146,7 @@ export default function AttendancePage() {
   // Admin features
   const [userRole, setUserRole] = useState<string | null>(null);
   const [employees, setEmployees] = useState<EmployeeOption[]>([]);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('__self__');
   
   // Regularization
   const [showRegModal, setShowRegModal] = useState(false);
@@ -199,7 +199,7 @@ export default function AttendancePage() {
       const result = await getMonthlyAttendance(
         selectedMonth, 
         selectedYear, 
-        selectedEmployeeId || undefined
+        selectedEmployeeId === '__self__' ? undefined : selectedEmployeeId
       );
       setData(result);
     } catch (error) {
@@ -357,7 +357,7 @@ export default function AttendancePage() {
                 <SelectValue placeholder="My Attendance" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">My Attendance</SelectItem>
+                <SelectItem value="__self__">My Attendance</SelectItem>
                 {employees.map((emp) => (
                   <SelectItem key={emp.id} value={emp.id}>
                     {emp.name} ({emp.employeeId})
@@ -546,7 +546,7 @@ export default function AttendancePage() {
                 <CardHeader>
                   <CardTitle>
                     Daily Attendance - {MONTHS[selectedMonth]} {selectedYear}
-                    {selectedEmployeeId && employees.find(e => e.id === selectedEmployeeId) && (
+                    {selectedEmployeeId !== '__self__' && employees.find(e => e.id === selectedEmployeeId) && (
                       <span className="ml-2 text-muted-foreground font-normal text-base">
                         ({employees.find(e => e.id === selectedEmployeeId)?.name})
                       </span>
@@ -566,7 +566,7 @@ export default function AttendancePage() {
                           <TableHead>Work Hours</TableHead>
                           <TableHead>Location</TableHead>
                           <TableHead>Status</TableHead>
-                          {!selectedEmployeeId && <TableHead>Action</TableHead>}
+                          {selectedEmployeeId === '__self__' && <TableHead>Action</TableHead>}
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -617,7 +617,7 @@ export default function AttendancePage() {
                                 </Badge>
                               </TableCell>
                               <TableCell>{getStatusBadge(att.status)}</TableCell>
-                              {!selectedEmployeeId && (
+                              {selectedEmployeeId === '__self__' && (
                                 <TableCell>
                                   {needsRegularization && (
                                     <Button
@@ -640,7 +640,7 @@ export default function AttendancePage() {
                     <div className="text-center py-12 text-muted-foreground">
                       <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
                       <p>No attendance records for {MONTHS[selectedMonth]} {selectedYear}</p>
-                      {!selectedEmployeeId && (
+                      {selectedEmployeeId === '__self__' && (
                         <Button
                           variant="outline"
                           className="mt-4"
