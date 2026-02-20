@@ -48,14 +48,12 @@ interface ProfileTimeCardProps {
 const locationIcons = {
   OFFICE: Building2,
   REMOTE: Home,
-  HYBRID: Briefcase,
   FIELD: MapPin,
 };
 
 const locationLabels = {
   OFFICE: 'Office',
   REMOTE: 'Remote',
-  HYBRID: 'Hybrid',
   FIELD: 'Field',
 };
 
@@ -78,12 +76,20 @@ export function ProfileTimeCard({
   const fetchAttendance = useCallback(async () => {
     try {
       const res = await fetch('/api/attendance');
-      if (!res.ok) throw new Error('Failed to fetch');
+      if (!res.ok) {
+        // Don't show error for auth issues - user might not be fully logged in yet
+        if (res.status === 401) {
+          setData(null);
+          return;
+        }
+        throw new Error('Failed to fetch');
+      }
       const json = await res.json();
       setData(json);
       setError(null);
     } catch {
-      setError('Failed to load attendance');
+      // Silent fail - just show default state
+      setData(null);
     } finally {
       setLoading(false);
     }
@@ -133,10 +139,28 @@ export function ProfileTimeCard({
   const handleCheckIn = async () => {
     setActionLoading('checkin');
     try {
+      // Capture geolocation
+      let location: string | undefined;
+      if (navigator.geolocation) {
+        try {
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 5000,
+              maximumAge: 0,
+            });
+          });
+          location = `${position.coords.latitude.toFixed(6)},${position.coords.longitude.toFixed(6)}`;
+        } catch {
+          // Geolocation failed, continue without it
+          console.log('Geolocation not available');
+        }
+      }
+
       const res = await fetch('/api/attendance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'checkin', locationType: selectedLocation }),
+        body: JSON.stringify({ action: 'checkin', locationType: selectedLocation, location }),
       });
       if (!res.ok) {
         const err = await res.json();
