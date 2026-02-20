@@ -2,7 +2,12 @@ import Link from 'next/link';
 import { getSessionUser } from '@/lib/workos-auth';
 import ProfilePhotoUpload from '@/components/dashboard/ProfilePhotoUpload';
 import { AttendanceWidget } from '@/components/attendance/AttendanceWidget';
-import prisma from '@/lib/db';
+import {
+  getDashboardOrgStats,
+  getDashboardRecentTasks,
+  getDashboardEvents,
+  getDashboardPersonalStats,
+} from '@/actions/dashboard';
 import {
   Building2,
   Users,
@@ -35,231 +40,6 @@ import {
 
 export const revalidate = 60;
 
-// ── Fetch org-wide dashboard stats ──
-async function getDashboardStats() {
-  try {
-    const today = new Date();
-    const dayOfW = today.getDay();
-    const monOff = dayOfW === 0 ? -6 : 1 - dayOfW;
-    const calStart = new Date(today);
-    calStart.setDate(today.getDate() + monOff);
-    calStart.setHours(0, 0, 0, 0);
-    const calEnd = new Date(calStart);
-    calEnd.setDate(calStart.getDate() + 5);
-    calEnd.setHours(23, 59, 59, 999);
-
-    const [
-      totalEmployees,
-      activeEmployees,
-      totalCompanies,
-      totalDepartments,
-      totalTasks,
-      completedTasks,
-      inProgressTasks,
-      overdueTasks,
-      totalProjects,
-      activeProjects,
-      recentTasks,
-      upcomingEvents,
-      recentProjects,
-      weekEvents,
-    ] = await Promise.all([
-      prisma.user.count().catch(() => 0),
-      prisma.user.count({ where: { status: 'ACTIVE' } }).catch(() => 0),
-      prisma.company.count().catch(() => 0),
-      prisma.department.count().catch(() => 0),
-      prisma.task.count().catch(() => 0),
-      prisma.task.count({ where: { status: 'COMPLETED' } }).catch(() => 0),
-      prisma.task.count({ where: { status: 'IN_PROGRESS' } }).catch(() => 0),
-      prisma.task.count({
-        where: { status: { notIn: ['COMPLETED', 'CANCELLED'] }, dueDate: { lt: new Date() } },
-      }).catch(() => 0),
-      prisma.project.count().catch(() => 0),
-      prisma.project.count({ where: { status: 'ACTIVE' } }).catch(() => 0),
-      prisma.task.findMany({
-        take: 5, orderBy: { updatedAt: 'desc' },
-        select: {
-          id: true, title: true, status: true, priority: true, dueDate: true, updatedAt: true,
-          assignee: { select: { firstName: true, lastName: true, avatar: true } },
-        },
-      }).catch(() => []),
-      prisma.event.findMany({
-        where: { startDate: { gte: today }, isPublic: true },
-        take: 5, orderBy: { startDate: 'asc' },
-        select: { id: true, title: true, startDate: true, endDate: true, type: true, location: true, isAllDay: true },
-      }).catch(() => []),
-      prisma.project.findMany({
-        where: { status: 'ACTIVE' }, take: 5, orderBy: { updatedAt: 'desc' },
-        select: {
-          id: true, name: true, status: true, updatedAt: true,
-          owner: { select: { firstName: true, lastName: true } },
-          _count: { select: { members: true } },
-        },
-      }).catch(() => []),
-      prisma.event.findMany({
-        where: { startDate: { gte: calStart, lte: calEnd } },
-        take: 20, orderBy: { startDate: 'asc' },
-        select: { id: true, title: true, startDate: true, endDate: true, type: true, location: true, isAllDay: true },
-      }).catch(() => []),
-    ]);
-
-    const taskCompletionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-
-    return {
-      totalEmployees, activeEmployees, totalCompanies, totalDepartments,
-      totalTasks, completedTasks, inProgressTasks, overdueTasks,
-      totalProjects, activeProjects, taskCompletionRate,
-      recentTasks, upcomingEvents, recentProjects, weekEvents,
-    };
-  } catch (error) {
-    console.error('Dashboard stats error:', error);
-    return {
-      totalEmployees: 0, activeEmployees: 0, totalCompanies: 0, totalDepartments: 0,
-      totalTasks: 0, completedTasks: 0, inProgressTasks: 0, overdueTasks: 0,
-      totalProjects: 0, activeProjects: 0, taskCompletionRate: 0,
-      recentTasks: [] as any[], upcomingEvents: [] as any[],
-      recentProjects: [] as any[], weekEvents: [] as any[],
-    };
-  }
-}
-
-// ── Fetch personal stats for the logged-in user ──
-async function getPersonalStats(userId: string) {
-  try {
-    const now = new Date();
-
-    const userInfo = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { hourlyRate: true, lastLoginAt: true, avatar: true },
-    });
-
-    const allTasks = await prisma.task.findMany({
-      where: { assigneeId: userId },
-      select: {
-        id: true, title: true, status: true, priority: true,
-        dueDate: true, completedAt: true, estimatedHours: true, actualHours: true,
-        project: { select: { id: true, name: true, code: true } },
-        createdAt: true, updatedAt: true,
-      },
-      orderBy: { updatedAt: 'desc' },
-    });
-
-    const taskStats = {
-      total: allTasks.length,
-      todo: allTasks.filter(t => t.status === 'TODO').length,
-      inProgress: allTasks.filter(t => t.status === 'IN_PROGRESS').length,
-      onHold: allTasks.filter(t => t.status === 'ON_HOLD').length,
-      completed: allTasks.filter(t => t.status === 'COMPLETED').length,
-      cancelled: allTasks.filter(t => t.status === 'CANCELLED').length,
-      overdue: allTasks.filter(t =>
-        t.dueDate && new Date(t.dueDate) < now && !['COMPLETED', 'CANCELLED'].includes(t.status)
-      ).length,
-      completionRate: allTasks.length > 0
-        ? Math.round((allTasks.filter(t => t.status === 'COMPLETED').length / allTasks.length) * 100) : 0,
-    };
-
-    const pendingTasks = allTasks
-      .filter(t => !['COMPLETED', 'CANCELLED'].includes(t.status))
-      .slice(0, 8);
-
-    const projectMemberships = await prisma.projectMember.findMany({
-      where: { userId },
-      include: {
-        project: {
-          select: {
-            id: true, name: true, code: true, status: true,
-            _count: { select: { tasks: true, members: true } },
-          },
-        },
-      },
-    });
-
-    const allTimeEntries = await prisma.taskTimeEntry.findMany({
-      where: { userId },
-      select: {
-        id: true, hours: true, cost: true, date: true, description: true,
-        task: { select: { id: true, title: true, project: { select: { name: true } } } },
-      },
-      orderBy: { date: 'desc' },
-    });
-
-    const totalHours = allTimeEntries.reduce((sum, e) => sum + e.hours, 0);
-    const totalCost = allTimeEntries.reduce((sum, e) => sum + (e.cost || 0), 0);
-
-    const dayOfWeek = now.getDay();
-    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() + mondayOffset);
-    weekStart.setHours(0, 0, 0, 0);
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
-    weekEnd.setHours(23, 59, 59, 999);
-
-    const thisWeekEntries = allTimeEntries.filter(e => {
-      const d = new Date(e.date);
-      return d >= weekStart && d <= weekEnd;
-    });
-
-    const weeklyHours = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => {
-      const date = new Date(weekStart);
-      date.setDate(weekStart.getDate() + index);
-      const dateStr = date.toDateString();
-      const dayEntries = thisWeekEntries.filter(e => new Date(e.date).toDateString() === dateStr);
-      return {
-        day,
-        date: date.toISOString(),
-        hours: Math.round(dayEntries.reduce((sum, e) => sum + e.hours, 0) * 100) / 100,
-      };
-    });
-
-    const totalHoursWeek = thisWeekEntries.reduce((sum, e) => sum + e.hours, 0);
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const thisMonthEntries = allTimeEntries.filter(e => new Date(e.date) >= monthStart);
-    const totalHoursMonth = thisMonthEntries.reduce((sum, e) => sum + e.hours, 0);
-
-    const completedTasksList = allTasks.filter(t => t.status === 'COMPLETED');
-    const onTimeCompleted = completedTasksList.filter(t =>
-      !t.dueDate || (t.completedAt && new Date(t.completedAt) <= new Date(t.dueDate))
-    ).length;
-    const totalEstimated = allTasks.reduce((sum, t) => sum + (t.estimatedHours || 0), 0);
-    const totalActual = allTasks.reduce((sum, t) => sum + (t.actualHours || 0), 0);
-
-    return {
-      hourlyRate: userInfo?.hourlyRate || 0,
-      lastLoginAt: userInfo?.lastLoginAt || null,
-      hasAvatar: !!userInfo?.avatar,
-      loginStreak: weeklyHours.filter(d => d.hours > 0).length,
-      taskStats,
-      pendingTasks,
-      projects: projectMemberships.map(pm => ({
-        id: pm.project.id, name: pm.project.name, code: pm.project.code,
-        status: pm.project.status, role: pm.role,
-        totalTasks: pm.project._count.tasks, totalMembers: pm.project._count.members,
-      })),
-      timeStats: {
-        totalHours: Math.round(totalHours * 100) / 100,
-        totalCost: Math.round(totalCost * 100) / 100,
-        totalHoursWeek: Math.round(totalHoursWeek * 100) / 100,
-        totalHoursMonth: Math.round(totalHoursMonth * 100) / 100,
-        weeklyHours,
-      },
-      performance: {
-        completionRate: taskStats.completionRate,
-        onTimeRate: completedTasksList.length > 0
-          ? Math.round((onTimeCompleted / completedTasksList.length) * 100) : 0,
-        hoursUtilization: totalEstimated > 0
-          ? Math.round((totalActual / totalEstimated) * 100) : 0,
-        totalEstimated: Math.round(totalEstimated * 100) / 100,
-        totalActual: Math.round(totalActual * 100) / 100,
-      },
-      recentTimeEntries: allTimeEntries.slice(0, 5),
-    };
-  } catch (error) {
-    console.error('Personal stats error:', error);
-    return null;
-  }
-}
-
 function getGreeting() {
   const hour = new Date().getHours();
   if (hour < 12) return 'Good Morning';
@@ -272,12 +52,25 @@ function getGreeting() {
 // ══════════════════════════════════════════
 
 export default async function DashboardPage() {
-  const [user, stats] = await Promise.all([
-    getSessionUser(),
-    getDashboardStats(),
+  // First get user (needed for personal stats)
+  const user = await getSessionUser();
+  
+  // Run all data fetches in parallel
+  const [orgStats, recentTasks, events, personalStats] = await Promise.all([
+    getDashboardOrgStats(),
+    getDashboardRecentTasks(),
+    getDashboardEvents(),
+    user?.id ? getDashboardPersonalStats() : Promise.resolve(null),
   ]);
-
-  const personalStats = user?.id ? await getPersonalStats(user.id) : null;
+  
+  // Combine org stats with events and tasks for backward compatibility
+  const stats = {
+    ...orgStats,
+    recentTasks,
+    upcomingEvents: events.upcoming,
+    weekEvents: events.week,
+    recentProjects: [] as any[],
+  };
 
   const firstName = user?.firstName || user?.name?.split(' ')[0] || 'User';
   const greeting = getGreeting();
