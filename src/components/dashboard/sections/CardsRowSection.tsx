@@ -1,16 +1,8 @@
 import Link from 'next/link';
 import { getSessionUser } from '@/lib/workos-auth';
-import { getDashboardPersonalStats, PersonalStats } from '@/actions/dashboard';
-import ProfilePhotoUpload from '@/components/dashboard/ProfilePhotoUpload';
-import {
-  CheckSquare,
-  Calendar,
-  FolderOpen,
-  Briefcase,
-  ArrowUpRight,
-  IndianRupee,
-  Flame,
-} from 'lucide-react';
+import { getDashboardPersonalStats } from '@/actions/dashboard';
+import { ProfileTimeCard } from '@/components/dashboard/ProfileTimeCard';
+import { ArrowUpRight } from 'lucide-react';
 
 export async function CardsRowSection() {
   const [user, personalStats] = await Promise.all([
@@ -25,60 +17,15 @@ export async function CardsRowSection() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {/* ── Profile Card ── */}
-      <div className="rounded-2xl bg-gradient-to-br from-amber-50/80 via-[#fdf3d7] to-orange-50/60 border border-amber-200/40 shadow-sm p-5 flex flex-col items-center text-center relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, rgba(184,134,11,0.5) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
-        <div className="relative z-10 flex flex-col items-center w-full">
-          <ProfilePhotoUpload
-            currentAvatar={personalStats?.hasAvatar ? '/api/profile/avatar' : null}
-            userInitials={userInitials}
-            userName={firstName}
-          />
-          <h3 className="text-base font-semibold text-gray-900 mt-1">{user?.name || firstName}</h3>
-          <p className="text-[11px] text-gray-500 mb-2">{user?.role?.replace('_', ' ') || 'Employee'}</p>
-
-          {/* Rate badge */}
-          {personalStats && personalStats.hourlyRate > 0 && (
-            <div className="inline-flex items-center gap-1 rounded-full bg-white/90 border border-amber-300/60 px-3 py-1 mb-3 shadow-sm">
-              <IndianRupee className="h-3 w-3 text-[#B8860B]" />
-              <span className="text-sm font-bold text-gray-900">{personalStats.hourlyRate.toLocaleString('en-IN')}</span>
-            </div>
-          )}
-
-          {/* 4 Quick Action Icons */}
-          <div className="grid grid-cols-4 gap-3 w-full mb-3">
-            {[
-              { icon: CheckSquare, label: 'Tasks', href: '/tasks', bg: 'bg-[#4CAF50]' },
-              { icon: Briefcase, label: 'Projects', href: '/projects', bg: 'bg-[#2196F3]' },
-              { icon: Calendar, label: 'Calendar', href: '/calendar', bg: 'bg-[#26A69A]' },
-              { icon: FolderOpen, label: 'Drives', href: '/drives', bg: 'bg-[#F97316]' },
-            ].map((action) => {
-              const Icon = action.icon;
-              return (
-                <Link key={action.href} href={action.href} className="flex flex-col items-center gap-1.5 group">
-                  <div className={`${action.bg} rounded-xl p-2.5 transition-transform group-hover:scale-110 shadow-sm`}>
-                    <Icon className="h-4 w-4 text-white" />
-                  </div>
-                  <span className="text-[9px] text-gray-400 group-hover:text-gray-600 transition-colors">{action.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* Streak + Online */}
-          <div className="w-full flex items-center justify-between text-[10px] text-gray-400 pt-2 border-t border-amber-200/40">
-            {loginStreak > 0 ? (
-              <span className="flex items-center gap-1">
-                <Flame className="h-3 w-3 text-orange-500" />{loginStreak}-day streak
-              </span>
-            ) : <span />}
-            <span className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Online
-            </span>
-          </div>
-        </div>
-      </div>
+      {/* ── Profile + Time Tracking Card ── */}
+      <ProfileTimeCard
+        userName={user?.name || firstName}
+        userRole={user?.role?.replace('_', ' ') || 'Employee'}
+        userInitials={userInitials}
+        hasAvatar={personalStats?.hasAvatar || false}
+        hourlyRate={personalStats?.hourlyRate || 0}
+        loginStreak={loginStreak}
+      />
 
       {/* ── Progress Card ── */}
       <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm p-5">
