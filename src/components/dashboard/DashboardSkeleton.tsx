@@ -39,10 +39,10 @@ export function WelcomeStripSkeleton() {
   );
 }
 
-// Section 2: 4-column cards row (Load Second)
+// Section 2: 3-column cards row (Load Second)
 export function CardsRowSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-pulse">
       {/* Profile Card Skeleton */}
       <div className="rounded-2xl bg-amber-50/50 border border-amber-200/40 p-5 flex flex-col items-center">
         <div className="h-16 w-16 bg-gray-200/70 rounded-full mb-2" />
@@ -74,23 +74,6 @@ export function CardsRowSkeleton() {
               style={{ height: `${Math.random() * 60 + 20}%` }}
             />
           ))}
-        </div>
-      </div>
-
-      {/* Attendance Card Skeleton */}
-      <div className="rounded-2xl bg-white/80 border border-gray-200/80 p-5">
-        <div className="flex items-center justify-between mb-3">
-          <div className="h-4 w-20 bg-gray-200/60 rounded" />
-          <div className="h-6 w-20 bg-gray-200/50 rounded-full" />
-        </div>
-        <div className="h-12 w-32 bg-gray-200/70 rounded mb-3" />
-        <div className="space-y-2">
-          <div className="h-3 w-full bg-gray-200/50 rounded" />
-          <div className="h-3 w-3/4 bg-gray-200/40 rounded" />
-        </div>
-        <div className="flex gap-2 mt-4">
-          <div className="h-9 flex-1 bg-gray-200/60 rounded-lg" />
-          <div className="h-9 flex-1 bg-gray-200/60 rounded-lg" />
         </div>
       </div>
 

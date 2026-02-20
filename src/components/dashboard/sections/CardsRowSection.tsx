@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { getSessionUser } from '@/lib/workos-auth';
 import { getDashboardPersonalStats, PersonalStats } from '@/actions/dashboard';
 import ProfilePhotoUpload from '@/components/dashboard/ProfilePhotoUpload';
-import { AttendanceWidget } from '@/components/attendance/AttendanceWidget';
 import {
   CheckSquare,
   Calendar,
@@ -25,7 +24,7 @@ export async function CardsRowSection() {
   const loginStreak = personalStats?.loginStreak || 0;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {/* ── Profile Card ── */}
       <div className="rounded-2xl bg-gradient-to-br from-amber-50/80 via-[#fdf3d7] to-orange-50/60 border border-amber-200/40 shadow-sm p-5 flex flex-col items-center text-center relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, rgba(184,134,11,0.5) 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
@@ -138,9 +137,6 @@ export async function CardsRowSection() {
           </>
         )}
       </div>
-
-      {/* ── Attendance & Time Tracking Card ── */}
-      <AttendanceWidget />
 
       {/* ── Completion Card ── */}
       <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm p-5">
