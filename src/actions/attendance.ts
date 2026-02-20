@@ -905,3 +905,438 @@ export async function getAttendanceHistory(
 
   return attendances;
 }
+
+// ==========================================
+// ADMIN: GET ALL EMPLOYEES
+// ==========================================
+
+export async function getAllEmployeesForAdmin() {
+  const user = await getSessionUser();
+  if (!user) {
+    return [];
+  }
+
+  // Only allow SUPER_ADMIN, ADMIN, HR_ADMIN, MANAGER
+  const adminRoles = ['SUPER_ADMIN', 'ADMIN', 'HR_ADMIN', 'MANAGER'];
+  if (!adminRoles.includes(user.role)) {
+    return [];
+  }
+
+  const employees = await prisma.user.findMany({
+    where: {
+      status: 'ACTIVE',
+    },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      employeeId: true,
+      department: {
+        select: { name: true },
+      },
+    },
+    orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
+  });
+
+  return employees.map((emp) => ({
+    id: emp.id,
+    name: `${emp.firstName} ${emp.lastName}`,
+    employeeId: emp.employeeId,
+    department: emp.department?.name || 'N/A',
+  }));
+}
+
+// ==========================================
+// ATTENDANCE REGULARIZATION
+// ==========================================
+
+export interface RegularizationRequest {
+  id: string;
+  userId: string;
+  requestDate: Date;
+  requestedCheckIn: Date | null;
+  requestedCheckOut: Date | null;
+  reason: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  reviewedBy: string | null;
+  reviewedAt: Date | null;
+  reviewNotes: string | null;
+  createdAt: Date;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    employeeId: string;
+    email: string;
+  };
+  reviewer?: {
+    firstName: string;
+    lastName: string;
+  } | null;
+}
+
+export async function requestRegularization(data: {
+  requestDate: Date;
+  requestedCheckIn?: Date;
+  requestedCheckOut?: Date;
+  reason: string;
+}) {
+  const user = await getSessionUser();
+  if (!user) {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  if (!data.reason || data.reason.trim().length < 5) {
+    return { success: false, error: 'Please provide a valid reason (min 5 characters)' };
+  }
+
+  if (!data.requestedCheckIn && !data.requestedCheckOut) {
+    return { success: false, error: 'Please provide at least check-in or check-out time' };
+  }
+
+  // Create regularization request
+  const regularization = await prisma.attendanceRegularization.create({
+    data: {
+      userId: user.id,
+      requestDate: data.requestDate,
+      requestedCheckIn: data.requestedCheckIn || null,
+      requestedCheckOut: data.requestedCheckOut || null,
+      reason: data.reason.trim(),
+    },
+    include: {
+      user: {
+        select: { id: true, firstName: true, lastName: true, employeeId: true, email: true },
+      },
+    },
+  });
+
+  // Send email to admin/manager
+  await sendRegularizationEmail(regularization, user);
+
+  revalidatePath('/attendance');
+  return { success: true, regularization };
+}
+
+async function sendRegularizationEmail(
+  regularization: { 
+    id: string; 
+    requestDate: Date; 
+    requestedCheckIn: Date | null; 
+    requestedCheckOut: Date | null; 
+    reason: string;
+  },
+  user: { id: string; firstName: string; lastName: string; email: string; managerId?: string | null }
+) {
+  // Dynamically import to avoid circular dependencies
+  const { sendEmail } = await import('@/lib/mailgun');
+  
+  // Get user's manager or admin
+  let recipientEmail: string | null = null;
+  
+  if (user.managerId) {
+    const manager = await prisma.user.findUnique({
+      where: { id: user.managerId },
+      select: { email: true },
+    });
+    recipientEmail = manager?.email || null;
+  }
+
+  // If no manager, find an admin
+  if (!recipientEmail) {
+    const admin = await prisma.user.findFirst({
+      where: {
+        role: { in: ['SUPER_ADMIN', 'ADMIN', 'HR_ADMIN'] },
+        status: 'ACTIVE',
+      },
+      select: { email: true },
+    });
+    recipientEmail = admin?.email || null;
+  }
+
+  if (!recipientEmail) {
+    console.warn('No admin/manager email found for regularization request');
+    return;
+  }
+
+  const dateStr = new Date(regularization.requestDate).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const checkInStr = regularization.requestedCheckIn 
+    ? new Date(regularization.requestedCheckIn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    : 'N/A';
+  
+  const checkOutStr = regularization.requestedCheckOut
+    ? new Date(regularization.requestedCheckOut).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    : 'N/A';
+
+  await sendEmail({
+    to: recipientEmail,
+    subject: `Attendance Regularization Request - ${user.firstName} ${user.lastName}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Attendance Regularization Request</h2>
+        <p><strong>${user.firstName} ${user.lastName}</strong> has submitted a regularization request.</p>
+        
+        <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+          <p><strong>Date:</strong> ${dateStr}</p>
+          <p><strong>Requested Check-in:</strong> ${checkInStr}</p>
+          <p><strong>Requested Check-out:</strong> ${checkOutStr}</p>
+          <p><strong>Reason:</strong> ${regularization.reason}</p>
+        </div>
+        
+        <p>Please review and approve or reject this request from the Attendance section in the intranet.</p>
+        
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="color: #666; font-size: 12px;">This is an automated email from National Group Intranet.</p>
+      </div>
+    `,
+  });
+}
+
+export async function getPendingRegularizations(): Promise<RegularizationRequest[]> {
+  const user = await getSessionUser();
+  if (!user) {
+    return [];
+  }
+
+  // Only allow admins/managers to view pending requests
+  const adminRoles = ['SUPER_ADMIN', 'ADMIN', 'HR_ADMIN', 'MANAGER'];
+  if (!adminRoles.includes(user.role)) {
+    return [];
+  }
+
+  const regularizations = await prisma.attendanceRegularization.findMany({
+    where: {
+      status: 'PENDING',
+    },
+    include: {
+      user: {
+        select: { id: true, firstName: true, lastName: true, employeeId: true, email: true },
+      },
+      reviewer: {
+        select: { firstName: true, lastName: true },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return regularizations as RegularizationRequest[];
+}
+
+export async function getMyRegularizations(): Promise<RegularizationRequest[]> {
+  const user = await getSessionUser();
+  if (!user) {
+    return [];
+  }
+
+  const regularizations = await prisma.attendanceRegularization.findMany({
+    where: {
+      userId: user.id,
+    },
+    include: {
+      user: {
+        select: { id: true, firstName: true, lastName: true, employeeId: true, email: true },
+      },
+      reviewer: {
+        select: { firstName: true, lastName: true },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return regularizations as RegularizationRequest[];
+}
+
+export async function approveRegularization(
+  regularizationId: string,
+  notes?: string
+) {
+  const user = await getSessionUser();
+  if (!user) {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  // Only allow admins/managers to approve
+  const adminRoles = ['SUPER_ADMIN', 'ADMIN', 'HR_ADMIN', 'MANAGER'];
+  if (!adminRoles.includes(user.role)) {
+    return { success: false, error: 'Not authorized to approve regularizations' };
+  }
+
+  const regularization = await prisma.attendanceRegularization.findUnique({
+    where: { id: regularizationId },
+    include: {
+      user: { select: { id: true, firstName: true, lastName: true, email: true } },
+    },
+  });
+
+  if (!regularization) {
+    return { success: false, error: 'Regularization request not found' };
+  }
+
+  if (regularization.status !== 'PENDING') {
+    return { success: false, error: 'Request already processed' };
+  }
+
+  // Update regularization status
+  await prisma.attendanceRegularization.update({
+    where: { id: regularizationId },
+    data: {
+      status: 'APPROVED',
+      reviewedBy: user.id,
+      reviewedAt: new Date(),
+      reviewNotes: notes || null,
+    },
+  });
+
+  // Update or create attendance record
+  const requestDate = new Date(regularization.requestDate);
+  const dateOnly = new Date(requestDate.getFullYear(), requestDate.getMonth(), requestDate.getDate());
+
+  const existingAttendance = await prisma.attendance.findUnique({
+    where: {
+      userId_date: {
+        userId: regularization.userId,
+        date: dateOnly,
+      },
+    },
+  });
+
+  if (existingAttendance) {
+    // Update existing attendance
+    const updateData: Record<string, unknown> = {
+      status: 'CHECKED_OUT',
+      isCurrentlyIn: false,
+    };
+
+    if (regularization.requestedCheckIn) {
+      updateData.firstCheckIn = regularization.requestedCheckIn;
+    }
+    if (regularization.requestedCheckOut) {
+      updateData.lastCheckOut = regularization.requestedCheckOut;
+    }
+
+    // Recalculate work minutes
+    const checkIn = regularization.requestedCheckIn || existingAttendance.firstCheckIn;
+    const checkOut = regularization.requestedCheckOut || existingAttendance.lastCheckOut;
+    if (checkIn && checkOut) {
+      const workMinutes = Math.floor((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60));
+      updateData.workMinutes = Math.max(0, workMinutes - (existingAttendance.breakMinutes || 0));
+      updateData.totalMinutes = workMinutes;
+    }
+
+    await prisma.attendance.update({
+      where: { id: existingAttendance.id },
+      data: updateData,
+    });
+  } else if (regularization.requestedCheckIn) {
+    // Create new attendance record
+    const checkOutTime = regularization.requestedCheckOut || null;
+    const workMinutes = checkOutTime
+      ? Math.floor((new Date(checkOutTime).getTime() - new Date(regularization.requestedCheckIn).getTime()) / (1000 * 60))
+      : 0;
+
+    await prisma.attendance.create({
+      data: {
+        userId: regularization.userId,
+        date: dateOnly,
+        firstCheckIn: regularization.requestedCheckIn,
+        lastCheckOut: checkOutTime,
+        status: checkOutTime ? 'CHECKED_OUT' : 'CHECKED_IN',
+        isCurrentlyIn: !checkOutTime,
+        locationType: 'OFFICE',
+        totalMinutes: workMinutes,
+        workMinutes: workMinutes,
+      },
+    });
+  }
+
+  // Send approval email
+  const { sendEmail } = await import('@/lib/mailgun');
+  await sendEmail({
+    to: regularization.user.email,
+    subject: 'Attendance Regularization Approved',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #22c55e;">Regularization Request Approved</h2>
+        <p>Your attendance regularization request for ${new Date(regularization.requestDate).toLocaleDateString()} has been approved.</p>
+        ${notes ? `<p><strong>Reviewer Notes:</strong> ${notes}</p>` : ''}
+        <p>Your attendance record has been updated accordingly.</p>
+      </div>
+    `,
+  });
+
+  revalidatePath('/attendance');
+  return { success: true };
+}
+
+export async function rejectRegularization(
+  regularizationId: string,
+  notes?: string
+) {
+  const user = await getSessionUser();
+  if (!user) {
+    return { success: false, error: 'Unauthorized' };
+  }
+
+  // Only allow admins/managers to reject
+  const adminRoles = ['SUPER_ADMIN', 'ADMIN', 'HR_ADMIN', 'MANAGER'];
+  if (!adminRoles.includes(user.role)) {
+    return { success: false, error: 'Not authorized to reject regularizations' };
+  }
+
+  const regularization = await prisma.attendanceRegularization.findUnique({
+    where: { id: regularizationId },
+    include: {
+      user: { select: { email: true, firstName: true, lastName: true } },
+    },
+  });
+
+  if (!regularization) {
+    return { success: false, error: 'Regularization request not found' };
+  }
+
+  if (regularization.status !== 'PENDING') {
+    return { success: false, error: 'Request already processed' };
+  }
+
+  // Update regularization status
+  await prisma.attendanceRegularization.update({
+    where: { id: regularizationId },
+    data: {
+      status: 'REJECTED',
+      reviewedBy: user.id,
+      reviewedAt: new Date(),
+      reviewNotes: notes || null,
+    },
+  });
+
+  // Send rejection email
+  const { sendEmail } = await import('@/lib/mailgun');
+  await sendEmail({
+    to: regularization.user.email,
+    subject: 'Attendance Regularization Rejected',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #ef4444;">Regularization Request Rejected</h2>
+        <p>Your attendance regularization request for ${new Date(regularization.requestDate).toLocaleDateString()} has been rejected.</p>
+        ${notes ? `<p><strong>Reason:</strong> ${notes}</p>` : ''}
+        <p>Please contact your manager for more information.</p>
+      </div>
+    `,
+  });
+
+  revalidatePath('/attendance');
+  return { success: true };
+}
+
+export async function getCurrentUserRole() {
+  const user = await getSessionUser();
+  if (!user) {
+    return null;
+  }
+  return user.role;
+}

@@ -72,14 +72,25 @@ Enterprise intranet portal for **National Group India** — a centralized platfo
 - 📜 **Policies** — HR & IT policy repository
 - ⚙️ **Settings** — Organization branding (company name & logo upload)
 
+### Attendance Management
+- ⏰ **Multi-Session Check-In/Out** — Employees can check in and out multiple times per day
+- 📊 **Daily Summary** — First check-in and last check-out tracked for daily overview
+- 🕐 **Live Session Timer** — Real-time work hours display on dashboard widget
+- 📅 **Monthly Reports** — View attendance records by month with statistics
+- 👥 **Admin Employee Selector** — Super Admin/Admin/HR Admin/Manager can view any employee's attendance
+- 📝 **Attendance Regularization** — Employees can request to regularize missed check-ins/check-outs
+- ✅ **Approval Workflow** — Managers/Admins can approve or reject regularization requests
+- 📧 **Email Notifications** — Automatic email to manager/admin on regularization requests
+- 📈 **Statistics** — Present days, absent days, late arrivals, total work hours, break time, overtime
+
 ---
 
 ## 🛡️ Authentication
 
-- **Credentials Login** — Email/password with bcrypt hashing
-- **Microsoft 365 SSO** — Azure AD integration for enterprise sign-in
+- **WorkOS AuthKit** — Enterprise-grade SSO with SAML, OIDC, and social providers
+- **Microsoft 365 SSO** — Azure AD integration for enterprise sign-in via WorkOS
 - **Role-Based Access Control** — 6 user roles with granular permissions
-- **JWT Sessions** — 30-day session persistence
+- **JWT Sessions** — 30-day session persistence with jose library
 
 ### User Roles
 
@@ -101,8 +112,8 @@ Enterprise intranet portal for **National Group India** — a centralized platfo
 | Framework    | Next.js 14.1.3 (App Router, Server Components)        |
 | Language     | TypeScript 5.3 (strict mode)                           |
 | Database     | PostgreSQL (via Vercel Postgres)                        |
-| ORM          | Prisma 5.10 (39 models)                                |
-| Auth         | NextAuth.js 4 (Credentials + Azure AD)                 |
+| ORM          | Prisma 5.22 (42 models)                                |
+| Auth         | WorkOS AuthKit (SSO, SAML, OIDC, Azure AD)             |
 | Styling      | Tailwind CSS 3.4 + Radix UI primitives                 |
 | Icons        | Lucide React                                            |
 | Forms        | React Hook Form + Zod validation                       |
@@ -120,13 +131,14 @@ Enterprise intranet portal for **National Group India** — a centralized platfo
 
 ```
 src/
-├── actions/            # Server actions (companies, users, tasks, tickets, etc.)
+├── actions/            # Server actions (companies, users, tasks, tickets, attendance, etc.)
 ├── app/
 │   ├── (dashboard)/    # Authenticated pages
 │   │   ├── dashboard/      # Home dashboard with stats & quick access
 │   │   ├── companies/      # Company management
 │   │   ├── departments/    # Department management with member views
 │   │   ├── employees/      # Employee directory with edit & password reset
+│   │   ├── attendance/     # Attendance tracking & regularization
 │   │   ├── projects/       # Project listing & advanced creation wizard
 │   │   ├── tasks/          # Task management with detail views
 │   │   ├── calendar/       # Events & meetings
@@ -138,18 +150,19 @@ src/
 │   ├── api/            # API routes (auth, CRUD, settings, bulk operations)
 │   └── login/          # Login page with glassmorphism UI
 ├── components/
+│   ├── attendance/     # AttendanceWidget component
 │   ├── bulk-upload/    # Excel bulk upload modal
 │   ├── layout/         # Sidebar & Header
 │   ├── masters/        # Action components (Add/Edit/Bulk for each entity)
 │   └── ui/             # Reusable UI components (Button, Card, Dialog, etc.)
 ├── lib/
-│   ├── auth.ts         # NextAuth configuration (Credentials + Azure AD)
+│   ├── workos-auth.ts  # WorkOS AuthKit configuration
 │   ├── db.ts           # Prisma client singleton
 │   ├── mailgun.ts      # Mailgun email client
 │   ├── onedrive.ts     # OneDrive integration
 │   ├── excel.ts        # Excel import/export utilities
 │   └── utils.ts        # General utilities (cn, formatters)
-├── types/              # NextAuth type declarations
+├── types/              # Type declarations
 └── validations/        # Zod schemas for form validation
 
 prisma/
@@ -161,7 +174,7 @@ prisma/
 
 ## 🗄️ Database Models
 
-The schema includes **39 Prisma models** organized across these domains:
+The schema includes **42 Prisma models** organized across these domains:
 
 | Domain       | Models                                                                 |
 |--------------|------------------------------------------------------------------------|
@@ -174,6 +187,7 @@ The schema includes **39 Prisma models** organized across these domains:
 | IT Helpdesk  | ITTicket, TicketComment, ITRequest, ITRequestApproval                  |
 | IT Assets    | SystemAsset, Software, AssetSoftware, MobileDevice, Vendor             |
 | Drives       | SharedFolder, FolderPermission                                         |
+| Attendance   | Attendance, AttendanceSession, AttendanceBreak, TaskTimeLog, AttendanceRegularization |
 | System       | Notification, AuditLog, Announcement, RolePermission, SystemSetting    |
 | Chat         | ChatRoom, ChatMember, ChatMessage                                      |
 

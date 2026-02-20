@@ -54,6 +54,8 @@ model User {
   taskTimeEntries   TaskTimeEntry[]     @relation("TaskTimeEntryUser")
   taskTimeLogs      TaskTimeLog[]       @relation("UserTaskTimeLogs")
   ticketComments    TicketComment[]
+  regularizations   AttendanceRegularization[] @relation("UserRegularizations")
+  reviewedRegularizations AttendanceRegularization[] @relation("RegularizationReviewer")
   company           Company?            @relation(fields: [companyId], references: [id])
   department        Department?         @relation(fields: [departmentId], references: [id])
   manager           User?               @relation("UserManager", fields: [managerId], references: [id])
@@ -920,6 +922,33 @@ model TaskTimeLog {
   @@index([taskId])
   @@index([userId])
   @@index([createdAt])
+}
+
+model AttendanceRegularization {
+  id              String                       @id @default(cuid())
+  userId          String
+  requestDate     DateTime                     @db.Date
+  requestedCheckIn  DateTime?
+  requestedCheckOut DateTime?
+  reason          String
+  status          RegularizationStatus         @default(PENDING)
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  reviewNotes     String?
+  createdAt       DateTime                     @default(now())
+  updatedAt       DateTime                     @updatedAt
+  user            User                         @relation("UserRegularizations", fields: [userId], references: [id])
+  reviewer        User?                        @relation("RegularizationReviewer", fields: [reviewedBy], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([requestDate])
+}
+
+enum RegularizationStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum UserRole {
