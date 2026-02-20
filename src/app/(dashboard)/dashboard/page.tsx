@@ -469,9 +469,6 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          {/* ── Attendance & Time Tracking Card ── */}
-          <AttendanceWidget />
-
           {/* ── Progress Card ── */}
           <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm p-5">
             <div className="flex items-center justify-between mb-1">
@@ -531,58 +528,8 @@ export default async function DashboardPage() {
             )}
           </div>
 
-          {/* ── Time Tracker Card ── */}
-          <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm p-5 flex flex-col items-center">
-            <div className="flex items-center justify-between w-full mb-3">
-              <h3 className="text-sm font-semibold text-gray-800">Time tracker</h3>
-              <Link href="/tasks" className="w-6 h-6 rounded-md bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
-                <ArrowUpRight className="w-3 h-3 text-gray-500" />
-              </Link>
-            </div>
-
-            {/* Circular Ring */}
-            <div className="relative w-28 h-28 mb-2">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-                <circle cx="60" cy="60" r="50" fill="none" stroke="#f1f5f9" strokeWidth="8" />
-                <circle
-                  cx="60" cy="60" r="50" fill="none"
-                  stroke="url(#timeGold)" strokeWidth="8" strokeLinecap="round"
-                  strokeDasharray={`${2 * Math.PI * 50}`}
-                  strokeDashoffset={`${2 * Math.PI * 50 * (1 - Math.min((personalStats?.timeStats.totalHoursWeek || 0) / 40, 1))}`}
-                />
-                <defs>
-                  <linearGradient id="timeGold" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#B8860B" />
-                    <stop offset="100%" stopColor="#DAA520" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-bold text-gray-900 tracking-tight">{todayFmt}</span>
-                <span className="text-[9px] text-gray-400 mt-0.5">Work Time</span>
-              </div>
-            </div>
-
-            {/* Play/Pause Controls */}
-            <div className="flex items-center gap-3 mb-3">
-              <Link href="/tasks" className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors">
-                <Play className="w-3.5 h-3.5 text-gray-600 ml-0.5" />
-              </Link>
-              <span className="w-px h-4 bg-gray-200" />
-              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                <Pause className="w-3.5 h-3.5 text-gray-400" />
-              </div>
-              <div className="w-8 h-8 rounded-full bg-amber-50 border border-amber-200/60 flex items-center justify-center">
-                <Clock className="w-3.5 h-3.5 text-[#B8860B]" />
-              </div>
-            </div>
-
-            {/* Month stat */}
-            <div className="text-center">
-              <span className="text-[10px] text-gray-400">This month: </span>
-              <span className="text-xs font-bold text-gray-700">{personalStats?.timeStats.totalHoursMonth || 0}h</span>
-            </div>
-          </div>
+          {/* ── Attendance & Time Tracking Card ── */}
+          <AttendanceWidget />
 
           {/* ── Completion Card ── */}
           <div className="rounded-2xl bg-white/80 backdrop-blur-xl border border-gray-200/80 shadow-sm p-5">
