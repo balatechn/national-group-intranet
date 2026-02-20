@@ -5,45 +5,60 @@ import { getTodayAttendance } from '@/actions/attendance';
 import { ProfileTimeCard } from '@/components/dashboard/ProfileTimeCard';
 
 export async function CardsRowSection() {
-  const [user, personalStats, attendanceData] = await Promise.all([
-    getSessionUser(),
-    getDashboardPersonalStats(),
-    getTodayAttendance(),
-  ]);
+  let user, personalStats, attendanceData;
+  
+  try {
+    [user, personalStats, attendanceData] = await Promise.all([
+      getSessionUser(),
+      getDashboardPersonalStats(),
+      getTodayAttendance(),
+    ]);
+  } catch (error) {
+    console.error('CardsRowSection error:', error);
+    // Return minimal UI on error
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="rounded-xl bg-white border border-gray-200 shadow-sm p-5">
+          <p className="text-sm text-gray-500">Unable to load dashboard data</p>
+        </div>
+      </div>
+    );
+  }
 
   const firstName = user?.firstName || user?.name?.split(' ')[0] || 'User';
   const userInitials = (user?.firstName?.[0] || '') + (user?.lastName?.[0] || user?.name?.[0] || 'U');
   const loginStreak = personalStats?.loginStreak || 0;
 
-  // Prepare initial attendance data for client component
+  // Prepare initial attendance data for client component - with safe null checks
+  const attendance = attendanceData?.attendance;
   const initialAttendance = {
-    isCheckedIn: attendanceData.isCheckedIn,
-    isOnBreak: attendanceData.isOnBreak,
-    hasCheckedOutToday: !!attendanceData.attendance?.lastCheckOut && !attendanceData.isCheckedIn,
-    attendance: attendanceData.attendance ? {
-      id: attendanceData.attendance.id,
-      locationType: attendanceData.attendance.locationType,
-      lastCheckOut: attendanceData.attendance.lastCheckOut?.toISOString() || null,
-      sessions: (attendanceData.attendance.sessions || []).map(s => ({
-        checkInAt: s.checkInAt.toISOString(),
-        checkOutAt: s.checkOutAt?.toISOString() || null,
-        durationMinutes: s.durationMinutes,
+    isCheckedIn: attendanceData?.isCheckedIn ?? false,
+    isOnBreak: attendanceData?.isOnBreak ?? false,
+    hasCheckedOutToday: !!(attendance?.lastCheckOut) && !(attendanceData?.isCheckedIn),
+    attendance: attendance ? {
+      id: attendance.id,
+      locationType: attendance.locationType,
+      lastCheckOut: attendance.lastCheckOut ? new Date(attendance.lastCheckOut).toISOString() : null,
+      sessions: (attendance.sessions || []).map(s => ({
+        checkInAt: new Date(s.checkInAt).toISOString(),
+        checkOutAt: s.checkOutAt ? new Date(s.checkOutAt).toISOString() : null,
+        durationMinutes: s.durationMinutes || 0,
       })),
-      breaks: (attendanceData.attendance.breaks || []).map(b => ({
+      breaks: (attendance.breaks || []).map(b => ({
         id: b.id,
-        endTime: b.endTime?.toISOString() || null,
-        duration: b.duration,
+        endTime: b.endTime ? new Date(b.endTime).toISOString() : null,
+        duration: b.duration || 0,
       })),
     } : null,
-    currentSession: attendanceData.currentSession ? {
-      checkInAt: attendanceData.currentSession.checkInAt.toISOString(),
+    currentSession: attendanceData?.currentSession ? {
+      checkInAt: new Date(attendanceData.currentSession.checkInAt).toISOString(),
     } : null,
-    currentBreak: attendanceData.currentBreak ? {
-      startTime: attendanceData.currentBreak.startTime.toISOString(),
+    currentBreak: attendanceData?.currentBreak ? {
+      startTime: new Date(attendanceData.currentBreak.startTime).toISOString(),
     } : null,
-    todayHours: attendanceData.todayHours,
-    todayMinutes: attendanceData.todayMinutes,
-    weekHours: attendanceData.weekHours,
+    todayHours: attendanceData?.todayHours ?? 0,
+    todayMinutes: attendanceData?.todayMinutes ?? 0,
+    weekHours: attendanceData?.weekHours ?? 0,
   };
 
   return (

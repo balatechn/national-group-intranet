@@ -1,10 +1,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { getSessionUser } from '@/lib/workos-auth';
-import {
-  getDashboardOrgStats,
-  getDashboardPersonalStats,
-} from '@/actions/dashboard';
+import { getDashboardPersonalStats } from '@/actions/dashboard';
 import { CardsRowSection } from '@/components/dashboard/sections/CardsRowSection';
 import { BottomSection } from '@/components/dashboard/sections/BottomSection';
 import {
@@ -20,20 +17,30 @@ export const revalidate = 60;
 // Section 1: Welcome Strip (loads first - fast)
 // ═══════════════════════════════════════════
 async function WelcomeSection() {
-  const [user, orgStats, personalStats] = await Promise.all([
-    getSessionUser(),
-    getDashboardOrgStats(),
-    getDashboardPersonalStats(),
-  ]);
+  let user, personalStats;
+  
+  try {
+    [user, personalStats] = await Promise.all([
+      getSessionUser(),
+      getDashboardPersonalStats(),
+    ]);
+  } catch (error) {
+    console.error('WelcomeSection error:', error);
+    return (
+      <div className="space-y-3">
+        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Welcome</h1>
+      </div>
+    );
+  }
 
   const firstName = user?.firstName || user?.name?.split(' ')[0] || 'User';
   const today = new Date();
   const dateStr = today.toLocaleDateString('en-IN', { weekday: 'long', month: 'short', day: 'numeric' });
 
-  const overdueCount = personalStats?.taskStats.overdue || 0;
-  const tasksActive = (personalStats?.taskStats.inProgress || 0) + (personalStats?.taskStats.todo || 0);
-  const projectsCount = personalStats?.projects.length || 0;
-  const hoursWeek = personalStats?.timeStats.totalHoursWeek || 0;
+  const overdueCount = personalStats?.taskStats?.overdue || 0;
+  const tasksActive = (personalStats?.taskStats?.inProgress || 0) + (personalStats?.taskStats?.todo || 0);
+  const projectsCount = personalStats?.projects?.length || 0;
+  const hoursWeek = personalStats?.timeStats?.totalHoursWeek || 0;
 
   return (
     <div className="space-y-3">
