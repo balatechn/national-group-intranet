@@ -244,8 +244,8 @@ export default function AttendancePage() {
     }
   }
 
-  function openRegModal(date: Date) {
-    setRegDate(date);
+  function openRegModal(date?: Date) {
+    setRegDate(date || null);
     setRegCheckIn('09:00');
     setRegCheckOut('18:00');
     setRegReason('');
@@ -346,6 +346,14 @@ export default function AttendancePage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Request Regularization Button */}
+          {selectedEmployeeId === '__self__' && (
+            <Button variant="outline" onClick={() => openRegModal()}>
+              <FileEdit className="h-4 w-4 mr-2" />
+              Request Regularization
+            </Button>
+          )}
+
           {/* Admin Employee Selector */}
           {isAdmin && employees.length > 0 && (
             <Select
@@ -580,7 +588,8 @@ export default function AttendancePage() {
                             month: 'short',
                           });
 
-                          const needsRegularization = !att.firstCheckIn || !att.lastCheckOut;
+                          const needsRegularization = !att.lastCheckOut;
+                          const isPastDay = new Date(att.date) < new Date();
 
                           return (
                             <TableRow key={att.id}>
@@ -619,14 +628,14 @@ export default function AttendancePage() {
                               <TableCell>{getStatusBadge(att.status)}</TableCell>
                               {selectedEmployeeId === '__self__' && (
                                 <TableCell>
-                                  {needsRegularization && (
+                                  {(needsRegularization || isPastDay) && (
                                     <Button
                                       variant="outline"
                                       size="sm"
                                       onClick={() => openRegModal(new Date(att.date))}
                                     >
                                       <FileEdit className="h-3 w-3 mr-1" />
-                                      Regularize
+                                      {needsRegularization ? 'Regularize' : 'Edit'}
                                     </Button>
                                   )}
                                 </TableCell>
@@ -641,19 +650,9 @@ export default function AttendancePage() {
                       <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
                       <p>No attendance records for {MONTHS[selectedMonth]} {selectedYear}</p>
                       {selectedEmployeeId === '__self__' && (
-                        <Button
-                          variant="outline"
-                          className="mt-4"
-                          onClick={() => {
-                            const today = new Date();
-                            if (today.getMonth() === selectedMonth && today.getFullYear() === selectedYear) {
-                              openRegModal(today);
-                            }
-                          }}
-                        >
-                          <FileEdit className="h-4 w-4 mr-2" />
-                          Request Regularization
-                        </Button>
+                        <p className="text-sm mt-2">
+                          Use the &quot;Request Regularization&quot; button above to add missing attendance.
+                        </p>
                       )}
                     </div>
                   )}
@@ -802,16 +801,20 @@ export default function AttendancePage() {
           
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Date</Label>
+              <Label htmlFor="regDateInput">Date *</Label>
               <Input 
-                type="text" 
-                value={regDate ? regDate.toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  day: '2-digit', 
-                  month: 'short', 
-                  year: 'numeric' 
-                }) : ''} 
-                disabled 
+                id="regDateInput"
+                type="date"
+                value={regDate ? regDate.toISOString().split('T')[0] : ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val) {
+                    setRegDate(new Date(val + 'T00:00:00'));
+                  } else {
+                    setRegDate(null);
+                  }
+                }}
+                max={new Date().toISOString().split('T')[0]}
               />
             </div>
             
@@ -854,7 +857,7 @@ export default function AttendancePage() {
             </Button>
             <Button 
               onClick={submitRegularization} 
-              disabled={regSubmitting || !regReason.trim()}
+              disabled={regSubmitting || !regReason.trim() || !regDate}
             >
               {regSubmitting ? 'Submitting...' : 'Submit Request'}
             </Button>
